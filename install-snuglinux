@@ -1,0 +1,550 @@
+#! /bin/bash
+
+ARCH=`uname -m`
+
+#=======================================
+install_sevice(){
+  local YN INSTALLSYSTEMD SERVICE
+
+  if [ "$1" == "" ]; then
+     return
+  fi
+  YN="yn"
+  echo "$1" | grep service > /dev/null
+  if [ "$?" = 0 ]; then
+     SERVICE="$1"
+  else
+     SERVICE="$1.service"
+  fi
+  if [ -n "$SERVICE" ] ; then
+     while [ "$YN" = "${YN#*$INSTALLSYSTEMD}" ] ; do
+           echo -e "Включить авто запуск демона \e[0;32m$1\e[0m systemd? (y/n)"
+           read -p "" INSTALLSYSTEMD
+     done
+     if [ "$INSTALLSYSTEMD" == "y" ]; then
+        if ls -l "/mnt/usr/lib/systemd/system" | grep "$SERVICE" > /dev/null ; then
+           arch-chroot /mnt systemctl enable "$SERVICE"
+           if [ "$?" = 0 ]; then
+              echo -e "Добавлен в авто запуск демон \e[0;32m $1\e[0m"
+           fi
+        else
+           echo "Не найден файл /mnt/usr/lib/systemd/system/$SERVICE !!!"
+        fi
+     fi
+  fi
+}
+
+#=======================================
+not_installed_pkg() {
+  local list_pkg inst_list
+  inst_list=""
+  list_pkg=$1
+  for i in ${list_pkg[@]} ; do
+     pkg=`arch-chroot /mnt pacman -Qsq "$i" | grep -x "$i"`
+     if [ -z "$pkg" ]; then
+        inst_list="$inst_list $i"
+     fi
+  done
+  echo $inst_list
+}
+
+#=======================================
+install_pkg() {
+  local AMSURE YN INSTALL_PKG
+  INSTALL_PKG=$(not_installed_pkg "$1")
+  YN="yn"
+  AMSURE="$4"
+  NOCONFIRM="$5"
+  if [ -n "$INSTALL_PKG" ] ; then
+     while [ "$YN" = "${YN#*$AMSURE}" ] ; do
+           if [ -n "$2" ] ; then
+              read -p " $2 ?(y/n): " AMSURE
+           else
+              read -p "Установить $INSTALL_PKG ?(y/n): " AMSURE
+           fi
+     done
+  else
+     return
+  fi
+  if [ "$AMSURE" = "y" ] ; then
+     if [ "$NOCONFIRM" = "n" ]; then
+         arch-chroot /mnt pacman -S $INSTALL_PKG
+      else
+         arch-chroot /mnt pacman -S --noconfirm $INSTALL_PKG
+      fi
+     install_sevice "$3"
+  fi
+}
+
+#=======================================
+mount_part() {
+  local AMSURE AMSUREFORMAT ERROR_PART LABEL_PART
+  DEV=$1
+  if [ "$DEV" == "" ] ; then
+     echo "Не указан раздел для монтирования!"
+     exit 1
+  fi
+  if [ "$DEV" == "root" ]; then
+     DEV=""
+  fi
+  YN="yn"
+  ERROR_PART=0
+  lsblk -f --output MODEL,NAME,LABEL,SIZE,UUID,SERIAL | grep -v "rom\|loop\|airoot\|sr"
+  if [ "$AMSURE" == "i" ] ; then
+     return 0
+  fi
+  if [ "$DEV" = "swap" ] ; then
+     while [ "$ERROR_PART" = 0 ] ; do
+        echo -e "Укажите \e[0;32m"$1"\e[0m раздел для монтирования (i - пропустить) /dev/sd*::"
+        read -p "" AMSURE
+        if ! ls -l "$AMSURE" | grep "$AMSURE" > /dev/null ; then
+           ERROR_PART=0
+        else
+           ERROR_PART=1
+           echo ""
+           echo -e "Укажите метку раздела \e[0;32m"$AMSURE"\e[0m (Enter по умолчанию swap):"
+           read -p "" LABEL_PART
+           if [ "$LABEL_PART" == "" ] ; then
+              LABEL_PART="swap"
+           fi
+           swapon | grep "$AMSURE"  > /dev/null
+           if [ "$?" = 0 ]; then
+              swapoff "$AMSURE"
+           fi
+           mkswap -L "$LABEL_PART" "$AMSURE"
+           swapon "$AMSURE"
+        fi
+     done
+  else
+     while [ "$ERROR_PART" = 0 ] ; do
+        echo -e "Укажите \e[0;32m"$1"\e[0m раздел для монтирования (i - пропустить) /dev/sd*: "
+        read -p "" AMSURE
+        if ! ls -l "$AMSURE" | grep "$AMSURE" > /dev/null ; then
+           ERROR_PART=0
+        else
+           ERROR_PART=1
+           while [ "yn" = "${YN#*$AMSUREFORMAT}" ] ; do
+                 echo -e "Форматировать раздел \e[0;32m$AMSURE\e[0m в ext4 ? (y/n): "
+                 read -n 1 -p "" AMSUREFORMAT
+                 echo ""
+           done
+           if ! [ -d "/mnt/$DEV" ]; then
+              mkdir "/mnt/$DEV"
+           fi
+           mount | grep "home"  > /dev/null
+           if [ "$?" = 0 ]; then
+              umount "/mnt/home"
+           fi
+           mount | grep "$AMSURE"  > /dev/null
+           if [ "$?" = 0 ]; then
+              umount "/mnt/$DEV"
+           fi
+           if [ "$AMSUREFORMAT" = "y" ] ; then
+              echo -e "Укажите метку раздела \e[0;32m"$AMSURE"\e[0m (Enter по умолчанию /$1):"
+              read -p "" LABEL_PART
+              if [ "$LABEL_PART" == "" ] ; then
+                 LABEL_PART="/$1"
+              fi
+               mkfs.ext4 -F "$AMSURE" -L "$LABEL_PART"
+           fi
+           mount "$AMSURE" "/mnt/$DEV"
+        fi
+     done
+  fi
+}
+
+#=======================================
+check_amdgpu(){
+  VIDEO_CHIPSET=`lspci | grep -i --color vga`
+  VIDEO_CHIPSET=`echo $VIDEO_CHIPSET | tr a-z A-Z`
+
+  CHIPSET_NAME[1]="CAPE VERDE"
+  CHIPSET_NAME[2]="PITCAIRN"
+  CHIPSET_NAME[3]="TAHITI"
+  CHIPSET_NAME[4]="OLAND"
+  CHIPSET_NAME[5]="HAINAN"
+  CHIPSET_NAME[6]="BONAIRE"
+  CHIPSET_NAME[7]="KABINI"
+  CHIPSET_NAME[8]="KAVERI"
+  CHIPSET_NAME[9]="HAWAII"
+  CHIPSET_NAME[10]="MULLINS"
+  CHIPSET_NAME[11]="CARRIZO"
+  CHIPSET_NAME[12]="FIJI"
+  CHIPSET_NAME[13]="TONGA"
+  CHIPSET_NAME[14]="TOPAZ"
+  CHIPSET_NAME[15]="STONEY"
+  CHIPSET_NAME[16]="POLARIS10"
+  CHIPSET_NAME[17]="POLARIS11"
+
+  for i in "${CHIPSET_NAME[@]}"; do
+      echo "$VIDEO_CHIPSET" | grep "$i" > /dev/null
+      if [ "$?" = 0 ]; then
+         echo "Yes"
+         return
+      fi
+  done
+  echo "No"
+}
+
+#=======================================
+install_video_driver(){
+  local VIDEO ARRAY PREFIXDRIVER AMSURE
+
+  PREFIXDRIVER=""
+  #ATI
+  VIDEO=`lspci | grep -i --color vga | grep "Radeon"`
+  CHECK_AMDGPU="$(check_amdgpu)"
+  if [ "$CHECK_AMDGPU"=="Yes" ]; then
+     ARRAY="12"
+  else
+     ARRAY="1"
+  fi
+  if [ "$VIDEO" ] ; then
+     echo "Укажите видеодрайвер:"
+     echo "1 - xf86-video-ati (Старая версия ATI/AMD драйвера с открытым исходным кодом)"
+     if [ "$CHECK_AMDGPU"=="Yes" ]; then
+        echo "2 - xf86-video-amdgpu (ATI/AMD версия драйвера с открытым исходным кодом)"
+     fi
+     while [ "$ARRAY" = "${ARRAY#*$AMSURE}" ] ; do
+           read -p "Укажите драйвер для установки:" AMSURE
+     done
+     if [ "$AMSURE" = "2" ]; then
+        if [ "$ARCH" = "x86_64" ] ; then
+           install_pkg "xf86-video-amdgpu mesa-vdpau lib32-mesa-vdpau lib32-mesa" "Установить драйвера ATI (xf86-video-amdgpu)" "" "y" "n"
+        else
+           install_pkg "xf86-video-amdgpu mesa-vdpau" "Установить драйвера ATI (xf86-video-amdgpu)" "" "y" "n"
+        fi
+        sed -i /mnt/etc/mkinitcpio.conf -e 's|MODULES=""|MODULES="amdgpu"|g'
+        arch-chroot /mnt mkinitcpio -p linux
+        if ! [ -d /mnt/etc/X11/xorg.conf.d ]; then
+           mkdir /mnt/etc/X11/xorg.conf.d
+        fi
+        echo 'Section "Device"
+    Identifier "AMD"
+    Driver "amdgpu"
+EndSection' >> /mnt/etc/X11/xorg.conf.d/20-amdgpu.conf
+     elif [ "$AMSURE" = "1" ]; then
+        if [ "$ARCH" = "x86_64" ] ; then
+           install_pkg "xf86-video-ati lib32-ati-dri" "Установить драйвера ATI (xf86-video-ati)" "" "y" "n"
+        else
+           install_pkg "xf86-video-ati" "Установить драйвера ATI (xf86-video-ati)" "" "y" "n"
+        fi
+     fi
+  fi
+  #NVIDIA
+  ARRAY="1234"
+  VIDEO=`lspci | grep -i --color vga | grep "NVIDIA"`
+  if [ "$VIDEO" ] ; then
+     echo "Укажите видеодрайвер:"
+     echo "1 - nvidia (самая последняя версия драйвера)"
+     echo "2 - nvidia-340xx (для карт GeForce 8000/9000 и 100-300 series [NV5x, NV8x, NV9x и NVAx] года производства 2006-2010)"
+     echo "3 - nvidia-304xx (для карт GeForce 6000/7000 series [NV4x и NV6x] года производства 2004-2006)"
+     echo "4 - nouveau (свободный (Open Source) видеодрайвер для карт NVIDIA)"
+     while [ "$ARRAY" = "${ARRAY#*$AMSURE}" ] ; do
+           read -p "Укажите драйвер для установки:" AMSURE
+     done
+     if [ "$AMSURE" = "2" ]; then
+         PREFIXDRIVER="-340xx";
+     elif [ "$AMSURE" = "3" ]; then
+         PREFIXDRIVER="-304xx";
+     elif [ "$AMSURE" = "4" ]; then
+        if [ "$ARCH" = "x86_64" ] ; then
+           install_pkg "xf86-video-nouveau nouveau-dri lib32-nouveau-dri lib32-mesa" "" "" "y" "n"
+        else
+           install_pkg "xf86-video-nouveau nouveau-dri" "" "" "y" "n"
+        fi
+     else
+        if [ "$ARCH" = "x86_64" ] ; then
+           install_pkg "nvidia"$PREFIXDRIVER" nvidia"$PREFIXDRIVER"-libgl nvidia"$PREFIXDRIVER"-utils opencl-nvidia"$PREFIXDRIVER" libvdpau" "Установить самые свежие драйвера NVIDIA" "" "y" "n"
+        else
+           install_pkg "nvidia"$PREFIXDRIVER" nvidia"$PREFIXDRIVER"-libgl nvidia"$PREFIXDRIVER"-utils opencl-nvidia"$PREFIXDRIVER" libvdpau lib32-libvdpau lib32-nvidia"$PREFIXDRIVER"-libgl lib32-nvidia"$PREFIXDRIVER"-utils lib32-opencl-nvidia"$PREFIXDRIVER"" "Установить самые свежие драйвера NVIDIA" "" "y" "n"
+        fi
+        arch-chroot /mnt nvidia-xconfig
+     fi
+  fi
+}
+
+#=======================================
+install_network_manager(){
+   local ARRAY AMSURE
+
+   ARRAY="123"
+   echo "Укажите Network Manager:"
+   echo "1 - Не использовать Network Manager (использовать dhcpcd)"
+   echo "2 - Использовать NetworkManager"
+   echo "3 - Использовать wicd"
+   while [ "$ARRAY" = "${ARRAY#*$AMSURE}" ] ; do
+         read -p "Укажите драйвер для установки:" AMSURE
+   done
+   if [ "$AMSURE" = "1" ]; then
+      install_sevice dhcpcd.service
+   elif [ "$AMSURE" = "2" ]; then
+        install_pkg "networkmanager" "Менеджер сетевых подключений NetworkManager" "NetworkManager" "y"
+        install_sevice "NetworkManager-dispatcher"
+        install_pkg "bluez" "Поддержка Bluetooth bluez"
+        install_pkg "dhclient" "Автономный DHCP клиент из пакета dhcp (dhclient)"
+        install_pkg "dnsmasq" "Легкий и простой в настройке DNS и DHCP сервера"
+        install_pkg "modemmanager" "Сервис для управления модемами" "ModemManager"
+        install_pkg "openresolv" "resolv.conf управления конф. (resolvconf) пакет (openresolv)"
+        install_pkg "ppp" "Реализует Point-to-Point протокол для удаленного доступа (ppp)"
+        install_pkg "network-manager-applet" "Апплет для управления сетевыми подключениями NetworkManager"
+        install_pkg "nm-connection-editor" "Графический редактор NetworkManager и виджеты"
+        install_pkg "networkmanager-openvpn" "Плагин для настройки VPN сети openvpn NetworkManager"
+        install_pkg "networkmanager-pptp" "Плагин для настройки VPN сети PPTP NetworkManager"
+        install_pkg "networkmanager-vpnc" "Плагин для настройки VPN сети VPNC NetworkManager"
+        install_pkg "networkmanager-openconnect" "Плагин для настройки VPN сети OpenConnect NetworkManager"
+   elif [ "$AMSURE" = "3" ]; then
+        install_pkg "wicd" "Менеджер сетевых подключений wicd" "wicd" "y"
+        install_pkg "wicd-gtk" "Менеджер сетевых подключений wicd-gtk" "wicd"
+   fi
+   #install_sevice systemd-networkd.service
+}
+
+#=======================================
+partition_drive() {
+  local AMSURE YN ERROR_PART
+
+  ERROR_PART=0
+  YN="yn"
+  while [ "$YN" = "${YN#*$AMSURE}" ] ; do
+        read -p "Разбить диск на разделы ?(y/n): " AMSURE
+  done
+  if [ "$AMSURE" = "y" ] ; then
+     mount | grep "/home"  > /dev/null
+     if [ "$?" = 0 ]; then
+        umount "/mnt/home"
+     fi
+     mount | grep "/root"  > /dev/null
+     if [ "$?" = 0 ]; then
+        umount "/mnt"
+     fi
+     swapon | grep "$AMSURE"  > /dev/null
+     if [ "$?" = 0 ]; then
+        swapoff "$AMSURE"
+     fi
+     while [ "$ERROR_PART" = 0 ] ; do
+           read -p "Укажите раздел /dev/sd*: " AMSURE
+           if ! ls -l "$AMSURE" | grep "$AMSURE" > /dev/null ; then
+              ERROR_PART=0
+           else
+              ERROR_PART=1
+              cfdisk "$AMSURE"
+              partprobe
+           fi
+    done
+  fi
+}
+
+#=======================================
+edit_pacman_conf(){
+  local PATH_TO_FILE F
+
+  PATH_TO_FILE="$1"
+  echo "Внесение изменений в $PATH_TO_FILE"
+  if [ "$ARCH" = "x86_64" ] ; then
+     grep "#\[multilib]" $PATH_TO_FILE > /dev/null
+     if [ "$?" = 0 ]; then
+        F=`sed -n '/\#\[multilib]/{=}' $PATH_TO_FILE`
+        let "F = $F + 1"
+        sed -i $PATH_TO_FILE -e 's|\#\[multilib\]|\[multilib\]|g'
+        sed -i $PATH_TO_FILE -e "$F s|\#Include = \/etc\/pacman.d\/mirrorlist|Include = \/etc\/pacman.d\/mirrorlist|g"
+     fi
+  fi
+
+  grep "\[snuglinux-core]" $PATH_TO_FILE > /dev/null
+  if [ "$?" = 1 ]; then
+     F=`sed -n '/after the header, and they will be used before the default mirrors./{=}' $PATH_TO_FILE`
+     let "F = $F + 1"
+     sed -i $PATH_TO_FILE -e $F"a\[snuglinux-core]"
+     let "F = $F + 1"
+     sed -i $PATH_TO_FILE -e $F"a\SigLevel = Optional TrustAll"
+     let "F = $F + 1"
+     sed -i $PATH_TO_FILE -e $F"a\Server = https://snuglinux.pp.ua/repo/core/"'$arch'"\n"
+  fi
+}
+
+#=======================================
+install_ssd(){
+  #Определение SSD
+  hdparm -I /dev/sda | grep TRIM  > /dev/null
+  if [ "$?" = 0 ]; then
+     read -p "Для устройства /dev/sda есть поддержка TRIM, использовать ее?" AMSURE
+     echo "Для устройства /dev/sda есть поддержка TRIM"
+  fi
+}
+
+#=======================================
+add_user(){
+  USERNAME="$1"
+  if [ "$USERNAME" == "" ]; then
+     read -p "Логин нового пользователя: " USERNAME
+  fi
+  if [ -n "$USERNAME" ] ; then
+     arch-chroot /mnt useradd -m -g users -G "audio,games,lp,optical,power,scanner,storage,video,wheel,disk,uucp,dbus" -s /bin/bash "$USERNAME"
+     if [ "$USERNAME" == "root" ]; then
+        echo -e '#!/bin/sh'"\n\nexec startxfce4" > "/mnt/$USERNAME/.xinitrc"
+     else
+        echo -e '#!/bin/sh'"\n\nexec startxfce4" > "/mnt/home/$USERNAME/.xinitrc"
+     fi
+     echo "Введите пароль пользователя $USERNAME"
+     arch-chroot /mnt passwd "$USERNAME"
+  fi
+}
+
+#echo "Установка локали ru_RU.UTF-8"
+loadkeys ru
+setfont cyr-sun16
+sed -i /etc/locale.gen -e "s|#en_US.UTF-8 UTF-8|en_US.UTF-8 UTF-8|g"
+sed -i /etc/locale.gen -e "s|#uk_UA.UTF-8 UTF-8|uk_UA.UTF-8 UTF-8|g"
+sed -i /etc/locale.gen -e "s|#ru_RU.UTF-8 UTF-8|ru_RU.UTF-8 UTF-8|g"
+locale-gen
+export LANG=ru_RU.UTF-8
+
+partition_drive
+mount_part "root"
+mount_part "home"
+mount_part "swap"
+edit_pacman_conf "/etc/pacman.conf"
+
+pacstrap /mnt base
+
+install_network_manager
+
+arch-chroot /mnt loadkeys ru
+arch-chroot /mnt setfont cyr-sun16
+sed -i /mnt/etc/locale.gen -e "s|#en_US.UTF-8 UTF-8|en_US.UTF-8 UTF-8|g"
+sed -i /mnt/etc/locale.gen -e "s|#uk_UA.UTF-8 UTF-8|uk_UA.UTF-8 UTF-8|g"
+sed -i /mnt/etc/locale.gen -e "s|#ru_RU.UTF-8 UTF-8|ru_RU.UTF-8 UTF-8|g"
+arch-chroot /mnt locale-gen
+edit_pacman_conf "/mnt/etc/pacman.conf"
+dmesg | grep -i "nuvoton-cir" > /dev/null
+if [ "$?" = 0 ]; then
+   install_pkg "v4l-utils" "" "" "y"
+fi
+install_pkg "base-devel" "Установить базавые пакеты для разработчика" "" ""
+install_video_driver
+install_pkg "ntp" "Установить ntp (синхронизация времени)" "ntpd" "y"
+INSTALL_PKG=$(not_installed_pkg "xorg-server1.17")
+if [ -n "$INSTALL_PKG" ] ; then
+   install_pkg "xorg-server xorg-server-utils" "Установить xorg-server" "" "" "n"
+fi
+install_pkg "slim" "Slim - независимый графический менеджер входа в систему для X11" "slim"
+install_pkg "mc"
+install_pkg "netctl dialog wpa_supplicant" "Установить поддержку Wi-Fi"
+install_pkg "openssh sshfs" "" "sshd"
+install_pkg "net-tools"
+install_pkg "x11vnc"
+install_pkg "xfce4 xfce4-goodies gvfs gvfs-afc gvfs-smb gvfs-gphoto2 gvfs-mtp gvfs-goa gvfs-google gvfs-nfs" "Установить xfce4"
+install_pkg "virtualbox virtualbox-guest-iso virtualbox-guest-modules-arch virtualbox-host-dkms linux-headers virtualbox-guest-utils vde2 virtualbox-ext-oracle" "Установить VirtualBox" "virtualbox"
+INSTALL_PKG=$(not_installed_pkg "virtualbox")
+if [ -n "$INSTALL_PKG" ] ; then
+   echo -e "vboxdrv" > /mnt/etc/modules-load.d/virtualbox.conf
+   echo "Добавлен модуль vboxdrv в автозагрузку"
+fi
+install_pkg "openvpn"
+install_pkg "traceroute"
+install_pkg "firefox firefox-i18n-ru firefox-i18n-uk" "Firefox"
+install_pkg "thunderbird thunderbird-i18n-ru thunderbird-i18n-uk" "Установить почтовую программу Thunderbird"
+install_pkg "skype"
+install_pkg "pidgin" "Установить pidgin"
+install_pkg "doublecmd" "Установить файловый менеджер doublecmd"
+install_pkg "qbittorrent" "Торент клиент qbittorrent"
+install_pkg "remmina freerdp libvncserver" "remmina"
+install_pkg "libreoffice-fresh libreoffice-fresh-ru libreoffice-fresh-uk" "Установить LibreOffice"
+install_pkg "gparted f2fs-tools btrfs-progs exfat-utils reiserfsprogs gpart mtools ntfs-3g" "gparted"
+install_pkg "llvm" "Менеджер логических томов llvm"
+install_pkg "wget"
+install_pkg "ntfs-3g"
+install_pkg "dosfstools"
+install_pkg "uget"
+install_pkg "gksu"
+install_pkg "file-roller unzip cdrkit lrzip p7zip unace unrar" "Менеджер архивом file-roller"
+install_pkg "hunspell hunspell-ru hunspell-uk" "Проверка правописания hunspell"
+install_pkg "hyphen" "Правила переноса hyphen"
+install_pkg "xsane" "Программа для сканирования xsane"
+install_pkg "epdfview" "epdfview - просмотр PDF файлов"
+install_pkg "gimp"
+install_pkg "mythes" "Использовать Тезаурус"
+install_pkg "jre8-openjdk icedtea-web" "Установить java jre8-openjdk и web browser plugin icedtea-web"
+install_pkg "shotwell" "Установить Shotwell — программа для организации каталога фотоизображений и видеофайлов"
+install_pkg "pulseaudio pulseaudio-alsa pavucontrol paprefs" "Установить PulseAudio"
+install_pkg "gimagereader tesseract-data-eng tesseract-data-rus tesseract-data-ukr hunspell hunspell-ru hunspell-uk" "Установить gImageReader - распознавание текста"
+install_pkg "pkgfile" "pkgfile - утилита, которая позволяет узнать, какому пакету принадлежит файл"
+install_pkg "galculator" "galculator — научный калькулятор"
+install_pkg "deadbeef libmad faad2 libzip" "DeaDBeeF — простой и быстрый музыкальный плеер"
+install_pkg "vlc libdvdcss libdc1394 portaudio twolame projectm libgme libgoom2 vcdimager smbclient ttf-freefont lua-socket" "VLC media player — проигрыватель аудио и видео файлов"
+install_pkg "clementine gstreamer0.10-ugly-plugins gstreamer0.10-good-plugins gstreamer0.10-ffmpeg gstreamer0.10-base-plugins gstreamer0.10-bad-plugins gst-libav gst-plugins-ugly" "Clementine — проигрыватель аудио файлов"
+install_pkg "openshot libquicktime frei0r-plugins faac libavc1394 jack" "OpenShot видео редактор"
+install_pkg "steam lib32-alsa-plugins lib32-jack lib32-libsamplerate lib32-speex" "Steam"
+install_pkg "apache lynx lua php php-apache mariadb phpmyadmin php-mcrypt" "Apache" "httpd.service"
+install_pkg "ettercap-gtk"
+install_pkg "rdesktop"
+install_pkg "tigervnc"
+install_pkg "meld python2-dbus" "Программа сравнения файлов и каталогов meld"
+install_pkg "system-config-printer cups-pk-helper" "" "systemctl restart org.cups.cupsd.service"
+install_pkg "gcolor2"
+
+if [ "$ARCH" = "x86_64" ] ; then
+   install_pkg "flashplugin lib32-flashplugin" "flashplugin (для браузеров поддерка flash)"
+   install_pkg "multilib-devel" "Установить инструменты для сборки 32-битных пакетов на 64-битной системе"
+else
+   install_pkg "flashplugin" "Установить flashplugin (для браузеров поддерка flash)"
+fi
+
+# snuglinux
+install_pkg "freeoffice"
+install_pkg "epson-inkjet-printer-201105w"
+install_pkg "gopenvpn-git"
+install_pkg "hunspell-ru hunspell-uk"
+install_pkg "yaourt"
+install_pkg "mediatomb-samsung-tv"
+install_pkg "plex-media-server-plexpass"
+install_pkg "iscan iscan-data"
+
+#install_pkg "miro" "Miro – мощная программа, вернее комплекс, который имеет множество полезных для пользователя функций"
+
+arch-chroot /mnt pacman -S --noconfirm grub
+echo "Генерация fstab"
+genfstab -L -p /mnt >> /mnt/etc/fstab
+echo -e "LANG=ru_RU.UTF-8" > /mnt/etc/locale.conf
+ln -s /usr/share/zoneinfo/Europe/Kiev /mnt/etc/localtime
+#arch-chroot /mnt timedatectl set-timezone Europe/Kiev
+echo "Создание загрузочного RAM диска"
+arch-chroot /mnt mkinitcpio -p linux
+
+#AMSUREGRUB=
+AMSUREGRUBPART=
+#SIMV="12"
+#while [ "$SIMV" = "${SIMV#*$AMSUREGRUB}" ] ; do
+#      read -p "Установить: (1) grub-bios (2) grub-efi : " AMSUREGRUB
+#done
+#if [ "$AMSUREGRUB" = "1" ] ; then
+#else
+#   if [ "$ARCH" = "x86_64" ] ; then
+#      arch-chroot /mnt pacman -S --noconfirm grub-efi-x86_64
+#   else
+#      arch-chroot /mnt pacman -S --noconfirm grub-efi-i386
+#   fi
+#fi
+read -p "Укажите раздел для установки grub (/dev/sd*): " AMSUREGRUBPART
+if ! ls -l "$AMSUREGRUBPART" | grep "$AMSUREGRUBPART" > /dev/null ; then
+  exit
+else
+   arch-chroot /mnt grub-install "$AMSUREGRUBPART"
+   arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+   arch-chroot /mnt sed -i /boot/grub/grub.cfg -e 's|timeout=5|timeout=1|g'
+   arch-chroot /mnt sed -i -e "s|Arch Linux|Snug Linux|g" /boot/grub/grub.cfg
+fi
+LOCALHOST=
+read -p "Введите имя хоста: " LOCALHOST
+if [ -n "$LOCALHOST" ]; then
+   echo -e "$LOCALHOST" >  /mnt/etc/hostname
+fi
+echo -e "KEYMAP=ru\nFONT=cyr-sun16\nFONT_MAP=" > /mnt/etc/vconsole.conf
+
+add_user "root"
+add_user
+
+echo "Нажмите любую клавишу для перезагрузки"
+read
+reboot
