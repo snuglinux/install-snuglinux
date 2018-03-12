@@ -1,0 +1,775 @@
+lang=`echo $LANG | cut -b 1,2`
+
+show_message() {
+
+case $1 in
+##############
+SHOW_USAGE)############################################################
+##############
+case $lang in
+
+ru)
+cat <<EOFUSAGE
+install-snuglinux - скрипт поможет Вам установить и настроить дистрибутив на свой компьютер.
+
+Используются следующие опции командной строки:
+				
+ -v --version : Версия скрипта.
+				
+ -h --help: Показать справку и выйти.
+				
+Пример: install-snuglinux -h
+
+EOFUSAGE
+;;
+
+uk)
+cat <<EOFUSAGE
+install-snuglinux - скрипт допоможе встановити та налаштувати дистрибутив на свій комп'ютер.
+
+Використовуються наступні опції командного рядка:
+				
+ -v --version : Версія скрипта.
+				
+ -h --help : Показати довідку і вийти.
+				
+Приклад: install-snuglinux -h
+
+EOFUSAGE
+;;
+
+*)
+cat << EOFUSAGE
+install-snuglinux - the script helps you to install and configure the distro to your computer.
+
+Use the following command line options:
+				
+ -v --version : Version of the script.
+				
+ -h --help : Show help and exit.
+				
+Example: install-snuglinux -h
+
+EOFUSAGE
+;;
+esac
+;;
+
+#############
+CURRENT_VERSION)
+#############
+case $lang in
+ru) echo -e "Версия скрипта ${FC_4}${CURRENT_VERSION}${FC_0}";;
+uk) echo -e "Версія скрипта ${FC_4}${CURRENT_VERSION}${FC_0}";;
+*)  echo -e "Script version ${FC_4}${CURRENT_VERSION}${FC_0}";;
+esac
+;;
+
+################
+FILE_NOT_FOUND*)#######################################################
+################
+case $lang in
+ru) echo -e "${FC_2}Ошибка:${FC_0} Файл ${FC_3}$2${FC_0} не найден!";;
+uk) echo -e "${FC_2}Помилка:${FC_0} Файл ${FC_3}$2${FC_0} не знайдено!";;
+*)  echo -e "${FC_2}ERROR:${FC_0} File ${FC_3}$2${FC_0} not found!";;
+esac
+;;
+
+###############
+UNKNOWN_ARG)##########################################################
+###############
+case $lang in
+ru) echo -e "${FC_2}Ошибка:${FC_0} Неизвестный аргумент ${FC_3}$2${FC_0}";;
+uk) echo -e "${FC_2}Помилка:${FC_0} Невідомий аргумент ${FC_3}$2${FC_0}";;
+*)  echo -e "${FC_2}ERROR:${FC_0} Unknown argement ${FC_3}$2${FC_0}";;
+esac
+;;
+
+###############
+VAR_NOT_SET*)##########################################################
+###############
+case $lang in
+ru) echo -e "${FC_2}Ошибка:${FC_0} Переменная ${FC_3}$2${FC_0} не установлена";;
+uk) echo -e "${FC_2}Помилка:${FC_0} Змінна ${FC_3}$2${FC_0} не встановлена";;
+*)  echo -e "${FC_2}ERROR:${FC_0} Variable ${FC_3}$2${FC_0} not set";;
+esac
+;;
+
+###########
+NO_ARCHIVE)##############################################################
+###########
+case $lang in
+ru) echo -e "${FC_3}$2${FC_0} не является архивом";;
+uk) echo -e "${FC_3}$2${FC_0} не є архівом";;
+*)  echo -e "${FC_3}$2${FC_0} is not an archive";;
+esac
+;;
+
+###########
+WORK_DIR)##############################################################
+###########
+case $lang in
+ru) echo -e "Изменение рабочей директории на ${FC_3}$2${FC_0}";;
+uk) echo -e "Зміна робочої директорії на ${FC_3}$2${FC_0}";;
+*)  echo -e "Changing working dir to ${FC_3}$2${FC_0}";;
+esac
+;;
+
+###########
+BT_DIR_NOT_WRITABLE)##############################################################
+###########
+case $lang in
+ru) echo -e "${FC_2}Ошибка:${FC_0} Временная директория ${FC_3}$2${FC_0} не доступна для записи";;
+uk) echo -e "${FC_2}Помилка:${FC_0} Тимчасова директорія ${FC_3}$2${FC_0} не доступна для запису";;
+*)  echo -e "${FC_2}ERROR:${FC_0} Temp directory ${FC_3}$2${FC_0} is not writable";;
+esac
+;;
+
+############
+YES_OR_NO)##############################################################i
+###########
+case $lang in
+ru) echo -e "Введите ${FC_3}yes${FC_0} или ${FC_3}no${FC_0}";;
+uk) echo -e "Введіть ${FC_3}yes${FC_0} или ${FC_3}no${FC_0}";;
+*)  echo -e "Please enter ${FC_3}yes${FC_0} or ${FC_3}no${FC_0}";;
+esac
+;;
+
+##########
+WRITING_TO*)##############################################################i
+############
+case $lang in
+ru) echo -e "Файл записан в директорию ${FC_3}$2${FC_0}";;
+uk) echo -e "Файл записаний в директорію ${FC_3}$2${FC_0}";;
+*)  echo -e "File be written in ${FC_3}$2${FC_0}";;
+esac
+;;
+
+##########
+OVERWRITE_FILE*)###################################################
+############
+case $lang in
+ru) echo -e "Перезаписать файл ${FC_3}$2${FC_0}?";;
+uk) echo -e "Перезаписати файл ${FC_3}$2${FC_0}?";;
+*)  echo -e "Overwrite the file ${FC_3}$2${FC_0}?";;
+esac
+;;
+
+##########
+FAILED_TO_CREATE_DIR*)###################################################
+############
+case $lang in
+ru) echo -e "${FC_2}Ошибка:${FC_0} Не удалось создать каталог ${FC_3}$2${FC_0}";;
+uk) echo -e "${FC_2}Помилка:${FC_0} Не вдалося створити каталог ${FC_3}$2${FC_0}";;
+*)  echo -e "${FC_2}ERROR:${FC_0} Failed to create directory ${FC_3}$2${FC_0}";;
+esac
+;;
+
+##########
+NOT_FOUND_CONFIG*)###################################################
+############
+case $lang in
+ru) echo -e "${FC_2}Ошибка:${FC_0} Не найден конфигурационный файл ${FC_3}$2${FC_0}";;
+uk) echo -e "${FC_2}Помилка:${FC_0} Не знайдено конфігураційний файл ${FC_3}$2${FC_0}";;
+*)  echo -e "${FC_2}ERROR:${FC_0} Not found config file ${FC_3}$2${FC_0}";;
+esac
+;;
+
+##########
+NOT_SPECIFIED_PARAMETER*)###################################################
+############
+case $lang in
+ru) echo -e "${FC_2}Ошибка:${FC_0} Не указан параметр ${FC_3}$2${FC_0}";;
+uk) echo -e "${FC_2}Помилка:${FC_0} Не вказано параметр ${FC_3}$2${FC_0}";;
+*)  echo -e "${FC_2}ERROR:${FC_0} Not specified parameter ${FC_3}$2${FC_0}";;
+esac
+;;
+
+#############
+DIRECTORY_NOT_FOUND*)
+#############
+case $lang in
+ru) echo -e "${FC_2}Ошибка:${FC_0} Каталог ${FC_3}$2${FC_0} не найден";;
+uk) echo -e "${FC_2}Помилка:${FC_0} Каталог ${FC_3}$2${FC_0} не знайдено";;
+*)  echo -e "${FC_2}ERROR:${FC_0} Directory ${FC_3}$2${FC_0} not found";;
+esac
+;;
+
+################
+FILE_NOT_FOUND*)
+################
+case $lang in
+ru) echo -e "${FC_2}Ошибка:${FC_0} Файл ${FC_2}$2${FC_0} не найден";;
+uk) echo -e "${FC_2}Помилка:${FC_0} Файл ${FC_2}$2${FC_0} не знайдено";;
+*)  echo -e "${FC_2}ERROR:${FC_0} File ${FC_2}$2${FC_0} not found";;
+esac
+;;
+
+################
+FAILED_UPDATE)
+################
+case $lang in
+ru) echo -e "${FC_2}Ошибка:${FC_0} Не удалось обновить систему";;
+uk) echo -e "${FC_2}Помилка:${FC_0} Не вдалося оновити систему";;
+*)  echo -e "${FC_2}ERROR:${FC_0} Failed to update the system";;
+esac
+;;
+
+################
+PING_SERVER*)
+################
+case $lang in
+ru) echo -e "Проверка доступности сервера ${FC_3}$2${FC_0}";;
+uk) echo -e "Перевірка доступності сервера ${FC_3}$2${FC_0}";;
+*)  echo -e "Checking access to the server ${FC_3}$2${FC_0}";;
+esac
+;;
+
+################
+NOT_ACCESS_SERVER*)
+################
+case $lang in
+ru) echo -e "${FC_2}Ошибка:${FC_0} Не удается получить доступ к серверу ${FC_3}$2${FC_0}";;
+uk) echo -e "${FC_2}Помилка:${FC_0} Неможливо отримати доступ до сервера ${FC_3}$2${FC_0}";;
+*)  echo -e "${FC_2}ERROR:${FC_0} Can not access the server ${FC_3}$2${FC_0}";;
+esac
+;;
+
+################
+OK)
+################
+case $lang in
+ru) echo -e "${FC_4}...Хорошо${FC_0}";;
+uk) echo -e "${FC_4}...Добре${FC_0}";;
+*)  echo -e "${FC_4}...OK${FC_0}";;
+esac
+;;
+
+################
+PACKAGE_NOT_INSTALLED*)
+################
+case $lang in
+ru) echo -e "${FC_2}Ошибка:${FC_0} Пакет ${FC_4}$2${FC_0} не установлен!";;
+uk) echo -e "${FC_2}Помилка:${FC_0} Пакет ${FC_4}$2${FC_0} не встановлений!";;
+*)  echo -e "${FC_2}ERROR:${FC_0} Package of ${FC_4}$2${FC_0} is not installed!";;
+esac
+;;
+
+################
+SUCCESSFULLY_INSTALLED_PACKAGE*)
+################
+case $lang in
+ru) echo -e "${FC_4}Успешно установлен пакет ${FC_3}$2 ${FC_0}";;
+uk) echo -e "${FC_4}Успішно встановлено пакет ${FC_3}$2 ${FC_0}";;
+*)  echo -e "${FC_4}Successfully installed package ${FC_3}$2 ${FC_0}";;
+esac
+;;
+
+################
+SPECIFY_PARTITION_INSTALL_GRUB)
+################
+case $lang in
+ru) echo -e "${FC_4}Укажите раздел для установки grub (Enter по умолчанию ${FC_3}/dev/sda${FC_0}): ";;
+uk) echo -e "${FC_4}Вкажіть розділ для установки grub (Enter за замовчуванням ${FC_3}/dev/sda${FC_0}): ";;
+*)  echo -e "${FC_4}Specify the partition for installing grub (Enter by default ${FC_3}/dev/sda${FC_0}): ";;
+esac
+;;
+
+################
+FAILED_EXECUTE_COMMAND*)
+################
+case $lang in
+ru) echo -e "${FC_2}Ошибка:${FC_4} Не удалось выполнить команду ${FC_3}$2${FC_0}";;
+uk) echo -e "${FC_2}Помилка:${FC_4} Не вдалося виконати команду ${FC_3}$2${FC_0}";;
+*)  echo -e "${FC_2}ERROR:${FC_4} Failed to execute the command ${FC_3}$2${FC_0}";;
+esac
+;;
+
+################
+REQUIRED_LANGUAGE)
+################
+case $lang in
+ru) echo -e "Укажите требуемый язык. Возможные варианты:
+${FC_3}$2${FC_0}";;
+uk) echo -e "Вкажіть потрібну мову. Можливі варіанти:
+${FC_3}$2${FC_0}";;
+*)  echo -e "Specify the required language. Possible variants:
+${FC_3}$2${FC_0}";;
+esac
+;;
+
+################
+NOT_RIGHT_VALUE)
+################
+case $lang in
+ru) echo -e "${FC_2}Значение указано не верно!${FC_0}";;
+uk) echo -e "${FC_2}Значення вказано не вірно!${FC_0}";;
+*)  echo -e "${FC_2}The value is not correct!${FC_0}";;
+esac
+;;
+
+################
+FAILED_LOAD_FILE*)
+################
+case $lang in
+ru) echo -e "${FC_2}Ошибка:${FC_0} Не удалось загрузить файл ${FC_3}$2${FC_0}!";;
+uk) echo -e "${FC_2}Помилка:${FC_0} Не вдалося завантажити файл ${FC_3}$2${FC_0}!";;
+*)  echo -e "${FC_2}ERROR:${FC_0} Could not load file ${FC_3}$2${FC_0}!";;
+esac
+;;
+
+################
+I_M_NOT_ROOT)
+################
+case $lang in
+ru) echo -e "${FC_2}Ошибка:${FC_0} Необходимы права суперпользователя (root)";;
+uk) echo -e "${FC_2}Помилка:${FC_0} Необхідні права суперкористувача (root)";;
+*)  echo -e "${FC_2}ERROR:${FC_0} You need to be (root)";;
+esac;;
+
+################
+DESCRIPTION_NOT_EXIST)
+################
+case $lang in
+ru) echo -e "${FC_2}Описание не существует!${FC_0}";;
+uk) echo -e "${FC_2}Опис не існує!${FC_0}";;
+*)  echo -e "${FC_2}The description does not exist!${FC_0}";;
+esac;;
+
+################
+LOADING_DATA_SERVER)
+################
+case $lang in
+ru) echo -e "${FC_4}Загрузка данных с сервера ${FC_3}$2${FC_0}";;
+uk) echo -e "${FC_4}Загрузка данных с сервера ${FC_3}$2${FC_0}";;
+*)  echo -e "${FC_4}Loading data from server ${FC_3}$2${FC_0}";;
+esac;;
+
+################
+SELECT_TYPE)
+################
+case $lang in
+ru) echo -e "${FC_4}Выберите вариант установки: ${FC_0}";;
+uk) echo -e "${FC_4}Виберіть варіант установки: ${FC_0}";;
+*)  echo -e "${FC_4}Select the installation type: ${FC_0}";;
+esac;;
+
+################
+INSTALL_PACKAGE*)
+################
+case $lang in
+ru) echo -e "${FC_4}Выполняется установка пакета: ${FC_3}$2${FC_0}";;
+uk) echo -e "${FC_4}Виконується установка пакета: ${FC_3}$2${FC_0}";;
+*)  echo -e "${FC_4}The package is being installed: ${FC_3}$2${FC_0}";;
+esac;;
+
+################
+WANT_INSTALL_PACKAGE*)
+################
+case $lang in
+ru) echo -e "${FC_4}Вы желаете установить пакет ${FC_3}$2${FC_4}? ${FC_3}(y/n)${FC_4}: ${FC_0}";;
+uk) echo -e "${FC_4}Ви бажаєте встановити пакет ${FC_3}$2${FC_4}? ${FC_3}(y/n)${FC_4}: ${FC_0}";;
+*)  echo -e "${FC_4}Do you want to install the package ${FC_3}$2${FC_4}? ${FC_3}(y/n)${FC_4}: ${FC_0}";;
+esac;;
+
+################
+FAILED_INSTALL_PACKAGE*)
+################
+case $lang in
+ru) echo -e "${FC_2}Ошибка: Не удалось установить пакет ${FC_3}$2${FC_0}!";;
+uk) echo -e "${FC_2}Помилка: Не вдалося встановити пакет ${FC_3}$2${FC_0}!";;
+*)  echo -e "${FC_2}ERROR: Failed to install package ${FC_3}$2${FC_0}!";;
+esac;;
+
+################
+SPECIFY_VIDEO_DRIVER)
+################
+case $lang in
+ru) echo -e "${FC_4}Выберите вариант установки видеодрайвера:${FC_0}";;
+uk) echo -e "${FC_4}Виберіть варіант установки відеоодрайвера:${FC_0}";;
+*)  echo -e "${FC_4}Select the video driver installation option:${FC_0}";;
+esac;;
+
+################
+SPLIT_DISK_PARTITIONS)
+################
+case $lang in
+ru) echo -e "${FC_4}Разбить диск на разделы ?${FC_3}(y/n)${FC_0}: ";;
+uk) echo -e "${FC_4}Розбити диск на розділи? ${FC_3}(y/n)${FC_0}: ";;
+*)  echo -e "${FC_4}Split the disk into partitions? ${FC_3}(y/n)${FC_0}: ";;
+esac;;
+
+################
+FAILED_NOTIFY_PARTITION_TABLE)
+################
+case $lang in
+ru) echo -e "${FC_2}Ошибка:${FC_0} Не удалось информировать изменения таблицы разделов!";;
+uk) echo -e "${FC_2}Помилка:{FC_0} Не вдалося інформувати зміни таблиць розділів!";;
+*)  echo -e "${FC_2}ERROR:{FC_0} Failed to notify changes to the partition table!";;
+esac;;
+
+################
+DEMON_AUTOSTART*)
+################
+case $lang in
+ru) echo -e "${FC_4}Демон ${FC_3}$2${FC_4} был добавлен в автозапуск${FC_0}";;
+uk) echo -e "${FC_4}Демон ${FC_3}$2${FC_4} було додано до автозапуску${FC_0}";;
+*)  echo -e "${FC_4}The demon ${FC_3}$2${FC_4} has been added to auto start${FC_0}";;
+esac;;
+
+################
+MAKING_CHANGES_TO_FILE*)
+################
+case $lang in
+ru) echo -e "${FC_4}Внесение изменений в ${FC_3}$2${FC_0}";;
+uk) echo -e "${FC_4}Внесення змін до ${FC_3}$2${FC_0}";;
+*)  echo -e "${FC_4}Making changes to the ${FC_3}$2${FC_0}";;
+esac;;
+
+################
+ADD_DAEMON_AUTOSTART*)
+################
+case $lang in
+ru) echo -e "${FC_4}Добавить в автозапуск демон ${FC_3}$2${FC_4} systemd? ${FC_3}(y/n)${FC_0}";;
+uk) echo -e "${FC_4}Додати до автозапуску демон ${FC_3}$2${FC_4} systemd? ${FC_3}(y/n)${FC_0}";;
+*)  echo -e "${FC_4}Add the demon ${FC_3}$2${FC_4} systemd to the autostart? ${FC_3}(y/n)${FC_0}";;
+esac;;
+
+################
+NEW_USER_LOGIN)
+################
+case $lang in
+ru) echo -e "${FC_4}Ведите логин нового пользователя (продолжить ${FC_2}i${FC_4}): ${FC_0}";;
+uk) echo -e "${FC_4}Введіть логин нового користувача (продовжити ${FC_2}i${FC_4}): ${FC_0}";;
+*)  echo -e "${FC_4}Enter the login of the new user (сontinue ${FC_2}i${FC_4}): ${FC_0}";;
+esac;;
+
+################
+ENTER_USER_PASSWORD)
+################
+case $lang in
+ru) echo -e "${FC_4}Введите пароль пользователя ${FC_3}$2${FC_4}: ${FC_0}";;
+uk) echo -e "${FC_4}Введите пароль користувача ${FC_3}$2${FC_4}: ${FC_0}";;
+*)  echo -e "${FC_4}Enter the user password ${FC_3}$2${FC_4}: ${FC_0}";;
+esac;;
+
+################
+CREATING_SYSTEM_USERS)
+################
+case $lang in
+ru) echo -e "${FC_3}Создание пользователей системы${FC_0}";;
+uk) echo -e "${FC_3}Створення користувачів системи${FC_0}";;
+*)  echo -e "${FC_3}Creating system users${FC_0}";;
+esac;;
+
+################
+NO_PARTITION_MOUNTING)
+################
+case $lang in
+ru) echo -e "${FC_2}Ошибка: ${FC_4}Не указан раздел диска для монтирования!${FC_0}";;
+uk) echo -e "${FC_2}Помилка: ${FC_4}Не вказаний розділ диска для монтування!${FC_0}";;
+*)  echo -e "${FC_2}ERROR: ${FC_4}The partition of the drive is not specified for mounting!${FC_0}";;
+esac;;
+
+################
+SPECIFY_PARTITION)
+################
+case $lang in
+ru) echo -e "${FC_4}Укажите раздел (Enter по умолчанию ${FC_3}/dev/sda${FC_0}, продолжить ${FC_2}i${FC_0}): ";;
+uk) echo -e "${FC_4}Вкажіть розділ (Enter за замовчуванням ${FC_3}/dev/sda${FC_0}, продовжити ${FC_2}i${FC_0}): ";;
+*)  echo -e "${FC_4}Specify the partition (Enter by default ${FC_3}/dev/sda${FC_0}, сontinue ${FC_2}i${FC_0}): ";;
+esac;;
+
+################
+SPECIFY_PARTITION_MOUNT*)
+################
+case $lang in
+ru) echo -e "${FC_4}Укажите раздел для монтирования ${FC_3}$2${FC_0} (${FC_2}i${FC_4} - пропустить) ${FC_3}/dev/sda*${FC_0}: ";;
+uk) echo -e "${FC_4}Вкажіть розділ для монтування ${FC_3}$2${FC_0} (${FC_2}i${FC_4} - пропустити) ${FC_3}/dev/sda*${FC_0}: ";;
+*)  echo -e "${FC_4}Specify the mount partition ${FC_3}$2${FC_0} (${FC_2}i${FC_4} - skip) ${FC_3}/dev/sda*${FC_0}: ";;
+esac;;
+
+################
+SPECIFY_DISK_PARTITION_LABEL*)
+################
+case $lang in
+ru) echo -e "${FC_4}Укажите метку раздела ${FC_3}$2${FC_4} (Enter по умолчанию ${FC_3}$2${FC_0}): ";;
+uk) echo -e "${FC_4}Вкажіть мітку розділу ${FC_3}$2${FC_4} (Enter за замовчуванням ${FC_3}$2${FC_0}): ";;
+*)  echo -e "${FC_4}Specify the label of the partition of the ${FC_3}$2${FC_4} (Enter by default ${FC_3}$2${FC_0}): ";;
+esac;;
+
+################
+FORMAT_PARTITION_EXT4*)
+################
+case $lang in
+ru) echo -e "${FC_4}Форматировать раздел ${FC_3}$2${FC_4} в ext4 ?${FC_3}(y/n)${FC_4}: ${FC_0}";;
+uk) echo -e "${FC_4}Форматувати розділ ${FC_3}$2${FC_4} в ext4? ${FC_3}(y/n)${FC_4}: ${FC_0}";;
+*)  echo -e "${FC_4}Format partition ${FC_3}$2${FC_4} in ext4? ${FC_3}(y/n)${FC_4}: ${FC_0}";;
+esac;;
+
+################
+INSTALLING_BASIC_PACKAGES)
+################
+case $lang in
+ru) echo -e "${FC_4}Установка базовых пакетов${FC_0}";;
+uk) echo -e "${FC_4}Установка базових пакетів${FC_0}";;
+*)  echo -e "${FC_4}Installing basic packages${FC_0}";;
+esac;;
+
+################
+UNABLE_UNMOUNT_PARTITION*)
+################
+case $lang in
+ru) echo -e "${FC_2}Ошибка: ${FC_4}Не удалось размонтировать раздел ${FC_3}$2${FC_4}!${FC_0}";;
+uk) echo -e "${FC_2}Помилка: ${FC_4}Не вдалося демонтувати розділ ${FC_3}$2${FC_4}!${FC_0}";;
+*)  echo -e "${FC_2}ERROR: ${FC_4}Unable to unmount partition ${FC_3}$2${FC_4}!${FC_0}";;
+esac;;
+
+################
+UNABLE_FORMAT_PARTITION*)
+################
+case $lang in
+ru) echo -e "${FC_2}Ошибка: ${FC_4}Не удалось отфарматировать раздел ${FC_3}$2${FC_4}!${FC_0}";;
+uk) echo -e "${FC_2}Помилка: ${FC_4}Невдалося відформатувати розділ ${FC_3}$2${FC_4}!${FC_0}";;
+*)  echo -e "${FC_2}ERROR: ${FC_4}Failed to format the partition ${FC_3}$2${FC_4}!${FC_0}";;
+esac;;
+
+################
+FAILED_SET_SECTION_LABEL*)
+################
+case $lang in
+ru) echo -e "${FC_2}Ошибка: ${FC_4}Не удалось установить метку раздела ${FC_3}$2${FC_4}!${FC_0}";;
+uk) echo -e "${FC_2}Помилка: ${FC_4}Не вдалося встановити мітку розділу ${FC_3}$2${FC_4}!${FC_0}";;
+*)  echo -e "${FC_2}ERROR: ${FC_4}Failed to set label for partition ${FC_3}$2${FC_4}!${FC_0}";;
+esac;;
+
+################
+FAILED_MOUNT_PARTITION*)
+################
+case $lang in
+ru) echo -e "${FC_2}Ошибка: ${FC_4}Не удалось смонтировать раздел ${FC_3}$2${FC_4}!${FC_0}";;
+uk) echo -e "${FC_2}Помилка: ${FC_4}Не вдалося змонтувати розділ ${FC_3}$2${FC_4}!${FC_0}";;
+*)  echo -e "${FC_2}ERROR: ${FC_4}Failed to mount partition ${FC_3}$2${FC_4}!${FC_0}";;
+esac;;
+
+################
+FAILED_CREATE_USER*)
+################
+case $lang in
+ru) echo -e "${FC_2}Ошибка: ${FC_4}Не удалось создать пользователя ${FC_3}$2${FC_4}!${FC_0}";;
+uk) echo -e "${FC_2}Помилка: ${FC_4}Не вдалося створити користувача ${FC_3}$2${FC_4}!${FC_0}";;
+*)  echo -e "${FC_2}ERROR: ${FC_4}Failed to create user ${FC_3}$2${FC_4}!${FC_0}";;
+esac;;
+
+################
+ENTER_HOST_NAME)
+################
+case $lang in
+ru) echo -e "${FC_4}Введите имя хоста: ${FC_0}";;
+uk) echo -e "${FC_4}Введіть ім'я хоста: ${FC_0}";;
+*)  echo -e "${FC_4}Enter the host name: ${FC_0}";;
+esac;;
+
+################
+FAILED_SET_HOSTNAME)
+################
+case $lang in
+ru) echo -e "${FC_2}Ошибка: ${FC_4}Не удалось установить имя хоста!${FC_0}";;
+uk) echo -e "${FC_2}Помилка: ${FC_4}Не вдалося встановити ім'я хоста!${FC_0}";;
+*)  echo -e "${FC_2}ERROR: ${FC_4}Failed to set hostname!${FC_0}";;
+esac;;
+
+################
+ENTER_LOCALTIME)
+################
+case $lang in
+ru) echo -e "${FC_4}Установка временной зоны${FC_0}";;
+uk) echo -e "${FC_4}Установка тимчасової зони${FC_0}";;
+*)  echo -e "${FC_4}Setting the time zone${FC_0}";;
+esac;;
+
+################
+FAILED_SET_TIMEZONE)
+################
+case $lang in
+ru) echo -e "${FC_2}Ошибка: ${FC_4}Не удалось установить временную зону! ${FC_0}";;
+uk) echo -e "${FC_2}Помилка: ${FC_4}Не вдалося встановити тимчасову зону! ${FC_0}";;
+*)  echo -e "${FC_2}ERROR: ${FC_4}Could not set the time zone ${FC_0}";;
+esac;;
+
+################
+FAILED_CREATE_PASSWORD)
+################
+case $lang in
+ru) echo -e "${FC_2}Ошибка: ${FC_4}Не удалось создать пароль!${FC_0}";;
+uk) echo -e "${FC_2}Помилка: ${FC_4}Failed to create password!${FC_0}";;
+*)  echo -e "${FC_2}ERROR: ${FC_4}Failed to create password!${FC_0}";;
+esac;;
+
+################
+GENERATING_FSTAB)
+################
+case $lang in
+ru) echo -e "${FC_4}Генерация fstab ${FC_0}";;
+uk) echo -e "${FC_4}Генерація fstab ${FC_0}";;
+*)  echo -e "${FC_4}Generating fstab ${FC_0}";;
+esac;;
+
+################
+PRESS_ANY_KEY_TO_REBOOT)
+################
+case $lang in
+ru) echo -e "${FC_4}Нажмите любую клавишу для перезагрузки${FC_0}";;
+uk) echo -e "${FC_4}Натисніть будь-яку клавішу для перезавантаження${FC_0}";;
+*)  echo -e "${FC_4}Press any key to reboot${FC_0}";;
+esac;;
+
+################
+CREATING_BOOTABLE_RAM_DISK)
+################
+case $lang in
+ru) echo -e "${FC_4}Создание загрузочного RAM диска ${FC_0}";;
+uk) echo -e "${FC_4}Создание загрузочного RAM диска ${FC_0}";;
+*)  echo -e "${FC_4}Creating a bootable RAM disk ${FC_0}";;
+esac;;
+
+################
+0_DO_NOT_INSTALL)
+################
+case $lang in
+ru) echo -e "${FC_2}0${FC_3} - не устанавливать ${FC_0}";;
+uk) echo -e "${FC_2}0${FC_3} - не встановлювати ${FC_0}";;
+*)  echo -e "${FC_2}0${FC_3} - do not install ${FC_0}";;
+esac;;
+
+################
+1_XF86_VIDEO_ATI)
+################
+case $lang in
+ru) echo -e "${FC_2}1${FC_3} - xf86-video-ati (Старая версия ATI/AMD драйвера с открытым исходным кодом) ${FC_0}";;
+uk) echo -e "${FC_2}1${FC_3} - xf86-video-ati (Стара версія ATI / AMD драйвера з відкритим вихідним кодом) ${FC_0}";;
+*)  echo -e "${FC_2}1${FC_3} - xf86-video-ati (Old version of ATI / AMD driver with open source) ${FC_0}";;
+esac;;
+
+################
+2_XF86_VIDEO_AMDGPU)
+################
+case $lang in
+ru) echo -e "${FC_2}2${FC_3} - xf86-video-amdgpu (ATI/AMD версия драйвера с открытым исходным кодом) ${FC_0}";;
+uk) echo -e "${FC_2}2${FC_3} - xf86-video-amdgpu (ATI/AMD версія драйвера з відкритим вихідним кодом) ${FC_0}";;
+*)  echo -e "${FC_2}2${FC_3} - xf86-video-amdgpu (ATI/AMD version of the driver with open source) ${FC_0}";;
+esac;;
+
+################
+1_XF86_VIDEO_VESA)
+################
+case $lang in
+ru) echo -e "${FC_2}1${FC_3} - xf86-video-vesa (X.org vesa видео драйвер) ${FC_0}";;
+uk) echo -e "${FC_2}1${FC_3} - xf86-video-vesa (X.org vesa відео драйвер) ${FC_0}";;
+*)  echo -e "${FC_2}1${FC_3} - xf86-video-vesa (X.org vesa video driver) ${FC_0}";;
+esac;;
+
+################
+1_XF86_VIDEO_INTEL)
+################
+case $lang in
+ru) echo -e "${FC_2}1${FC_3} - xf86-video-intel (X.org Intel i810/i830/i915/945G/G965+ видео драйвер) ${FC_0}";;
+uk) echo -e "${FC_2}1${FC_3} - xf86-video-intel (X.org Intel i810/i830/i915/945G/G965+ відео драйвер) ${FC_0}";;
+*)  echo -e "${FC_2}1${FC_3} - xf86-video-intel (X.org Intel i810/i830/i915/945G/G965+ video drivers) ${FC_0}";;
+esac;;
+
+################
+1_NVIDIA)
+################
+case $lang in
+ru) echo -e "${FC_2}1${FC_3} - nvidia (Последняя версия драйвера NVIDIA) ${FC_0}";;
+uk) echo -e "${FC_2}1${FC_3} - nvidia (Остання версія драйвера NVIDIA) ${FC_0}";;
+*)  echo -e "${FC_2}1${FC_3} - nvidia (The latest version of the NVIDIA driver) ${FC_0}";;
+esac;;
+
+################
+2_NVIDIA_340XX)
+################
+case $lang in
+ru) echo -e "${FC_2}2${FC_3} - nvidia-340xx (для карт GeForce 8000/9000 и 100-300 series [NV5x, NV8x, NV9x и NVAx] года производства 2006-2010) ${FC_0}";;
+uk) echo -e "${FC_2}2${FC_3} - nvidia-340xx (для карт GeForce 8000/9000 і 100-300 series [NV5x, NV8x, NV9x і NVAx] року виробництва 2006-2010) ${FC_0}";;
+*)  echo -e "${FC_2}2${FC_3} - nvidia-340xx (for GeForce 8000/9000 and 100-300 series cards [NV5x, NV8x, NV9x and NVAx] of the year of manufacture 2006-2010) ${FC_0}";;
+esac;;
+
+################
+3_NVIDIA_304XX)
+################
+case $lang in
+ru) echo -e "${FC_2}2${FC_3} - nvidia-304xx (для карт GeForce 6000/7000 series [NV4x и NV6x] года производства 2004-2006) ${FC_0}";;
+uk) echo -e "${FC_2}2${FC_3} - nvidia-304xx (для карт GeForce 6000/7000 series [NV4x і NV6x] року виробництва 2004-2006) ${FC_0}";;
+*)  echo -e "${FC_2}2${FC_3} - nvidia-304xx (for GeForce 6000/7000 series [NV4x and NV6x] cards of the year 2004-2006) ${FC_0}";;
+esac;;
+
+################
+4_XF86_VIDEO_NOUVEAU)
+################
+case $lang in
+ru) echo -e "${FC_2}4${FC_3} - xf86-video-nouveau (Драйвер с открытым исходным кодом 2D-ускорения для видео карт nVidia) ${FC_0}";;
+uk) echo -e "${FC_2}4${FC_3} - xf86-video-nouveau (Драйвер з відкритим вихідним кодом 2D-прискорення для відео карт nVidia) ${FC_0}";;
+*)  echo -e "${FC_2}4${FC_3} - xf86-video-nouveau (Open Source 2D acceleration driver for nVidia cards) ${FC_0}";;
+esac;;
+
+################
+CHOOSE_INSTALLATION_OPTION)
+################
+case $lang in
+ru) echo -e "${FC_4}Выберите вариант установки: ${FC_0}";;
+uk) echo -e "${FC_4}Виберіть варіант установки: ${FC_0}";;
+*)  echo -e "${FC_4}Choose an installation option: ${FC_0}";;
+esac;;
+
+################
+SPECIFY_NETWORK_MANAGER)
+################
+case $lang in
+ru) echo -e "${FC_4}Укажите программу для управления сетевыми соединениями: ${FC_0}";;
+uk) echo -e "${FC_4}Вкажіть програму для управління мережевими з'єднаннями: ${FC_0}";;
+*)  echo -e "${FC_4}Specify a program for managing network connections: ${FC_0}";;
+esac;;
+
+################
+1_DHCPCD)
+################
+case $lang in
+ru) echo -e "${FC_2}1${FC_3} - dhcpcd (DHCP клиент) ${FC_0}";;
+uk) echo -e "${FC_2}1${FC_3} - dhcpcd (DHCP клієнт) ${FC_0}";;
+*)  echo -e "${FC_2}1${FC_3} - dhcpcd (DHCP client) ${FC_0}";;
+esac;;
+
+################
+2_NETWORK_MANAGER)
+################
+case $lang in
+ru) echo -e "${FC_2}2${FC_3} - networkmanager (Менеджер сетевых подключений NetworkManager) ${FC_0}";;
+uk) echo -e "${FC_2}2${FC_3} - networkmanager (Менеджер підключення до мережі NetworkManager) ${FC_0}";;
+*)  echo -e "${FC_2}2${FC_3} - networkmanager (Network connection manager NetworkManager) ${FC_0}";;
+esac;;
+
+################
+3_WICD)
+################
+case $lang in
+ru) echo -e "${FC_2}3${FC_3} - wicd (Менеджер сетевых подключений wicd) ${FC_0}";;
+uk) echo -e "${FC_2}3${FC_3} - wicd (Менеджер підключення до мережі wicd) ${FC_0}";;
+*)  echo -e "${FC_2}3${FC_3} - wicd (Network connection manager wicd) ${FC_0}";;
+esac;;
+
+################
+SPECIFY_MOUNTING_PARTITION*)
+################
+case $lang in
+ru) echo -e "${FC_4}Произвольная точка монтирования раздела (${FC_2}i${FC_4} - пропустить, пример: ${FC_3}/home${FC_4}, ${FC_3}/var${FC_4}, ${FC_3}/boot${FC_4}): ${FC_0}";;
+uk) echo -e "${FC_4}Довільна точка монтування розділу (${FC_2}i${FC_4} - пропустити, приклад: ${FC_3}/home${FC_4}, ${FC_3}/var${FC_4}, ${FC_3}/boot${FC_4}): ${FC_0}";;
+*)  echo -e "${FC_4}Any partition mount point (${FC_2}i${FC_4} - skip, example: ${FC_3}/home${FC_4}, ${FC_3}/var${FC_4}, ${FC_3}/boot${FC_4}): ${FC_0}";;
+esac;;
+
+*)
+echo -e "Unknown string $1";
+exit 1
+esac
+}

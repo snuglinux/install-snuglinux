@@ -1,0 +1,187 @@
+#! /bin/bash
+
+#=======================================
+check_amdgpu(){
+  VIDEO_CHIPSET=`lspci | grep -i --color vga`
+  VIDEO_CHIPSET=`echo $VIDEO_CHIPSET | tr a-z A-Z`
+
+  CHIPSET_NAME[1]="CAPE VERDE"
+  CHIPSET_NAME[2]="PITCAIRN"
+  CHIPSET_NAME[3]="TAHITI"
+  CHIPSET_NAME[4]="OLAND"
+  CHIPSET_NAME[5]="HAINAN"
+  CHIPSET_NAME[6]="BONAIRE"
+  CHIPSET_NAME[7]="KABINI"
+  CHIPSET_NAME[8]="KAVERI"
+  CHIPSET_NAME[9]="HAWAII"
+  CHIPSET_NAME[10]="MULLINS"
+  CHIPSET_NAME[11]="CARRIZO"
+  CHIPSET_NAME[12]="FIJI"
+  CHIPSET_NAME[13]="TONGA"
+  CHIPSET_NAME[14]="TOPAZ"
+  CHIPSET_NAME[15]="STONEY"
+  CHIPSET_NAME[16]="POLARIS10"
+  CHIPSET_NAME[17]="POLARIS11"
+
+  for i in "${CHIPSET_NAME[@]}"; do
+      echo "$VIDEO_CHIPSET" | grep "$i" > /dev/null
+      if [ "$?" = 0 ]; then
+         # yes
+         return 1
+      fi
+  done
+  # no
+  return 0
+}
+
+#=======================================
+install_video_ati(){
+  local ARRAY AMSURE STR_READ OK
+
+  check_amdgpu
+  if [ "$?" = 1 ]; then
+     ARRAY="012"
+  else
+     ARRAY="01"
+  fi
+  show_message SPECIFY_VIDEO_DRIVER
+  show_message 0_DO_NOT_INSTALL
+  show_message 1_XF86_VIDEO_ATI
+  if [ "${CHECK_AMDGPU}"=="yes" ]; then
+     show_message 2_XF86_VIDEO_AMDGPU
+  fi
+  STR_READ=`show_message CHOOSE_INSTALLATION_OPTION`
+  OK=0
+  while [ "${OK}" = 0 ] ; do
+        read -p "${STR_READ}" AMSURE
+        if [ "$ARRAY" = "${ARRAY#*$AMSURE}" ]; then
+           show_message NOT_RIGHT_VALUE
+           continue
+        else
+           OK=1
+        fi
+  done
+  if [ "${AMSURE}" = "0" ]; then
+     return 0
+     # no
+  elif [ "${AMSURE}" = "1" ]; then
+     install_pkg "xf86-video-ati lib32-ati-dri" "y"
+     return 1
+     # yes
+  elif [ "${AMSURE}" = "2" ]; then
+     install_pkg "xf86-video-amdgpu mesa-vdpau lib32-mesa-vdpau lib32-mesa" "y"
+     sed -i /mnt/etc/mkinitcpio.conf -e 's|MODULES=""|MODULES="amdgpu"|g'
+     arch-chroot /mnt mkinitcpio -p linux
+     if ! [ -d /mnt/etc/X11/xorg.conf.d ]; then
+        mkdir /mnt/etc/X11/xorg.conf.d
+     fi
+     echo 'Section "Device"
+    Identifier "AMD"
+    Driver "amdgpu"
+EndSection' >> /mnt/etc/X11/xorg.conf.d/20-amdgpu.conf
+     return 1
+     # yes
+  fi
+}
+
+#=======================================
+install_video_nvidia(){
+  local ARRAY AMSURE PREFIXDRIVER STR_READ OK
+
+  PREFIXDRIVER=""
+  ARRAY="01234"
+
+  show_message SPECIFY_VIDEO_DRIVER
+  show_message 0_DO_NOT_INSTALL
+  show_message 1_NVIDIA
+  show_message 2_NVIDIA_340XX
+  show_message 3_NVIDIA_304XX
+  show_message 4_XF86_VIDEO_NOUVEAU
+  STR_READ=`show_message CHOOSE_INSTALLATION_OPTION`
+  OK=0
+  while [ "${OK}" = 0 ] ; do
+        read -p "${STR_READ}" AMSURE
+        if [ "$ARRAY" = "${ARRAY#*$AMSURE}" ]; then
+           show_message NOT_RIGHT_VALUE
+           continue
+        else
+           OK=1
+        fi
+  done
+  if [ "$AMSURE" = "0" ]; then
+     return 0
+     # no
+  elif [ "$AMSURE" = "2" ]; then
+     PREFIXDRIVER="-340xx";
+  elif [ "$AMSURE" = "3" ]; then
+     PREFIXDRIVER="-304xx";
+  elif [ "$AMSURE" = "4" ]; then
+    install_pkg "xf86-video-nouveau nouveau-dri lib32-nouveau-dri lib32-mesa" "y"
+    return 1
+    # yes
+  fi
+  install_pkg "nvidia"$PREFIXDRIVER" nvidia"$PREFIXDRIVER"-libgl nvidia"$PREFIXDRIVER"-utils opencl-nvidia"$PREFIXDRIVER" libvdpau" "Установить самые свежие драйвера NVIDIA" "" "y" "n"
+  arch-chroot /mnt nvidia-xconfig
+  return 1
+  # yes
+}
+
+#=======================================
+install_video_vesa(){
+  local ARRAY AMSURE STR_READ OK
+
+  ARRAY="01"
+  show_message SPECIFY_VIDEO_DRIVER
+  show_message 0_DO_NOT_INSTALL
+  show_message 1_XF86_VIDEO_VESA
+
+  STR_READ=`show_message CHOOSE_INSTALLATION_OPTION`
+  OK=0
+  while [ "${OK}" = 0 ] ; do
+        read -p "${STR_READ}" AMSURE
+        if [ "$ARRAY" = "${ARRAY#*$AMSURE}" ]; then
+           show_message NOT_RIGHT_VALUE
+           continue
+        else
+           OK=1
+        fi
+  done
+  if [ "$AMSURE" = "0" ]; then
+     return 0
+  elif [ "$AMSURE" = "1" ]; then
+     install_pkg "xf86-video-vesa" "y"
+     return 1
+  fi
+}
+
+#=======================================
+install_video_intel(){
+  local ARRAY AMSURE STR_READ OK
+
+  ARRAY="01"
+  show_message SPECIFY_VIDEO_DRIVER
+  show_message 0_DO_NOT_INSTALL
+  show_message 1_XF86_VIDEO_INTEL
+
+  STR_READ=`show_message CHOOSE_INSTALLATION_OPTION`
+  OK=0
+  while [ "${OK}" = 0 ] ; do
+        read -p "${STR_READ}" AMSURE
+        if [ "$ARRAY" = "${ARRAY#*$AMSURE}" ]; then
+           show_message NOT_RIGHT_VALUE
+           continue
+        else
+           OK=1
+        fi
+  done
+  if [ "$AMSURE" = "0" ]; then
+     return 0
+     # no
+  elif [ "$AMSURE" = "1" ]; then
+     install_pkg "xf86-video-intel" "y"
+     sed -i /mnt/etc/mkinitcpio.conf -e 's|MODULES=""|MODULES="i915"|g'
+     arch-chroot /mnt mkinitcpio -p linux
+     return 1
+     # yes
+  fi
+}

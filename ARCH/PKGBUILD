@@ -1,0 +1,33 @@
+pkgname=install-snuglinux
+pkgver=0.0.3
+pkgrel=1
+pkgdesc="Console script to install and configure distribution snuglinux"
+arch=('any')
+url="https://github.com/snuglinux/install-snuglinux"
+license=('GPL2')
+depends=("openssl" "grep")
+source=("https://github.com/snuglinux/${pkgname}/archive/${pkgver}.tar.gz")
+md5sums=('b0cd0fad8ed404cb69132690368a0888')
+
+package(){
+  cd "$srcdir/${pkgname}-$pkgver"
+
+  # Create folders
+  install -d "$pkgdir/usr/share/snuglinux"
+  install -d "$pkgdir/etc"
+  install -d "$pkgdir/usr/bin"
+  install -d "$pkgdir/usr/share/doc/${pkgname}"
+  install -d "$pkgdir/usr/share/licenses/${pkgname}"
+
+  # Copy files
+  install -m755 install-snuglinux           "$pkgdir/usr/bin"
+  install -m644 install-snuglinux.messages  "$pkgdir/usr/share/snuglinux"
+  install -m644 install-snuglinux.func      "$pkgdir/usr/share/snuglinux"
+  install -m644 install-partition.func      "$pkgdir/usr/share/snuglinux"
+  install -m644 install-video.func          "$pkgdir/usr/share/snuglinux"
+  install -m644 README.md                   "$pkgdir/usr/share/doc/${pkgname}/README"
+  install -Dm 644 COPYING                   "$pkgdir/usr/share/licenses/${pkgname}/LICENSE"
+  install -Dm 644 install-snuglinux.conf    "$pkgdir/etc"
+  sed -e "s/CURRENT_VERSION=0.0.0/CURRENT_VERSION=$pkgver/" -i "$pkgdir/usr/bin/install-snuglinux"
+}
+

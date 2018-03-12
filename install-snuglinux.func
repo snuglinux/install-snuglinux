@@ -1,0 +1,572 @@
+#! /bin/bash
+
+#Loading message file
+if [ -f "${PO_DIR}/$BASE_NAME.messages" ]; then
+   . "${PO_DIR}/$BASE_NAME.messages"
+else
+  case $lang in
+       ru) echo -e "\e[31mОшибка:\e[0m не найден файл $BASE_NAME.messages в '${PO_DIR}'!!!";;
+       uk) echo -e "\e[31mПомилка:\e[0m не знайдений файл $BASE_NAME.messages у '${PO_DIR}'!!!";;
+       *)  echo -e "\e[31mError:\e[0m file $BASE_NAME.messages not found in '${PO_DIR}'!!!";;
+  esac
+  exit 1
+fi
+
+if ! [ -f $CONFIG_FILE ]; then
+   show_message NOT_FOUND_CONFIG $CONFIG_FILE
+   exit 1
+else
+   . "$CONFIG_FILE"
+fi
+
+#========================
+set_options(){
+  while [ ! -z "$1" ]; do
+        case $1 in
+             -v)
+                show_message CURRENT_VERSION
+                exit 0
+                ;;
+             -h|--help)
+                show_message SHOW_USAGE
+                exit 0
+                ;;
+             *) show_message UNKNOWN_ARG $1
+                exit 1
+               ;;
+        esac
+        shift
+  done
+}
+
+#=======================================
+preparation_disk(){
+  local OK AMSURE
+
+  if [ -f "${PO_DIR}/install-partition.func" ]; then
+     . "${PO_DIR}/install-partition.func"
+  else
+     show_message FILE_NOT_FOUND "${PO_DIR}/install-partition.func"
+     exit 1
+  fi
+  partition_drive
+  mount_part "/"
+  mount_part "swap"
+  OK=0;
+  while [ "$OK" = 0 ] ; do
+      STR_READ=`show_message SPECIFY_MOUNTING_PARTITION`
+      read -p "${STR_READ}" AMSURE
+      if [ "${AMSURE}" = "i" ]; then
+         OK=1
+         continue
+      elif [ "${AMSURE}" = "" ]; then
+         show_message NOT_RIGHT_VALUE
+         OK=0
+      else
+         mount_part "${AMSURE}"
+      fi
+  done
+}
+
+#=======================================
+ping_server() {
+  show_message PING_SERVER $SNUG_SERVER
+  res=1
+  /bin/ping ${SNUG_SERVER} -c 3 > /dev/null 2>&1 && res=0
+  if [ ${res} -ne 0 ]; then
+     show_message NOT_ACCESS_SERVER $SNUG_SERVER
+     exit 1
+  else
+     show_message OK
+  fi
+}
+
+#=======================================
+# Example: install_sevice "1" "2"
+# 1 - name sevice
+# 2 - do not ask questions (noconfirm)
+install_sevice(){
+  local YN INSTALLSYSTEMD SERVICE STR_READ
+
+  SERVICE="$1"
+  NOCONFIRM="$2"
+  if [ "${SERVICE}" == "" ]; then
+     return 1
+  fi
+  YN="yn"
+  echo "${SERVICE}" | grep service > /dev/null
+  if [ "$?" != 0 ]; then
+     SERVICE="${SERVICE}.service"
+  fi
+  if [ "${NOCONFIRM}" = "y" ]; then
+     INSTALLSYSTEMD="y"
+  else
+     STR_READ=`show_message ADD_DAEMON_AUTOSTART "${SERVICE}"`
+     while [ "$YN" = "${YN#*$INSTALLSYSTEMD}" ] ; do
+          read -p "${STR_READ}" INSTALLSYSTEMD
+     done
+  fi
+  if [ "$INSTALLSYSTEMD" == "y" ]; then
+     if ls -l "/mnt/usr/lib/systemd/system" | grep "${SERVICE}" > /dev/null ; then
+        arch-chroot /mnt systemctl enable "${SERVICE}"
+        if [ "$?" = 0 ]; then
+           show_message DEMON_AUTOSTART ${SERVICE}
+        fi
+     else
+        show_message FILE_NOT_FOUND "/mnt/usr/lib/systemd/system/${SERVICE}"
+        return 1
+     fi
+  fi
+  return 0
+}
+
+#=======================================
+not_installed_pkg() {
+  local list_pkg inst_list path_chroot
+
+  inst_list=""
+  list_pkg=$1
+  path_chroot=$2
+  for i in ${list_pkg[@]} ; do
+     if [ -z "${path_chroot}" ]; then
+        pkg=`pacman -Qsq "${i}" | grep -x "${i}"`;
+     else
+        pkg=`arch-chroot "${path_chroot}" pacman -Qsq "${i}" | grep -x "${i}"`;
+     fi
+     if [ -z "${pkg}" ]; then
+        inst_list="${inst_list} ${i}"
+     fi
+  done
+  echo ${inst_list}
+}
+
+#=======================================
+# Example: install_pkg "1" "2" "3"
+# 1 - name package
+# 2 - do not ask questions (noconfirm)
+# 3 - systemd service name
+install_pkg() {
+  local YN INSTALL_PKG SYSTEMD STR_READ AMSURE
+
+  INSTALL_PKG=$(not_installed_pkg "$1" "/mnt")
+  YN="yn"
+  NOCONFIRM="$2"
+  SYSTEMD="$3"
+  INSTALL_PKG="${INSTALL_PKG#"${INSTALL_PKG%%[![:space:]]*}"}"
+  #"
+  if [ -z "${INSTALL_PKG}" ] ; then
+     return 0
+  fi
+  if [ "${NOCONFIRM}" != "y" ]; then
+     STR_READ=`show_message WANT_INSTALL_PACKAGE "${INSTALL_PKG}"`
+     while [ "$YN" = "${YN#*$AMSURE}" ] ; do
+         read -p "${STR_READ}" AMSURE
+     done
+  else
+     show_message INSTALL_PACKAGE "${INSTALL_PKG}"
+     AMSURE="y"
+  fi
+  if [ "${AMSURE}" = "y" ]; then
+     arch-chroot /mnt pacman -S --noconfirm "${INSTALL_PKG}"
+#     arch-chroot /mnt pacman -S "${INSTALL_PKG}"
+     if [ "$?" = 0 ]; then
+        show_message SUCCESSFULLY_INSTALLED_PACKAGE "${INSTALL_PKG}"
+     else
+        show_message FAILED_INSTALL_PACKAGE "${INSTALL_PKG}"
+        return 1
+     fi
+     install_sevice "${SYSTEMD}"
+  fi
+  return 0
+}
+
+#=======================================
+install_video_driver(){
+  local NVIDIA ATI INTEL VIDEO INSTALL
+
+  if [ -f "${PO_DIR}/install-video.func" ]; then
+     . "${PO_DIR}/install-video.func"
+  else
+     show_message FILE_NOT_FOUND "${PO_DIR}/install-video.func"
+     exit 1
+  fi
+  NOT_INSTALL_PKG=$(not_installed_pkg "xorg-server", "/mnt")
+  if [ -n "${NOT_INSTALL_PKG}" ] ; then
+     return 0;
+  fi
+  INSTALL_VIDEO="no"
+  VIDEO=`lspci | grep -i --color vga`
+
+  NVIDIA=`echo $VIDEO | grep "NVIDIA"`
+  if [ "$NVIDIA" ]; then
+     install_video_nvidia
+     if [ "$?" = 1 ]; then
+        INSTALL_VIDEO="yes"
+     fi
+  fi
+  ATI=`echo $VIDEO | grep "Radeon"`
+  if [ "$ATI" ]; then
+     install_video_ati
+     if [ "$?" = 1 ]; then
+        INSTALL_VIDEO="yes"
+     fi
+  fi
+  INTEL=`echo $VIDEO | grep "Intel"`
+  if [ "$INTEL" ]; then
+     install_video_intel
+     if [ "$?" = 1 ]; then
+        INSTALL_VIDEO="yes"
+     fi
+  fi
+  if [ "$INSTALL_VIDEO"=="no" ]; then
+     install_video_vesa
+  fi
+}
+
+#=======================================
+install_network_manager(){
+   local ARRAY AMSURE NOT_INSTALL_PKG
+
+   NOT_INSTALL_PKG=$(not_installed_pkg "xorg-server", "/mnt")
+
+   ARRAY="0123"
+   show_message SPECIFY_NETWORK_MANAGER
+   show_message 0_DO_NOT_INSTALL
+   show_message 1_DHCPCD
+   show_message 2_NETWORK_MANAGER
+   show_message 3_WICD
+   STR_READ=`show_message CHOOSE_INSTALLATION_OPTION`
+   OK=0
+   while [ "${OK}" = 0 ] ; do
+         read -p "${STR_READ}" AMSURE
+         if [ "$ARRAY" = "${ARRAY#*$AMSURE}" ]; then
+            show_message NOT_RIGHT_VALUE
+            continue
+         else
+            OK=1
+         fi
+   done
+   if [ "$AMSURE" = "0" ]; then
+      return 0
+   elif [ "$AMSURE" = "1" ]; then
+      install_sevice "dhcpcd.service" "y"
+      return 1
+   elif [ "$AMSURE" = "2" ]; then
+        install_pkg "networkmanager" "y"
+        install_sevice "NetworkManager-dispatcher" "y"
+        install_sevice "NetworkManager" "y"
+        if [ -z "${NOT_INSTALL_PKG}" ] ; then
+           install_pkg "network-manager-applet" "y"
+           install_pkg "networkmanager-openvpn" "y"
+           install_pkg "networkmanager-pptp" "y"
+           install_pkg "networkmanager-vpnc" "y"
+           install_pkg "networkmanager-openconnect" "y"
+        fi
+#        install_pkg "bluez" "Поддержка Bluetooth bluez"
+#        install_pkg "modemmanager" "Сервис для управления модемами" "ModemManager"
+#        install_pkg "openresolv" "resolv.conf управления конф. (resolvconf) пакет (openresolv)"
+#        install_pkg "ppp" "Реализует Point-to-Point протокол для удаленного доступа (ppp)"
+       return 1
+   elif [ "$AMSURE" = "3" ]; then
+        install_pkg "wicd" "y"
+        install_sevice "wicd" "y"
+        if [ -z "${NOT_INSTALL_PKG}" ] ; then
+           install_pkg "wicd-gtk" "y"
+        fi
+        return 1
+   fi
+   #install_sevice systemd-networkd.service
+}
+
+#=======================================
+edit_pacman_conf(){
+  local PATH_TO_FILE F
+
+  PATH_TO_FILE="$1"
+  show_message MAKING_CHANGES_TO_FILE "${PATH_TO_FILE}"
+  if [ "$REAL_ARCH" = "x86_64" ] ; then
+     grep "#\[multilib]" $PATH_TO_FILE > /dev/null
+     if [ "$?" = 0 ]; then
+        F=`sed -n '/\#\[multilib]/{=}' $PATH_TO_FILE`
+        let "F = $F + 1"
+        sed -i $PATH_TO_FILE -e 's|\#\[multilib\]|\[multilib\]|g'
+        sed -i $PATH_TO_FILE -e "$F s|\#Include = \/etc\/pacman.d\/mirrorlist|Include = \/etc\/pacman.d\/mirrorlist|g"
+     fi
+  fi
+
+  grep "\[snuglinux-core]" $PATH_TO_FILE > /dev/null
+  if [ "$?" = 1 ]; then
+     F=`sed -n '/after the header, and they will be used before the default mirrors./{=}' $PATH_TO_FILE`
+     let "F = $F + 1"
+     sed -i $PATH_TO_FILE -e $F"a\[snuglinux-core]"
+     let "F = $F + 1"
+     sed -i $PATH_TO_FILE -e $F"a\SigLevel = Optional TrustAll"
+     let "F = $F + 1"
+     sed -i $PATH_TO_FILE -e $F"a\Server = https://snuglinux.pp.ua/repo/core/"'$arch'"\n"
+  fi
+}
+
+#=======================================
+generating_fstab(){
+  show_message GENERATING_FSTAB
+  genfstab -L -p /mnt >> /mnt/etc/fstab
+  if [ "$?" != 0 ]; then
+     show_message FAILED_EXECUTE_COMMAND "genfstab -L -p /mnt >> /mnt/etc/fstab"
+     exit 1
+  fi
+}
+
+#=======================================
+creating_bootable_ram_disk(){
+  show_message CREATING_BOOTABLE_RAM_DISK
+
+  arch-chroot /mnt mkinitcpio -p linux
+  if [ "$?" != 0 ]; then
+     show_message FAILED_EXECUTE_COMMAND "arch-chroot /mnt mkinitcpio -p linux"
+     exit 1
+  fi
+}
+
+#=======================================
+enter_localtime(){
+  local LOCALTIME
+
+  LOCALTIME="Europe/Kiev"
+  show_message ENTER_LOCALTIME
+
+  NOT_INSTALL_PKG=$(not_installed_pkg "tzdata" "/mnt")
+  if [ -n "${NOT_INSTALL_PKG}" ] ; then
+     show_message PACKAGE_NOT_INSTALLED "${NOT_INSTALL_PKG}"
+     exit 1;
+  fi
+  if [ -f /mnt/etc/localtime ]; then
+     rm /mnt/etc/localtime
+  fi
+  ln -s /usr/share/zoneinfo/${LOCALTIME} /mnt/etc/localtime
+  #arch-chroot /mnt timedatectl set-timezone Europe/Kiev
+  #arch-chroot /mnt timedatectl set-ntp true
+  if [ "$?" != 0 ]; then
+     show_message FAILED_SET_TIMEZONE
+     return 1
+  fi
+  return 0
+}
+
+#=======================================
+enter_hostname(){
+  local STR_READ LOCALHOST
+
+  LOCALHOST=""
+  STR_READ=`show_message ENTER_HOST_NAME`
+  read -p "${STR_READ}" LOCALHOST
+  if [ -n "${LOCALHOST}" ]; then
+     echo -e "${LOCALHOST}" >  "/mnt/etc/hostname"
+     if [ "$?" != 0 ]; then
+        show_message FAILED_SET_HOSTNAME
+        return 1
+     fi
+  fi
+  return 0
+}
+
+#=======================================
+set_password_user() {
+  local STR_READ OK USERNAME
+
+  USERNAME="$1"
+  if [ "${USERNAME}" = "" ] ; then
+     show_message NOT_RIGHT_VALUE
+     return 1
+  fi
+  OK=0;
+  while [ "$OK" = 0 ] ; do
+     show_message ENTER_USER_PASSWORD "${USERNAME}"
+     arch-chroot /mnt passwd "${USERNAME}"
+     if [ "$?" = 0 ]; then
+        OK=1;
+     else
+        show_message FAILED_CREATE_PASSWORD
+     fi
+  done
+}
+
+#=======================================
+add_user(){
+  local STR_READ OK USERNAME
+
+  USERNAME="$1"
+  if [ "${USERNAME}" = "" ] ; then
+     show_message NOT_RIGHT_VALUE
+     return 1
+  fi
+  arch-chroot /mnt useradd -m -g users -G "audio,games,lp,optical,power,scanner,storage,video,wheel,disk,uucp,dbus" -s /bin/bash "${USERNAME}"
+  if [ "$?" != 0 ]; then
+     show_message FAILED_CREATE_USER "${USERNAME}"
+     return 1
+  fi
+
+  INSTALL_PKG=$(not_installed_pkg "xfce4-session" "/mnt")
+  if [ "${INSTALL_PKG}" ] ; then
+     if [ "${USERNAME}" == "root" ]; then
+        echo -e '#!/bin/sh'"\n\nexec startxfce4" > "/mnt/${USERNAME}/.xinitrc"
+     else
+        echo -e '#!/bin/sh'"\n\nexec startxfce4" > "/mnt/home/${USERNAME}/.xinitrc"
+     fi
+  fi
+  set_password_user "${USERNAME}"
+  return 0
+}
+
+#=======================================
+add_users(){
+  local STR_READ OK USERNAME
+
+  show_message CREATING_SYSTEM_USERS
+  OK=0;
+  while [ "$OK" = 0 ] ; do
+     STR_READ=`show_message NEW_USER_LOGIN`
+     read -p "${STR_READ}" USERNAME
+     if [ "${USERNAME}" = "i" ]; then
+        OK=1;
+        return 0
+     fi
+     if [ "${USERNAME}" = "" ] ; then
+        show_message NOT_RIGHT_VALUE
+        continue
+     fi
+     add_user "${USERNAME}"
+  done
+  return 0
+}
+
+#=======================================
+system_language() {
+  local UP_LANG_SELECT LANG_UTF8 STR_READ
+
+  PATH_INST=$1
+
+  if ! [ -f ~/.config/lang.conf  ]; then
+     while [ "${LIST_LANG}" = "${LIST_LANG#*$LANG_SELECT}" ] ; do
+           STR_READ=`echo "$(tput bold)$(tput setaf 2)Specify the required language: $(tput setaf 1) ${LIST_LANG} $(tput sgr0)"`
+           read -p "${STR_READ}" LANG_SELECT
+           if [ "${LIST_LANG}" = "${LIST_LANG#*$LANG_SELECT}" ]; then
+              echo "Incorrect value"
+           else
+              echo -e "LANG_SELECT=${LANG_SELECT}" > ~/.config/lang.conf
+              echo "OK"
+           fi
+     done
+  fi
+  source ~/.config/lang.conf
+  UP_LANG_SELECT=`echo "${LANG_SELECT^^}"`
+  LANG_UTF8=${LANG_SELECT}"_"${UP_LANG_SELECT}.UTF-8
+  if [ -z "${PATH_INST}" ]; then
+     loadkeys ${LANG_SELECT}
+     export LANG=${LANG_UTF8}
+     setfont cyr-sun16
+     clear
+  else
+     arch-chroot ${PATH_INST} loadkeys ${LANG_SELECT}
+     arch-chroot ${PATH_INST} setfont cyr-sun16
+     echo -e "LANG=${LANG_UTF8}" > ${PATH_INST}/etc/locale.conf
+     echo -e "KEYMAP=${LANG_SELECT}\nFONT=cyr-sun16\nFONT_MAP=" > ${PATH_INST}/etc/vconsole.conf
+     #sed -i /mnt/etc/locale.gen -e 's|#\(en_US.UTF-8 UTF-8\)|\1|'
+     #sed -i /mnt/etc/locale.gen -e 's|#\(uk_UA.UTF-8 UTF-8\)|\1|'
+     #sed -i /mnt/etc/locale.gen -e 's|#\(ru_RU.UTF-8 UTF-8\)|\1|'
+     #arch-chroot /mnt locale-gen
+  fi
+}
+
+#=======================================
+download_type(){
+  local STR_N FILE_LISTS TMP_DOWN TYPE
+
+  show_message LOADING_DATA_SERVER ${SNUG_SERVER}
+  TMP_DOWN="/tmp/install-types"
+  FILE_LISTS=$TMP_DOWN"/lists"
+  rm -fr $TMP_DOWN
+  wget --quiet --tries=3 -c https://${SNUG_SERVER}/install-types/lists -P $TMP_DOWN
+  if [ "$?" != 0 ]; then
+     show_message FAILED_LOAD_FILE https://${SNUG_SERVER}/install-types/lists
+     exit 1;
+  fi
+  while read line ; do
+       let STR_N=$STR_N+1;
+       TYPE=`sed -n ${STR_N}p $FILE_LISTS`;
+       wget --quiet --tries=3 -c https://${SNUG_SERVER}/install-types/$TYPE/lang/$LANG_SELECT -P $TMP_DOWN/$TYPE/lang
+       if [ "$?" != 0 ]; then
+          wget --quiet --tries=3 -c https://${SNUG_SERVER}/install-types/$TYPE/lang/en -P $TMP_DOWN/$TYPE/lang
+       fi
+       wget --quiet --tries=3 -c https://${SNUG_SERVER}/install-types/$TYPE/packages -P $TMP_DOWN/$TYPE
+       if [ "$?" != 0 ]; then
+          show_message FAILED_LOAD_FILE https://${SNUG_SERVER}/install-types/$TYPE/packages
+       fi
+  done < $FILE_LISTS
+}
+
+#=======================================
+select_type() {
+  local STR_N TYPE OK STR_READ
+
+  download_type
+
+  TMP_DOWN="/tmp/install-types"
+  FILE_LISTS=${TMP_DOWN}"/lists"
+  if ! [ -f ${FILE_LISTS} ]; then
+     show_message FILE_NOT_FOUND ${FILE_LISTS}
+     exit 1;
+  fi
+  STR_N=0;
+  while read line ; do
+       let STR_N=${STR_N}+1;
+       echo -e "${FC_6}${STR_N}${FC_0} ${FC_3}${line}${FC_0}";
+       TYPE=`sed -n ${STR_N}p ${FILE_LISTS}`;
+       if [ -f ${TMP_DOWN}/${TYPE}/lang/${LANG_SELECT} ]; then
+          cat ${TMP_DOWN}/${TYPE}/lang/${LANG_SELECT}
+       elif [ -f ${TMP_DOWN}/${TYPE}/lang/en ]; then
+          cat ${TMP_DOWN}/${TYPE}/lang/en
+       else
+          show_message DESCRIPTION_NOT_EXIST
+       fi
+  done < ${FILE_LISTS}
+
+  OK=0;
+  STR_READ=`show_message SELECT_TYPE`
+  while [ "${OK}" = 0 ] ; do
+      read -p "${STR_READ}" SELECT_TYPE
+      if [[ "${SELECT_TYPE}" != *[[:digit:]]* ]]; then
+         show_message NOT_RIGHT_VALUE
+         continue
+      fi
+      TYPE=`sed -n ${SELECT_TYPE}p $FILE_LISTS`;
+      if ! [ -f $TMP_DOWN/$TYPE/packages ]; then
+         show_message FILE_NOT_FOUND "$TMP_DOWN/$TYPE/packages"
+      elif [[ $SELECT_TYPE -le $STR_N && $SELECT_TYPE -ne 0 ]] ; then
+         OK=1;
+      else
+         show_message NOT_RIGHT_VALUE
+      fi
+  done
+}
+
+#=======================================
+install_type() {
+  local TYPE STR_PKG FILE_PKG VARS IFS_OLD
+  TYPE=`sed -n ${SELECT_TYPE}p $FILE_LISTS`;
+  if ! [ -f ${TMP_DOWN}/${TYPE}/packages ]; then
+     show_message FILE_NOT_FOUND "${TMP_DOWN}/${TYPE}/packages"
+     exit 1;
+  fi
+  IFS_OLD=$IFS
+  IFS=$'\n'
+  FILE_PKG=${TMP_DOWN}/${TYPE}/packages
+  for line in $(cat ${FILE_PKG}); do
+      if [ "${line:0:1}" = "#" ]; then
+         continue
+      fi
+      VARS=$(echo $line | tr " " "\n");
+      STR_PKG=( ${VARS} )
+      install_pkg "${STR_PKG[0]}" "${STR_PKG[1]}" "${STR_PKG[2]}"
+  done
+  IFS=$IFS_OLD
+}
