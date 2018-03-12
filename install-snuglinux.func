@@ -141,6 +141,24 @@ not_installed_pkg() {
 }
 
 #=======================================
+installed_pkg() {
+  local NAME_PKG PATH_CHROOT INSTALL_PKG
+
+  NAME_PKG=$1
+  PATH_CHROOT=$2
+  if [ -z "${PATH_CHROOT}" ]; then
+     INSTALL_PKG=`pacman -Qsq "${NAME_PKG}" | grep -x "${NAME_PKG}"`;
+  else
+     INSTALL_PKG=`arch-chroot "${PATH_CHROOT}" pacman -Qsq "${NAME_PKG}" | grep -x "${NAME_PKG}"`;
+  fi
+  if [ -z "${INSTALL_PKG}" ]; then
+     return 0
+  else
+     return 1
+  fi
+}
+
+#=======================================
 # Example: install_pkg "1" "2" "3"
 # 1 - name package
 # 2 - do not ask questions (noconfirm)
@@ -182,7 +200,7 @@ install_pkg() {
 
 #=======================================
 install_video_driver(){
-  local NVIDIA ATI INTEL VIDEO INSTALL
+  local NVIDIA ATI INTEL VIDEO INSTALL_VIDEO
 
   if [ -f "${PO_DIR}/install-video.func" ]; then
      . "${PO_DIR}/install-video.func"
@@ -190,8 +208,8 @@ install_video_driver(){
      show_message FILE_NOT_FOUND "${PO_DIR}/install-video.func"
      exit 1
   fi
-  NOT_INSTALL_PKG=$(not_installed_pkg "xorg-server", "/mnt")
-  if [ -n "${NOT_INSTALL_PKG}" ] ; then
+  installed_pkg "xorg-server" "/mnt"
+  if [ "$?" = 0 ]; then
      return 0;
   fi
   INSTALL_VIDEO="no"
@@ -225,9 +243,10 @@ install_video_driver(){
 
 #=======================================
 install_network_manager(){
-   local ARRAY AMSURE NOT_INSTALL_PKG
+   local ARRAY AMSURE INSTALL_X
 
-   NOT_INSTALL_PKG=$(not_installed_pkg "xorg-server", "/mnt")
+   installed_pkg "xorg-server" "/mnt"
+   INSTALL_X="$?"
 
    ARRAY="0123"
    show_message SPECIFY_NETWORK_MANAGER
@@ -255,7 +274,7 @@ install_network_manager(){
         install_pkg "networkmanager" "y"
         install_sevice "NetworkManager-dispatcher" "y"
         install_sevice "NetworkManager" "y"
-        if [ -z "${NOT_INSTALL_PKG}" ] ; then
+        if [ "${INSTALL_X}" = "1" ] ; then
            install_pkg "network-manager-applet" "y"
            install_pkg "networkmanager-openvpn" "y"
            install_pkg "networkmanager-pptp" "y"
@@ -270,7 +289,7 @@ install_network_manager(){
    elif [ "$AMSURE" = "3" ]; then
         install_pkg "wicd" "y"
         install_sevice "wicd" "y"
-        if [ -z "${NOT_INSTALL_PKG}" ] ; then
+        if [ "${INSTALL_X}" = "1" ] ; then
            install_pkg "wicd-gtk" "y"
         fi
         return 1
@@ -329,7 +348,7 @@ creating_bootable_ram_disk(){
 
 #=======================================
 enter_localtime(){
-  local LOCALTIME
+  local LOCALTIME NOT_INSTALL_PKG
 
   LOCALTIME="Europe/Kiev"
   show_message ENTER_LOCALTIME
@@ -404,9 +423,8 @@ add_user(){
      show_message FAILED_CREATE_USER "${USERNAME}"
      return 1
   fi
-
-  INSTALL_PKG=$(not_installed_pkg "xfce4-session" "/mnt")
-  if [ "${INSTALL_PKG}" ] ; then
+  installed_pkg "xfce4-session" "/mnt"
+  if [ "$?" = 1 ]; then
      if [ "${USERNAME}" == "root" ]; then
         echo -e '#!/bin/sh'"\n\nexec startxfce4" > "/mnt/${USERNAME}/.xinitrc"
      else
@@ -550,6 +568,29 @@ select_type() {
 }
 
 #=======================================
+download_pkg(){
+  local FILE_LISTS TMP_DOWN TYPE PKG_NAME
+
+  PKG_NAME=$1
+  TMP_DOWN="/tmp/install-types"
+  FILE_LISTS=${TMP_DOWN}"/lists"
+
+  TYPE=`sed -n ${SELECT_TYPE}p $FILE_LISTS`;
+  if [ -f ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME} ]; then
+     rm -f ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME}
+  fi
+#  if ! [ -d /mnt/$TMP_DOWN/$TYPE/pack ]; then
+#     mkdit -p /mnt/$TMP_DOWN/$TYPE/pack
+#  fi
+  wget --quiet --tries=3 -c https://${SNUG_SERVER}/install-types/${TYPE}/pack/${PKG_NAME} -P ${TMP_DOWN}/${TYPE}/pack
+  if [ "$?" = 0 ]; then
+     if [ -f ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME} ]; then
+        source ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME}
+     fi
+  fi
+}
+
+#=======================================
 install_type() {
   local TYPE STR_PKG FILE_PKG VARS IFS_OLD
   TYPE=`sed -n ${SELECT_TYPE}p $FILE_LISTS`;
@@ -566,7 +607,9 @@ install_type() {
       fi
       VARS=$(echo $line | tr " " "\n");
       STR_PKG=( ${VARS} )
+      download_pkg "${STR_PKG[0]}"
       install_pkg "${STR_PKG[0]}" "${STR_PKG[1]}" "${STR_PKG[2]}"
+      download_pkg "${STR_PKG[0]}"
   done
   IFS=$IFS_OLD
 }

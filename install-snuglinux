@@ -1,6 +1,6 @@
 #! /bin/bash
 
-CURRENT_VERSION=0.0.0
+CURRENT_VERSION=0.0.3
 INSTALL_PREFIX=/usr
 BASE_NAME=`basename "$0"`
 REAL_ARCH=$(uname -m)
@@ -79,4 +79,4 @@ add_users
 
 show_message PRESS_ANY_KEY_TO_REBOOT
 read
-#reboot
+reboot
