@@ -7,7 +7,7 @@ url="https://github.com/snuglinux/install-snuglinux"
 license=('GPL2')
 depends=("openssl" "grep")
 source=("https://github.com/snuglinux/${pkgname}/archive/${pkgver}.tar.gz")
-md5sums=('b0cd0fad8ed404cb69132690368a0888')
+md5sums=('1f970209c5638df191f255f147267e70')
 
 package(){
   cd "$srcdir/${pkgname}-$pkgver"
