@@ -140,6 +140,7 @@ not_installed_pkg() {
   echo ${inst_list}
 }
 
+
 #=======================================
 installed_pkg() {
   local NAME_PKG PATH_CHROOT INSTALL_PKG
@@ -159,12 +160,24 @@ installed_pkg() {
 }
 
 #=======================================
+pacman_list() {
+  local LIST_PKG RESULT_STR
+
+  LIST_PKG="$1"
+  RESULT_STR='/usr/bin/arch-chroot /mnt pacman -S --noconfirm'
+  for i in ${LIST_PKG[@]} ; do
+        RESULT_STR="${RESULT_STR} ${i}"
+  done
+  echo "${RESULT_STR}"
+}
+
+#=======================================
 # Example: install_pkg "1" "2" "3"
 # 1 - name package
 # 2 - do not ask questions (noconfirm)
 # 3 - systemd service name
 install_pkg() {
-  local YN INSTALL_PKG SYSTEMD STR_READ AMSURE
+  local YN INSTALL_PKG SYSTEMD STR_READ AMSURE PACMAN_CMD
 
   INSTALL_PKG=$(not_installed_pkg "$1" "/mnt")
   YN="yn"
@@ -185,7 +198,9 @@ install_pkg() {
      AMSURE="y"
   fi
   if [ "${AMSURE}" = "y" ]; then
-     arch-chroot /mnt pacman -S --noconfirm "${INSTALL_PKG}"
+     PACMAN_CMD=`pacman_list "${INSTALL_PKG}"`
+     eval $PACMAN_CMD
+#     arch-chroot /mnt pacman -S --noconfirm "${INSTALL_PKG}"
 #     arch-chroot /mnt pacman -S "${INSTALL_PKG}"
      if [ "$?" = 0 ]; then
         show_message SUCCESSFULLY_INSTALLED_PACKAGE "${INSTALL_PKG}"
@@ -216,27 +231,27 @@ install_video_driver(){
   VIDEO=`lspci | grep -i --color vga`
 
   NVIDIA=`echo $VIDEO | grep "NVIDIA"`
-  if [ "$NVIDIA" ]; then
+  if [ "${NVIDIA}" ]; then
      install_video_nvidia
      if [ "$?" = 1 ]; then
         INSTALL_VIDEO="yes"
      fi
   fi
-  ATI=`echo $VIDEO | grep "Radeon"`
+  ATI=`echo ${VIDEO} | grep "Radeon"`
   if [ "$ATI" ]; then
      install_video_ati
      if [ "$?" = 1 ]; then
         INSTALL_VIDEO="yes"
      fi
   fi
-  INTEL=`echo $VIDEO | grep "Intel"`
-  if [ "$INTEL" ]; then
+  INTEL=`echo ${VIDEO} | grep "Intel"`
+  if [ "${INTEL}" ]; then
      install_video_intel
      if [ "$?" = 1 ]; then
         INSTALL_VIDEO="yes"
      fi
   fi
-  if [ "$INSTALL_VIDEO"=="no" ]; then
+  if [ "${INSTALL_VIDEO}"=="no" ]; then
      install_video_vesa
   fi
 }
@@ -607,9 +622,10 @@ install_type() {
       fi
       VARS=$(echo $line | tr " " "\n");
       STR_PKG=( ${VARS} )
-      download_pkg "${STR_PKG[0]}"
       install_pkg "${STR_PKG[0]}" "${STR_PKG[1]}" "${STR_PKG[2]}"
-      download_pkg "${STR_PKG[0]}"
+      if [ "$?" = 0 ]; then
+         download_pkg "${STR_PKG[0]}"
+      fi
   done
   IFS=$IFS_OLD
 }
