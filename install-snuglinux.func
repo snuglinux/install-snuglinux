@@ -95,7 +95,7 @@ install_sevice(){
   fi
   YN="yn"
   echo "${SERVICE}" | grep service > /dev/null
-  if [ "$?" != 0 ]; then
+  if [ $? != 0 ]; then
      SERVICE="${SERVICE}.service"
   fi
   if [ "${NOCONFIRM}" = "y" ]; then
@@ -109,7 +109,7 @@ install_sevice(){
   if [ "$INSTALLSYSTEMD" == "y" ]; then
      if ls -l "/mnt/usr/lib/systemd/system" | grep "${SERVICE}" > /dev/null ; then
         arch-chroot /mnt systemctl enable "${SERVICE}"
-        if [ "$?" = 0 ]; then
+        if [ $? = 0 ]; then
            show_message DEMON_AUTOSTART ${SERVICE}
         fi
      else
@@ -202,7 +202,7 @@ install_pkg() {
      eval $PACMAN_CMD
 #     arch-chroot /mnt pacman -S --noconfirm "${INSTALL_PKG}"
 #     arch-chroot /mnt pacman -S "${INSTALL_PKG}"
-     if [ "$?" = 0 ]; then
+     if [ $? = 0 ]; then
         show_message SUCCESSFULLY_INSTALLED_PACKAGE "${INSTALL_PKG}"
      else
         show_message FAILED_INSTALL_PACKAGE "${INSTALL_PKG}"
@@ -224,7 +224,7 @@ install_video_driver(){
      exit 1
   fi
   installed_pkg "xorg-server" "/mnt"
-  if [ "$?" = 0 ]; then
+  if [ $? = 0 ]; then
      return 0;
   fi
   INSTALL_VIDEO="no"
@@ -233,25 +233,25 @@ install_video_driver(){
   NVIDIA=`echo $VIDEO | grep "NVIDIA"`
   if [ "${NVIDIA}" ]; then
      install_video_nvidia
-     if [ "$?" = 1 ]; then
+     if [ $? = 1 ]; then
         INSTALL_VIDEO="yes"
      fi
   fi
   ATI=`echo ${VIDEO} | grep "Radeon"`
   if [ "$ATI" ]; then
      install_video_ati
-     if [ "$?" = 1 ]; then
+     if [ $? = 1 ]; then
         INSTALL_VIDEO="yes"
      fi
   fi
   INTEL=`echo ${VIDEO} | grep "Intel"`
   if [ "${INTEL}" ]; then
      install_video_intel
-     if [ "$?" = 1 ]; then
+     if [ $? = 1 ]; then
         INSTALL_VIDEO="yes"
      fi
   fi
-  if [ "${INSTALL_VIDEO}"=="no" ]; then
+  if [ "${INSTALL_VIDEO}" == "no" ]; then
      install_video_vesa
   fi
 }
@@ -329,7 +329,7 @@ edit_pacman_conf(){
   fi
 
   grep "\[snuglinux-core]" $PATH_TO_FILE > /dev/null
-  if [ "$?" = 1 ]; then
+  if [ $? = 1 ]; then
      F=`sed -n '/after the header, and they will be used before the default mirrors./{=}' $PATH_TO_FILE`
      let "F = $F + 1"
      sed -i $PATH_TO_FILE -e $F"a\[snuglinux-core]"
@@ -344,7 +344,7 @@ edit_pacman_conf(){
 generating_fstab(){
   show_message GENERATING_FSTAB
   genfstab -L -p /mnt >> /mnt/etc/fstab
-  if [ "$?" != 0 ]; then
+  if [ $? != 0 ]; then
      show_message FAILED_EXECUTE_COMMAND "genfstab -L -p /mnt >> /mnt/etc/fstab"
      exit 1
   fi
@@ -355,7 +355,7 @@ creating_bootable_ram_disk(){
   show_message CREATING_BOOTABLE_RAM_DISK
 
   arch-chroot /mnt mkinitcpio -p linux
-  if [ "$?" != 0 ]; then
+  if [ $? != 0 ]; then
      show_message FAILED_EXECUTE_COMMAND "arch-chroot /mnt mkinitcpio -p linux"
      exit 1
   fi
@@ -379,7 +379,7 @@ enter_localtime(){
   ln -s /usr/share/zoneinfo/${LOCALTIME} /mnt/etc/localtime
   #arch-chroot /mnt timedatectl set-timezone Europe/Kiev
   #arch-chroot /mnt timedatectl set-ntp true
-  if [ "$?" != 0 ]; then
+  if [ $? != 0 ]; then
      show_message FAILED_SET_TIMEZONE
      return 1
   fi
@@ -395,7 +395,7 @@ enter_hostname(){
   read -p "${STR_READ}" LOCALHOST
   if [ -n "${LOCALHOST}" ]; then
      echo -e "${LOCALHOST}" >  "/mnt/etc/hostname"
-     if [ "$?" != 0 ]; then
+     if [ $? != 0 ]; then
         show_message FAILED_SET_HOSTNAME
         return 1
      fi
@@ -416,7 +416,7 @@ set_password_user() {
   while [ "$OK" = 0 ] ; do
      show_message ENTER_USER_PASSWORD "${USERNAME}"
      arch-chroot /mnt passwd "${USERNAME}"
-     if [ "$?" = 0 ]; then
+     if [ $? = 0 ]; then
         OK=1;
      else
         show_message FAILED_CREATE_PASSWORD
@@ -434,12 +434,12 @@ add_user(){
      return 1
   fi
   arch-chroot /mnt useradd -m -g users -G "audio,games,lp,optical,power,scanner,storage,video,wheel,disk,uucp,dbus" -s /bin/bash "${USERNAME}"
-  if [ "$?" != 0 ]; then
+  if [ $? != 0 ]; then
      show_message FAILED_CREATE_USER "${USERNAME}"
      return 1
   fi
   installed_pkg "xfce4-session" "/mnt"
-  if [ "$?" = 1 ]; then
+  if [ $? = 1 ]; then
      if [ "${USERNAME}" == "root" ]; then
         echo -e '#!/bin/sh'"\n\nexec startxfce4" > "/mnt/${USERNAME}/.xinitrc"
      else
@@ -519,7 +519,7 @@ download_type(){
   FILE_LISTS=$TMP_DOWN"/lists"
   rm -fr $TMP_DOWN
   wget --quiet --tries=3 -c https://${SNUG_SERVER}/install-types/lists -P $TMP_DOWN
-  if [ "$?" != 0 ]; then
+  if [ $? != 0 ]; then
      show_message FAILED_LOAD_FILE https://${SNUG_SERVER}/install-types/lists
      exit 1;
   fi
@@ -527,11 +527,11 @@ download_type(){
        let STR_N=$STR_N+1;
        TYPE=`sed -n ${STR_N}p $FILE_LISTS`;
        wget --quiet --tries=3 -c https://${SNUG_SERVER}/install-types/$TYPE/lang/$LANG_SELECT -P $TMP_DOWN/$TYPE/lang
-       if [ "$?" != 0 ]; then
+       if [ $? != 0 ]; then
           wget --quiet --tries=3 -c https://${SNUG_SERVER}/install-types/$TYPE/lang/en -P $TMP_DOWN/$TYPE/lang
        fi
        wget --quiet --tries=3 -c https://${SNUG_SERVER}/install-types/$TYPE/packages -P $TMP_DOWN/$TYPE
-       if [ "$?" != 0 ]; then
+       if [ $? != 0 ]; then
           show_message FAILED_LOAD_FILE https://${SNUG_SERVER}/install-types/$TYPE/packages
        fi
   done < $FILE_LISTS
@@ -598,7 +598,7 @@ download_pkg(){
 #     mkdit -p /mnt/$TMP_DOWN/$TYPE/pack
 #  fi
   wget --quiet --tries=3 -c https://${SNUG_SERVER}/install-types/${TYPE}/pack/${PKG_NAME} -P ${TMP_DOWN}/${TYPE}/pack
-  if [ "$?" = 0 ]; then
+  if [ $? = 0 ]; then
      if [ -f ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME} ]; then
         source ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME}
      fi
@@ -623,7 +623,7 @@ install_type() {
       VARS=$(echo $line | tr " " "\n");
       STR_PKG=( ${VARS} )
       install_pkg "${STR_PKG[0]}" "${STR_PKG[1]}" "${STR_PKG[2]}"
-      if [ "$?" = 0 ]; then
+      if [ $? = 0 ]; then
          download_pkg "${STR_PKG[0]}"
       fi
   done

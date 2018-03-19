@@ -158,6 +158,8 @@ install_video_vesa(){
 install_video_intel(){
   local ARRAY AMSURE STR_READ OK
 
+     return 1
+
   ARRAY="01"
   show_message SPECIFY_VIDEO_DRIVER
   show_message 0_DO_NOT_INSTALL
