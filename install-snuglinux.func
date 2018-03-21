@@ -177,12 +177,13 @@ pacman_list() {
 # 2 - do not ask questions (noconfirm)
 # 3 - systemd service name
 install_pkg() {
-  local YN INSTALL_PKG SYSTEMD STR_READ AMSURE PACMAN_CMD
+  local YN INSTALL INSTALL_PKG SYSTEMD STR_READ AMSURE PACMAN_CMD
 
   INSTALL_PKG=$(not_installed_pkg "$1" "/mnt")
   YN="yn"
   NOCONFIRM="$2"
   SYSTEMD="$3"
+  INSTALL=0
   INSTALL_PKG="${INSTALL_PKG#"${INSTALL_PKG%%[![:space:]]*}"}"
   #"
   if [ -z "${INSTALL_PKG}" ] ; then
@@ -204,13 +205,18 @@ install_pkg() {
 #     arch-chroot /mnt pacman -S "${INSTALL_PKG}"
      if [ $? = 0 ]; then
         show_message SUCCESSFULLY_INSTALLED_PACKAGE "${INSTALL_PKG}"
+        INSTALL=1
+        install_sevice "${SYSTEMD}"
      else
         show_message FAILED_INSTALL_PACKAGE "${INSTALL_PKG}"
-        return 1
+        INSTALL=0
      fi
-     install_sevice "${SYSTEMD}"
   fi
-  return 0
+  if [ $INSTALL = 0 ]; then
+     return 1
+  else
+     return 0
+  fi
 }
 
 #=======================================
@@ -622,10 +628,13 @@ install_type() {
       fi
       VARS=$(echo $line | tr " " "\n");
       STR_PKG=( ${VARS} )
+set -x
       install_pkg "${STR_PKG[0]}" "${STR_PKG[1]}" "${STR_PKG[2]}"
+echo "install > down"
       if [ $? = 0 ]; then
          download_pkg "${STR_PKG[0]}"
       fi
+exit
   done
   IFS=$IFS_OLD
 }
