@@ -509,10 +509,10 @@ system_language() {
      arch-chroot ${PATH_INST} setfont cyr-sun16
      echo -e "LANG=${LANG_UTF8}" > ${PATH_INST}/etc/locale.conf
      echo -e "KEYMAP=${LANG_SELECT}\nFONT=cyr-sun16\nFONT_MAP=" > ${PATH_INST}/etc/vconsole.conf
-     #sed -i /mnt/etc/locale.gen -e 's|#\(en_US.UTF-8 UTF-8\)|\1|'
-     #sed -i /mnt/etc/locale.gen -e 's|#\(uk_UA.UTF-8 UTF-8\)|\1|'
-     #sed -i /mnt/etc/locale.gen -e 's|#\(ru_RU.UTF-8 UTF-8\)|\1|'
-     #arch-chroot /mnt locale-gen
+     sed -i /mnt/etc/locale.gen -e 's|#\(en_US.UTF-8 UTF-8\)|\1|'
+     sed -i /mnt/etc/locale.gen -e 's|#\(uk_UA.UTF-8 UTF-8\)|\1|'
+     sed -i /mnt/etc/locale.gen -e 's|#\(ru_RU.UTF-8 UTF-8\)|\1|'
+     arch-chroot /mnt locale-gen
   fi
 }
 
