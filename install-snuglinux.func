@@ -628,13 +628,10 @@ install_type() {
       fi
       VARS=$(echo $line | tr " " "\n");
       STR_PKG=( ${VARS} )
-set -x
       install_pkg "${STR_PKG[0]}" "${STR_PKG[1]}" "${STR_PKG[2]}"
-echo "install > down"
       if [ $? = 0 ]; then
          download_pkg "${STR_PKG[0]}"
       fi
-exit
   done
   IFS=$IFS_OLD
 }
