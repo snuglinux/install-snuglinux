@@ -65,7 +65,7 @@ install_video_ati(){
      return 0
      # no
   elif [ "${AMSURE}" = "1" ]; then
-     install_pkg "xf86-video-ati lib32-ati-dri" "y"
+     install_pkg "xf86-video-ati lib32-ati-dri xf86-video-fbdev" "y"
      return 1
      # yes
   elif [ "${AMSURE}" = "2" ]; then
@@ -94,9 +94,10 @@ install_video_nvidia(){
   show_message SPECIFY_VIDEO_DRIVER
   show_message 0_DO_NOT_INSTALL
   show_message 1_NVIDIA
-  show_message 2_NVIDIA_340XX
-  show_message 3_NVIDIA_304XX
-  show_message 4_XF86_VIDEO_NOUVEAU
+  show_message 2_NVIDIA_390XX
+  show_message 3_NVIDIA_340XX
+  show_message 4_NVIDIA_304XX
+  show_message 5_XF86_VIDEO_NOUVEAU
   STR_READ=`show_message CHOOSE_INSTALLATION_OPTION`
   OK=0
   while [ "${OK}" = 0 ] ; do
@@ -112,15 +113,17 @@ install_video_nvidia(){
      return 0
      # no
   elif [ "$AMSURE" = "2" ]; then
-     PREFIXDRIVER="-340xx";
+     PREFIXDRIVER="-390xx";
   elif [ "$AMSURE" = "3" ]; then
-     PREFIXDRIVER="-304xx";
+     PREFIXDRIVER="-340xx";
   elif [ "$AMSURE" = "4" ]; then
+     PREFIXDRIVER="-304xx";
+  elif [ "$AMSURE" = "5" ]; then
     install_pkg "xf86-video-nouveau nouveau-dri lib32-nouveau-dri lib32-mesa" "y"
     return 1
     # yes
   fi
-  install_pkg "nvidia"$PREFIXDRIVER" nvidia"$PREFIXDRIVER"-libgl nvidia"$PREFIXDRIVER"-utils opencl-nvidia"$PREFIXDRIVER" libvdpau" "Установить самые свежие драйвера NVIDIA" "" "y" "n"
+  install_pkg "nvidia"$PREFIXDRIVER" nvidia"$PREFIXDRIVER"-utils opencl-nvidia"$PREFIXDRIVER" libvdpau" "Установить драйвер NVIDIA" "" "y" "n"
   arch-chroot /mnt nvidia-xconfig
   return 1
   # yes
