@@ -1,5 +1,5 @@
 pkgname=install-snuglinux
-pkgver=0.0.7
+pkgver=0.0.11
 pkgrel=1
 pkgdesc="Console script to install and configure distribution snuglinux"
 arch=('any')

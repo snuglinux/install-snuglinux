@@ -40,9 +40,10 @@ install_video_ati(){
 
   check_amdgpu
   if [ "$?" = 1 ]; then
-     ARRAY="012"
+     ARRAY = "012"
+     CHECK_AMDGPU = "yes"
   else
-     ARRAY="01"
+     ARRAY = "01"
   fi
   show_message SPECIFY_VIDEO_DRIVER
   show_message 0_DO_NOT_INSTALL
@@ -75,10 +76,7 @@ install_video_ati(){
      if ! [ -d /mnt/etc/X11/xorg.conf.d ]; then
         mkdir /mnt/etc/X11/xorg.conf.d
      fi
-     echo 'Section "Device"
-    Identifier "AMD"
-    Driver "amdgpu"
-EndSection' >> /mnt/etc/X11/xorg.conf.d/20-amdgpu.conf
+     cp /mnt/usr/share/X11/xorg.conf.d/10-amdgpu.conf /mnt/etc/X11/xorg.conf.d/10-amdgpu.conf
      return 1
      # yes
   fi
