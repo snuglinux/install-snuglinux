@@ -22,6 +22,7 @@ check_amdgpu(){
   CHIPSET_NAME[15]="STONEY"
   CHIPSET_NAME[16]="POLARIS10"
   CHIPSET_NAME[17]="POLARIS11"
+  CHIPSET_NAME[18]="WANI"
 
   for i in "${CHIPSET_NAME[@]}"; do
       echo "$VIDEO_CHIPSET" | grep "$i" > /dev/null
@@ -38,17 +39,17 @@ check_amdgpu(){
 install_video_ati(){
   local ARRAY AMSURE STR_READ OK
 
-  check_amdgpu
-  if [ "$?" = 1 ]; then
-     ARRAY = "012"
-     CHECK_AMDGPU = "yes"
+  check_amdgpu;
+  CHECK_AMDGPU=$?
+  if [ $CHECK_AMDGPU = 1 ]; then
+     ARRAY="012"
   else
-     ARRAY = "01"
+     ARRAY="01"
   fi
   show_message SPECIFY_VIDEO_DRIVER
   show_message 0_DO_NOT_INSTALL
   show_message 1_XF86_VIDEO_ATI
-  if [ "${CHECK_AMDGPU}"=="yes" ]; then
+  if [ ${CHECK_AMDGPU} = 1 ]; then
      show_message 2_XF86_VIDEO_AMDGPU
   fi
   STR_READ=`show_message CHOOSE_INSTALLATION_OPTION`
