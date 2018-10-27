@@ -16,8 +16,46 @@ if ! [ -f $CONFIG_FILE ]; then
    show_message NOT_FOUND_CONFIG $CONFIG_FILE
    exit 1
 else
-   . "$CONFIG_FILE"
+   source "$CONFIG_FILE"
 fi
+
+#=======================================
+system_language() {
+  local UP_LANG_SELECT LANG_UTF8 STR_READ
+
+  PATH_INST=$1
+
+  if ! [ -f ~/.config/lang.conf  ]; then
+     while [ "${LIST_LANG}" = "${LIST_LANG#*$LANG_SELECT}" ] ; do
+           STR_READ=`echo "$(tput bold)$(tput setaf 2)Specify the required language: $(tput setaf 1) ${LIST_LANG} $(tput sgr0)"`
+           read -p "${STR_READ}" LANG_SELECT
+           if [ "${LIST_LANG}" = "${LIST_LANG#*$LANG_SELECT}" ]; then
+              echo "Incorrect value"
+           else
+              echo -e "LANG_SELECT=${LANG_SELECT}" > ~/.config/lang.conf
+              echo "OK"
+           fi
+     done
+  fi
+  source ~/.config/lang.conf
+  UP_LANG_SELECT=`echo "${LANG_SELECT^^}"`
+  LANG_UTF8=${LANG_SELECT}"_"${UP_LANG_SELECT}.UTF-8
+  if [ -z "${PATH_INST}" ]; then
+     loadkeys ${LANG_SELECT}
+     export LANG=${LANG_UTF8}
+     setfont cyr-sun16
+     clear
+  else
+     arch-chroot ${PATH_INST} loadkeys ${LANG_SELECT}
+     arch-chroot ${PATH_INST} setfont cyr-sun16
+     echo -e "LANG=${LANG_UTF8}" > ${PATH_INST}/etc/locale.conf
+     echo -e "KEYMAP=${LANG_SELECT}\nFONT=cyr-sun16\nFONT_MAP=" > ${PATH_INST}/etc/vconsole.conf
+     sed -i ${PATH_INST}/etc/locale.gen -e 's|#\(en_US.UTF-8 UTF-8\)|\1|'
+     sed -i ${PATH_INST}/etc/locale.gen -e 's|#\(uk_UA.UTF-8 UTF-8\)|\1|'
+     sed -i ${PATH_INST}/etc/locale.gen -e 's|#\(ru_RU.UTF-8 UTF-8\)|\1|'
+     arch-chroot ${PATH_INST} locale-gen
+  fi
+}
 
 #========================
 set_options(){
@@ -37,6 +75,19 @@ set_options(){
         esac
         shift
   done
+}
+
+#=======================================
+ping_server() {
+  show_message PING_SERVER $SNUG_SERVER
+  res=1
+  /bin/ping ${SNUG_SERVER} -c 3 > /dev/null 2>&1 && res=0
+  if [ ${res} -ne 0 ]; then
+     show_message NOT_ACCESS_SERVER $SNUG_SERVER
+     exit 1
+  else
+     show_message OK
+  fi
 }
 
 #=======================================
@@ -122,6 +173,9 @@ install_sevice(){
 
 #=======================================
 not_installed_pkg() {
+# Example: not_installed_pkg "1" "2"
+# 1 - list name pkg
+# 2 - path chroot
   local list_pkg inst_list path_chroot
 
   inst_list=""
@@ -224,15 +278,19 @@ install_video_driver(){
   local NVIDIA ATI INTEL VIDEO INSTALL_VIDEO
 
   if [ -f "${PO_DIR}/install-video.func" ]; then
-     . "${PO_DIR}/install-video.func"
+     source "${PO_DIR}/install-video.func"
   else
      show_message FILE_NOT_FOUND "${PO_DIR}/install-video.func"
      exit 1
   fi
-  installed_pkg "xorg-server" "/mnt"
-  if [ $? = 0 ]; then
-     return 0;
+  NOT_INSTALL_PKG=$(not_installed_pkg "xorg-server" "/mnt")
+  if [ -n "$NOT_INSTALL_PKG" ] ; then
+     installed_pkg "xorg-server" "/mnt"
+     if [ $? = 0 ]; then
+        return 1;
+     fi
   fi
+
   INSTALL_VIDEO="no"
   VIDEO=`lspci | grep -i --color vga`
 
@@ -259,6 +317,9 @@ install_video_driver(){
   fi
   if [ "${INSTALL_VIDEO}" == "no" ]; then
      install_video_vesa
+     if [ $? = 1 ]; then
+        INSTALL_VIDEO="yes"
+     fi
   fi
 }
 
@@ -479,66 +540,28 @@ add_users(){
 }
 
 #=======================================
-system_language() {
-  local UP_LANG_SELECT LANG_UTF8 STR_READ
-
-  PATH_INST=$1
-
-  if ! [ -f ~/.config/lang.conf  ]; then
-     while [ "${LIST_LANG}" = "${LIST_LANG#*$LANG_SELECT}" ] ; do
-           STR_READ=`echo "$(tput bold)$(tput setaf 2)Specify the required language: $(tput setaf 1) ${LIST_LANG} $(tput sgr0)"`
-           read -p "${STR_READ}" LANG_SELECT
-           if [ "${LIST_LANG}" = "${LIST_LANG#*$LANG_SELECT}" ]; then
-              echo "Incorrect value"
-           else
-              echo -e "LANG_SELECT=${LANG_SELECT}" > ~/.config/lang.conf
-              echo "OK"
-           fi
-     done
-  fi
-  source ~/.config/lang.conf
-  UP_LANG_SELECT=`echo "${LANG_SELECT^^}"`
-  LANG_UTF8=${LANG_SELECT}"_"${UP_LANG_SELECT}.UTF-8
-  if [ -z "${PATH_INST}" ]; then
-     loadkeys ${LANG_SELECT}
-     export LANG=${LANG_UTF8}
-     setfont cyr-sun16
-     clear
-  else
-     arch-chroot ${PATH_INST} loadkeys ${LANG_SELECT}
-     arch-chroot ${PATH_INST} setfont cyr-sun16
-     echo -e "LANG=${LANG_UTF8}" > ${PATH_INST}/etc/locale.conf
-     echo -e "KEYMAP=${LANG_SELECT}\nFONT=cyr-sun16\nFONT_MAP=" > ${PATH_INST}/etc/vconsole.conf
-     sed -i /mnt/etc/locale.gen -e 's|#\(en_US.UTF-8 UTF-8\)|\1|'
-     sed -i /mnt/etc/locale.gen -e 's|#\(uk_UA.UTF-8 UTF-8\)|\1|'
-     sed -i /mnt/etc/locale.gen -e 's|#\(ru_RU.UTF-8 UTF-8\)|\1|'
-     arch-chroot /mnt locale-gen
-  fi
-}
-
-#=======================================
 download_type(){
   local STR_N FILE_LISTS TMP_DOWN TYPE
 
   show_message LOADING_DATA_SERVER ${SNUG_SERVER}
-  TMP_DOWN="/tmp/install-types"
+  TMP_DOWN="/tmp/install/types"
   FILE_LISTS=$TMP_DOWN"/lists"
   rm -fr $TMP_DOWN
-  wget --quiet --tries=3 -c https://${SNUG_SERVER}/install-types/lists -P $TMP_DOWN
+  wget --quiet --tries=3 -c https://${SNUG_SERVER}/install/types/lists -P $TMP_DOWN
   if [ $? != 0 ]; then
-     show_message FAILED_LOAD_FILE https://${SNUG_SERVER}/install-types/lists
+     show_message FAILED_LOAD_FILE https://${SNUG_SERVER}/install/types/lists
      exit 1;
   fi
   while read line ; do
        let STR_N=$STR_N+1;
        TYPE=`sed -n ${STR_N}p $FILE_LISTS`;
-       wget --quiet --tries=3 -c https://${SNUG_SERVER}/install-types/$TYPE/lang/$LANG_SELECT -P $TMP_DOWN/$TYPE/lang
+       wget --quiet --tries=3 -c https://${SNUG_SERVER}/install/types/$TYPE/lang/$LANG_SELECT -P $TMP_DOWN/$TYPE/lang
        if [ $? != 0 ]; then
-          wget --quiet --tries=3 -c https://${SNUG_SERVER}/install-types/$TYPE/lang/en -P $TMP_DOWN/$TYPE/lang
+          wget --quiet --tries=3 -c https://${SNUG_SERVER}/install/types/$TYPE/lang/en -P $TMP_DOWN/$TYPE/lang
        fi
-       wget --quiet --tries=3 -c https://${SNUG_SERVER}/install-types/$TYPE/packages -P $TMP_DOWN/$TYPE
+       wget --quiet --tries=3 -c https://${SNUG_SERVER}/install/types/$TYPE/packages -P $TMP_DOWN/$TYPE
        if [ $? != 0 ]; then
-          show_message FAILED_LOAD_FILE https://${SNUG_SERVER}/install-types/$TYPE/packages
+          show_message FAILED_LOAD_FILE https://${SNUG_SERVER}/install/types/$TYPE/packages
        fi
   done < $FILE_LISTS
 }
@@ -549,7 +572,7 @@ select_type() {
 
   download_type
 
-  TMP_DOWN="/tmp/install-types"
+  TMP_DOWN="/tmp/snuglinux/install/types"
   FILE_LISTS=${TMP_DOWN}"/lists"
   if ! [ -f ${FILE_LISTS} ]; then
      show_message FILE_NOT_FOUND ${FILE_LISTS}
@@ -593,7 +616,7 @@ download_pkg(){
   local FILE_LISTS TMP_DOWN TYPE PKG_NAME
 
   PKG_NAME=$1
-  TMP_DOWN="/tmp/install-types"
+  TMP_DOWN="/tmp/install/types"
   FILE_LISTS=${TMP_DOWN}"/lists"
 
   TYPE=`sed -n ${SELECT_TYPE}p $FILE_LISTS`;
@@ -603,11 +626,17 @@ download_pkg(){
 #  if ! [ -d /mnt/$TMP_DOWN/$TYPE/pack ]; then
 #     mkdit -p /mnt/$TMP_DOWN/$TYPE/pack
 #  fi
-  wget --quiet --tries=3 -c https://${SNUG_SERVER}/install-types/${TYPE}/pack/${PKG_NAME} -P ${TMP_DOWN}/${TYPE}/pack
+  wget --quiet --tries=3 -c https://${SNUG_SERVER}/install/types/${TYPE}/pack/${PKG_NAME} -P ${TMP_DOWN}/${TYPE}/pack
   if [ $? = 0 ]; then
      if [ -f ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME} ]; then
         source ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME}
+        if [ $? = 0 ]; then
+           show_message FAILED_EXECUTE_COMMAND ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME}
+           show_message CONTINUE_PRESS_ANY_KEY
+           read
+        fi
      fi
+    read
   fi
 }
 
@@ -631,6 +660,9 @@ install_type() {
       install_pkg "${STR_PKG[0]}" "${STR_PKG[1]}" "${STR_PKG[2]}"
       if [ $? = 0 ]; then
          download_pkg "${STR_PKG[0]}"
+      else
+         show_message CONTINUE_PRESS_ANY_KEY
+         read
       fi
   done
   IFS=$IFS_OLD

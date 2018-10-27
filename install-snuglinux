@@ -9,21 +9,19 @@ PO_DIR=${INSTALL_PREFIX}/share/snuglinux
 TMP_DIR=/tmp/snuglinux
 
 #=======================================
-ping_server() {
-  show_message PING_SERVER $SNUG_SERVER
-  res=1
-  /bin/ping ${SNUG_SERVER} -c 3 > /dev/null 2>&1 && res=0
-  if [ ${res} -ne 0 ]; then
-     show_message NOT_ACCESS_SERVER $SNUG_SERVER
-     exit 1
-  else
-     show_message OK
-  fi
+download_updates_func(){
+   if ! [ -d "$TMP_DIR" ]; then
+      mkdir "$TMP_DIR"
+   fi
+   wget --quiet --tries=3 -c https://snuglinux.pp.ua/install/install-snuglinux.func     -P $TMP_DIR
+   wget --quiet --tries=3 -c https://snuglinux.pp.ua/install/install-partition.func     -P $TMP_DIR
+   wget --quiet --tries=3 -c https://snuglinux.pp.ua/install/install-video.func         -P $TMP_DIR
+   wget --quiet --tries=3 -c https://snuglinux.pp.ua/install/install-snuglinux.messages -P $TMP_DIR
+
+   if [ -f $TMP_DIR/install-snuglinux.func -a -f $TMP_DIR/install-partition.func -a -f $TMP_DIR/install-video.func -a -f $TMP_DIR/install-snuglinux.messages ]; then
+      PO_DIR=$TMP_DIR
+   fi
 }
-
-system_language
-
-
 
 if ! [ -f ${PO_DIR}/install-snuglinux.func ]; then
   case $lang in
@@ -33,9 +31,10 @@ if ! [ -f ${PO_DIR}/install-snuglinux.func ]; then
   esac
   exit 1
 else
-   . ${PO_DIR}/install-snuglinux.func
+   source ${PO_DIR}/install-snuglinux.func
 fi
 
+system_language
 
 set_options $*
 
@@ -49,13 +48,7 @@ if [ "$?" = 1 ]; then
    exit 1;
 fi
 
-if ! [ -d "$TMP_DIR" ]; then
-   mkdir "$TMP_DIR"
-fi
-exit
-wget --quiet --tries=3 -c https://github.com/snuglinux/install-snuglinux/master/install-snuglinux.func -P $TMP_DIR
-wget --quiet --tries=3 -c https://github.com/snuglinux/install-snuglinux/master/install-snuglinux.func -P $TMP_DIR
-
+download_updates_func
 
 pacman -Sy
 

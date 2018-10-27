@@ -688,7 +688,16 @@ uk) echo -e "${FC_2}1${FC_3} - nvidia (Остання версія драйве�
 esac;;
 
 ################
-2_NVIDIA_340XX)
+2_NVIDIA_390XX)
+################
+case $lang in
+ru) echo -e "${FC_2}2${FC_3} - nvidia-390xx (для карт GeForce 400 series и более новых [NVCx и новее]) ${FC_0}";;
+uk) echo -e "${FC_2}2${FC_3} - nvidia-390xx (для карт GeForce 400 series та новіших [NVCx і новіше]) ${FC_0}";;
+*)  echo -e "${FC_2}2${FC_3} - nvidia-390xx (for GeForce 400 series cards and newer [NVCx and newer]) ${FC_0}";;
+esac;;
+
+################
+3_NVIDIA_340XX)
 ################
 case $lang in
 ru) echo -e "${FC_2}2${FC_3} - nvidia-340xx (для карт GeForce 8000/9000 и 100-300 series [NV5x, NV8x, NV9x и NVAx] года производства 2006-2010) ${FC_0}";;
@@ -697,7 +706,7 @@ uk) echo -e "${FC_2}2${FC_3} - nvidia-340xx (для карт GeForce 8000/9000 �
 esac;;
 
 ################
-3_NVIDIA_304XX)
+4_NVIDIA_304XX)
 ################
 case $lang in
 ru) echo -e "${FC_2}2${FC_3} - nvidia-304xx (для карт GeForce 6000/7000 series [NV4x и NV6x] года производства 2004-2006) ${FC_0}";;
@@ -706,7 +715,7 @@ uk) echo -e "${FC_2}2${FC_3} - nvidia-304xx (для карт GeForce 6000/7000 s
 esac;;
 
 ################
-4_XF86_VIDEO_NOUVEAU)
+5_XF86_VIDEO_NOUVEAU)
 ################
 case $lang in
 ru) echo -e "${FC_2}4${FC_3} - xf86-video-nouveau (Драйвер с открытым исходным кодом 2D-ускорения для видео карт nVidia) ${FC_0}";;
@@ -766,6 +775,15 @@ case $lang in
 ru) echo -e "${FC_4}Произвольная точка монтирования раздела (${FC_2}i${FC_4} - пропустить, пример: ${FC_3}/home${FC_4}, ${FC_3}/var${FC_4}, ${FC_3}/boot${FC_4}): ${FC_0}";;
 uk) echo -e "${FC_4}Довільна точка монтування розділу (${FC_2}i${FC_4} - пропустити, приклад: ${FC_3}/home${FC_4}, ${FC_3}/var${FC_4}, ${FC_3}/boot${FC_4}): ${FC_0}";;
 *)  echo -e "${FC_4}Any partition mount point (${FC_2}i${FC_4} - skip, example: ${FC_3}/home${FC_4}, ${FC_3}/var${FC_4}, ${FC_3}/boot${FC_4}): ${FC_0}";;
+esac;;
+
+################
+CONTINUE_PRESS_ANY_KEY)
+################
+case $lang in
+ru) echo -e "${FC_4}Для продолжения нажмите любую клавишу${FC_0}";;
+uk) echo -e "${FC_4}Для продовження натисніть будь-яку клавішу${FC_0}";;
+*)  echo -e "${FC_4}To continue, press any key${FC_0}";;
 esac;;
 
 *)
