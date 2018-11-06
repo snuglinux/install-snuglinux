@@ -20,6 +20,7 @@ download_updates_func(){
 
    if [ -f $TMP_DIR/install-snuglinux.func -a -f $TMP_DIR/install-partition.func -a -f $TMP_DIR/install-video.func -a -f $TMP_DIR/install-snuglinux.messages ]; then
       PO_DIR=$TMP_DIR
+      source ${PO_DIR}/install-snuglinux.func
    fi
 }
 
