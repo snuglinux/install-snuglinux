@@ -162,9 +162,14 @@ install_sevice(){
         arch-chroot /mnt systemctl enable "${SERVICE}"
         if [ $? = 0 ]; then
            show_message DEMON_AUTOSTART ${SERVICE}
+        else
+           show_message CONTINUE_PRESS_ANY_KEY
+           read
+           return 1
         fi
      else
         show_message FILE_NOT_FOUND "/mnt/usr/lib/systemd/system/${SERVICE}"
+        read
         return 1
      fi
   fi
@@ -254,7 +259,7 @@ install_pkg() {
   fi
   if [ "${AMSURE}" = "y" ]; then
      PACMAN_CMD=`pacman_list "${INSTALL_PKG}"`
-     eval $PACMAN_CMD
+     eval ${PACMAN_CMD}
 #     arch-chroot /mnt pacman -S --noconfirm "${INSTALL_PKG}"
 #     arch-chroot /mnt pacman -S "${INSTALL_PKG}"
      if [ $? = 0 ]; then
@@ -264,6 +269,8 @@ install_pkg() {
      else
         show_message FAILED_INSTALL_PACKAGE "${INSTALL_PKG}"
         INSTALL=0
+        show_message CONTINUE_PRESS_ANY_KEY
+        read
      fi
   fi
   if [ $INSTALL = 0 ]; then
@@ -544,7 +551,7 @@ download_type(){
   local STR_N FILE_LISTS TMP_DOWN TYPE
 
   show_message LOADING_DATA_SERVER ${SNUG_SERVER}
-  TMP_DOWN="/tmp/install/types"
+  TMP_DOWN="/tmp/snuglinux/install/types"
   FILE_LISTS=$TMP_DOWN"/lists"
   rm -fr $TMP_DOWN
   wget --quiet --tries=3 -c https://${SNUG_SERVER}/install/types/lists -P $TMP_DOWN
@@ -616,7 +623,7 @@ download_pkg(){
   local FILE_LISTS TMP_DOWN TYPE PKG_NAME
 
   PKG_NAME=$1
-  TMP_DOWN="/tmp/install/types"
+  TMP_DOWN="/tmp/snuglinux/install/types"
   FILE_LISTS=${TMP_DOWN}"/lists"
 
   TYPE=`sed -n ${SELECT_TYPE}p $FILE_LISTS`;
@@ -630,13 +637,7 @@ download_pkg(){
   if [ $? = 0 ]; then
      if [ -f ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME} ]; then
         source ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME}
-        if [ $? = 0 ]; then
-           show_message FAILED_EXECUTE_COMMAND ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME}
-           show_message CONTINUE_PRESS_ANY_KEY
-           read
-        fi
      fi
-    read
   fi
 }
 
@@ -660,9 +661,6 @@ install_type() {
       install_pkg "${STR_PKG[0]}" "${STR_PKG[1]}" "${STR_PKG[2]}"
       if [ $? = 0 ]; then
          download_pkg "${STR_PKG[0]}"
-      else
-         show_message CONTINUE_PRESS_ANY_KEY
-         read
       fi
   done
   IFS=$IFS_OLD
