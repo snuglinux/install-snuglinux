@@ -19,6 +19,8 @@ else
    source "$CONFIG_FILE"
 fi
 
+YES_CHAR="$(pacman -Sddw bash --noconfirm | grep '? \[' | cut -d"[" -f2 | cut -d"/" -f1)"
+
 #=======================================
 system_language() {
   local UP_LANG_SELECT LANG_UTF8 STR_READ
@@ -223,7 +225,9 @@ pacman_list() {
   local LIST_PKG RESULT_STR
 
   LIST_PKG="$1"
-  RESULT_STR='/usr/bin/arch-chroot /mnt pacman -S --noconfirm'
+#  RESULT_STR='/usr/bin/arch-chroot /mnt pacman -S --noconfirm'
+  RESULT_STR='yes "$YES_CHAR" | /usr/bin/arch-chroot /mnt pacman -S --noconfirm --needed'
+
   for i in ${LIST_PKG[@]} ; do
         RESULT_STR="${RESULT_STR} ${i}"
   done
