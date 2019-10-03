@@ -51,8 +51,6 @@ fi
 
 download_updates_func
 
-pacman -Sy
-
 NOT_INSTALL_PKG=$(not_installed_pkg "arch-install-scripts wget sed")
 if [ -n "$NOT_INSTALL_PKG" ] ; then
    show_message PACKAGE_NOT_INSTALLED "$NOT_INSTALL_PKG"

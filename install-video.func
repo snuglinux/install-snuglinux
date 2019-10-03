@@ -23,6 +23,7 @@ check_amdgpu(){
   CHIPSET_NAME[16]="POLARIS10"
   CHIPSET_NAME[17]="POLARIS11"
   CHIPSET_NAME[18]="WANI"
+  CHIPSET_NAME[18]="RAVEN"
 
   for i in "${CHIPSET_NAME[@]}"; do
       echo "$VIDEO_CHIPSET" | grep "$i" > /dev/null
@@ -72,7 +73,7 @@ install_video_ati(){
      # yes
   elif [ "${AMSURE}" = "2" ]; then
      install_pkg "xf86-video-amdgpu mesa-vdpau lib32-mesa-vdpau lib32-mesa" "y"
-     sed -i /mnt/etc/mkinitcpio.conf -e 's|MODULES=""|MODULES="amdgpu"|g'
+     sed -i /mnt/etc/mkinitcpio.conf -e 's|MODULES=()|MODULES=(amdgpu)|g'
      arch-chroot /mnt mkinitcpio -p linux
      if ! [ -d /mnt/etc/X11/xorg.conf.d ]; then
         mkdir /mnt/etc/X11/xorg.conf.d

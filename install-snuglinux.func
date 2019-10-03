@@ -1,6 +1,6 @@
 #! /bin/bash
 
-#Loading message file
+# Loading message file
 if [ -f "${PO_DIR}/$BASE_NAME.messages" ]; then
    . "${PO_DIR}/$BASE_NAME.messages"
 else
@@ -19,6 +19,9 @@ else
    source "$CONFIG_FILE"
 fi
 
+pacman -Sy
+
+# To determine in pacman yes
 YES_CHAR="$(pacman -Sddw bash --noconfirm | grep '? \[' | cut -d"[" -f2 | cut -d"/" -f1)"
 
 #=======================================
@@ -225,11 +228,15 @@ pacman_list() {
   local LIST_PKG RESULT_STR
 
   LIST_PKG="$1"
+  OPTION="$2"
 #  RESULT_STR='/usr/bin/arch-chroot /mnt pacman -S --noconfirm'
-  RESULT_STR='yes "$YES_CHAR" | /usr/bin/arch-chroot /mnt pacman -S --noconfirm --needed'
-
+  if [ $OPTION == "1" ]; then
+     RESULT_STR='yes "$YES_CHAR" | /usr/bin/arch-chroot /mnt pacman -S --noconfirm --needed'
+  else
+     RESULT_STR='yes | /usr/bin/arch-chroot /mnt pacman -S --needed'
+  fi
   for i in ${LIST_PKG[@]} ; do
-        RESULT_STR="${RESULT_STR} ${i}"
+      RESULT_STR="${RESULT_STR} ${i}"
   done
   echo "${RESULT_STR}"
 }
@@ -262,8 +269,12 @@ install_pkg() {
      AMSURE="y"
   fi
   if [ "${AMSURE}" = "y" ]; then
-     PACMAN_CMD=`pacman_list "${INSTALL_PKG}"`
+     PACMAN_CMD=`pacman_list "${INSTALL_PKG}" "1"`
      eval ${PACMAN_CMD}
+     if ! [ $? = 0 ]; then
+        PACMAN_CMD=`pacman_list "${INSTALL_PKG}" "2"`
+        eval ${PACMAN_CMD}
+     fi
 #     arch-chroot /mnt pacman -S --noconfirm "${INSTALL_PKG}"
 #     arch-chroot /mnt pacman -S "${INSTALL_PKG}"
      if [ $? = 0 ]; then
@@ -374,8 +385,8 @@ install_network_manager(){
            install_pkg "networkmanager-vpnc" "y"
            install_pkg "networkmanager-openconnect" "y"
         fi
-#        install_pkg "bluez" "Поддержка Bluetooth bluez"
-#        install_pkg "modemmanager" "Сервис для управления модемами" "ModemManager"
+        install_pkg "bluez" "Поддержка Bluetooth bluez"
+        install_pkg "modemmanager" "Сервис для управления модемами" "ModemManager"
 #        install_pkg "openresolv" "resolv.conf управления конф. (resolvconf) пакет (openresolv)"
 #        install_pkg "ppp" "Реализует Point-to-Point протокол для удаленного доступа (ppp)"
        return 1
