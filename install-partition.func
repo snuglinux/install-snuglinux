@@ -1,28 +1,24 @@
 #! /bin/bash
 
 #=======================================
-install_grub(){
-  local STR_READ AMSURE OK
+find_part_label(){
+  local find_label=$1
+  lsblk -f --output NAME,LABEL,TYPE -p -n -P 2>&1 | while read line; do
+    eval $line
+    if [ "$TYPE" == "part" ]; then
+      if ! [ -z $LABEL ]; then
+        if [ "$LABEL" ==  "$find_label" ]; then
+           echo $NAME
+           return 1
+        fi
+      fi
+    fi
+  done
+  return 0
+}
 
-  install_pkg "grub" "y"
-  if [ "$?" != 0 ]; then
-     show_message PACKAGE_NOT_INSTALLED "grub"
-     exit 1
-  fi
-  #AMSUREGRUB=
-  #SIMV="12"
-  #while [ "$SIMV" = "${SIMV#*$AMSUREGRUB}" ] ; do
-  #      read -p "Установить: (1) grub-bios (2) grub-efi : " AMSUREGRUB
-  #done
-  #if [ "$AMSUREGRUB" = "1" ] ; then
-  #else
-  #   if [ "$REAL_ARCH" = "x86_64" ] ; then
-  #      arch-chroot /mnt pacman -S --noconfirm grub-efi-x86_64
-  #   else
-  #      arch-chroot /mnt pacman -S --noconfirm grub-efi-i386
-  #   fi
-  #fi
-  lsblk -d --output NAME,MODEL,SIZE,SERIAL | grep -v "rom\|loop\|airoot\|sr"
+#=======================================
+install_grub_bios(){
   AMSURE=""
   OK=0
   while [ "${OK}" = 0 ] ; do
@@ -35,14 +31,14 @@ install_grub(){
            OK=0
         else
            arch-chroot /mnt grub-install "${AMSURE}"
-           if [ "$?" != 0 ]; then
+           if [ $? != 0 ]; then
              show_message FAILED_EXECUTE_COMMAND "grub-install ${AMSURE}"
-             continue
+             return 1
            fi
            arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
-           if [ "$?" != 0 ]; then
+           if [ $? != 0 ]; then
              show_message FAILED_EXECUTE_COMMAND "grub-mkconfig -o /boot/grub/grub.cfg"
-             continue
+             return 1
            fi
            arch-chroot /mnt sed -i /boot/grub/grub.cfg -e 's|timeout=5|timeout=1|g'
            arch-chroot /mnt sed -i -e "s|Arch Linux|Snug Linux|g" /boot/grub/grub.cfg
@@ -53,136 +49,226 @@ install_grub(){
 }
 
 #=======================================
+install_grub_uefi(){
+  if ! [ -d "/mnt/boot/efi" ]; then
+     STR_READ=`show_message UEFI_DIRECTORY_DOES_NOT_EXIST /mnt/boot/efi`
+     return 1
+  fi
+  OK=0
+  while [ "${OK}" = 0 ] ; do
+     arch-chroot /mnt grub-install
+     if [ $? != 0 ]; then
+        show_message FAILED_EXECUTE_COMMAND "grub-install"
+        return 1
+     fi
+     arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+     if [ $? != 0 ]; then
+        show_message FAILED_EXECUTE_COMMAND "grub-mkconfig -o /boot/grub/grub.cfg"
+        return 1
+     fi
+     arch-chroot /mnt sed -i /boot/grub/grub.cfg -e 's|timeout=5|timeout=1|g'
+     arch-chroot /mnt sed -i -e "s|Arch Linux|Snug Linux|g" /boot/grub/grub.cfg
+     OK=1
+  done
+  return 0
+}
+
+#=======================================
+install_grub(){
+  local STR_READ AMSURE OK
+  install_pkg "grub efibootmgr" "y"
+  if [ $? != 0 ]; then
+     show_message PACKAGE_NOT_INSTALLED "grub"
+     exit 1
+  fi
+  if [ -d /sys/firmware/efi ]; then
+     GRUB_UEFI=1;
+  else
+     GRUB_UEFI=0;
+  fi
+
+  lsblk -d --output NAME,MODEL,SIZE,SERIAL | grep -v "rom\|loop\|airoot\|sr"
+  if [ $GRUB_UEFI = 0 ]; then
+     install_grub_bios
+  else
+     install_grub_uefi
+  fi
+  return 0
+}
+
+#=======================================
 umount_part() {
-  mount | grep "/mnt/home"  > /dev/null
-  if [ "$?" = 0 ]; then
-     umount "/mnt/home"
-  fi
-  mount | grep "/mnt/data"  > /dev/null
-  if [ "$?" = 0 ]; then
-     umount "/mnt/data"
-  fi
-  mount | grep "/mnt/proc"  > /dev/null
-  if [ "$?" = 0 ]; then
-     umount "/mnt/proc"
-  fi
-  mount | grep "/mnt/sys"  > /dev/null
-  if [ "$?" = 0 ]; then
-     umount "/mnt/sys"
-  fi
-  mount | grep "/mnt/run"  > /dev/null
-  if [ "$?" = 0 ]; then
-     umount "/mnt/run"
-  fi
-  mount | grep "/mnt/tmp"  > /dev/null
-  if [ "$?" = 0 ]; then
-     umount "/mnt/tmp"
-  fi
-  mount | grep "/mnt/dev/pts"  > /dev/null
-  if [ "$?" = 0 ]; then
-     umount "/mnt/dev/pts"
-  fi
-  mount | grep "/mnt/dev/shm"  > /dev/null
-  if [ "$?" = 0 ]; then
-     umount "/mnt/dev/shm"
-  fi
-  mount | grep "/mnt/dev"  > /dev/null
-  if [ "$?" = 0 ]; then
-     umount "/mnt/dev"
-  fi
-  mount | grep "/mnt/var"  > /dev/null
-  if [ "$?" = 0 ]; then
-     umount "/mnt/var"
-  fi
-  mount | grep "/mnt/boot"  > /dev/null
-  if [ "$?" = 0 ]; then
-     umount "/mnt/boot"
-  fi
   mount | grep "/mnt"  > /dev/null
-  if [ "$?" = 0 ]; then
-     umount "/mnt"
+  if [ $? = 0 ]; then
+     umount -R "/mnt"
   fi
   swapon | grep "${AMSURE}"  > /dev/null
-  if [ "$?" = 0 ]; then
+  if [ $? = 0 ]; then
      swapoff "${AMSURE}"
   fi
   mount | grep "/mnt"  > /dev/null
-  if [ "$?" != 0 ]; then
+  if [ $? != 0 ]; then
      return 1
   fi
   return 0
 }
 
 #=======================================
-mount_part() {
-  local AMSURE AMSUREFORMAT OK LABEL_PART STR_READ
+mount_efi(){
+  local YN DEV AMSURE_FORMAT LABEL_PART
 
   DEV=$1
-  if [ "${DEV}" == "" ] ; then
+  LABEL_PART=$2
+
+  YN="yn"
+  if ! [ -d "/mnt/boot" ]; then
+     mkdir "/mnt/boot"
+  fi
+  if ! [ -d "/mnt/boot/efi" ]; then
+     mkdir "/mnt/boot/efi"
+  fi
+  mount | grep "/mnt/boot/efi"  > /dev/null
+  if [ $? = 0 ]; then
+     umount "/mnt/boot/efi"
+  fi
+  while [ "yn" = "${YN#*$AMSURE_FORMAT}" ] ; do
+     STR_READ=`show_message FORMAT_PARTITION "${DEV}" "Fat32"`
+     read -p "${STR_READ}" AMSURE_FORMAT
+  done
+  if [ "${AMSURE_FORMAT}" = "y" ] ; then
+     mkfs.vfat -F32 -n "${LABEL_PART}" "${DEV}"
+     if [ $? != 0 ]; then
+        show_message UNABLE_FORMAT_PARTITION "${DEV}"
+        exit 1
+     fi
+  else
+     fatlabel "${DEV}" "${LABEL_PART}"
+     if [ $? != 0 ]; then
+        show_message FAILED_SET_SECTION_LABEL "${DEV}"
+        return 1
+     fi
+  fi
+  mount "${DEV}" "/mnt/boot/efi"
+  if [ $? != 0 ]; then
+     show_message FAILED_MOUNT_PARTITION "${DEV}"
+     exit 1
+  fi
+}
+
+#=======================================
+mount_swap(){
+  local DEV LABEL_PART
+
+  DEV=$1
+  LABEL_PART=$2
+  swapon | grep "${DEV}"  > /dev/null
+  if [ $? = 0 ]; then
+     swapoff "${DEV}"
+  fi
+  mkswap -L "${LABEL_PART}" "${DEV}"
+  swapon "${DEV}"
+}
+
+#=======================================
+mount_dev(){
+  local YN AMSURE AMSURE_FORMAT DEV PATCH_PART LABEL_PART
+
+  DEV=$1
+  LABEL_PART=$2
+  PATCH_PART=$3
+  if [ "${PATCH_PART:0:1}" == "/" ]; then
+     PATCH_PART=${PATCH_PART:1}
+  fi
+  YN="yn"
+  if ! [ -d "/mnt/${PATCH_PART}" ]; then
+     mkdir "/mnt/${PATCH_PART}"
+  fi
+  mount | grep "/mnt/${PATCH_PART}"  > /dev/null
+  if [ $? = 0 ]; then
+     umount "/mnt/${PATCH_PART}"
+  fi
+  while [ "yn" = "${YN#*$AMSURE_FORMAT}" ] ; do
+     STR_READ=`show_message FORMAT_PARTITION "${AMSURE}" "Ext4"`
+     read -p "${STR_READ}" AMSURE_FORMAT
+  done
+  if [ "${AMSURE_FORMAT}" = "y" ] ; then
+     mkfs.ext4 -F "${DEV}" -L "${LABEL_PART}"
+     if [ $? != 0 ]; then
+        show_message UNABLE_FORMAT_PARTITION "${DEV}"
+        exit 1
+     fi
+  else
+     e2label "${DEV}" "${LABEL_PART}"
+     if [ $? != 0 ]; then
+        show_message FAILED_SET_SECTION_LABEL "${DEV}"
+        return 1
+     fi
+  fi
+  mount "${DEV}" "/mnt/${PATCH_PART}"
+  if [ $? != 0 ]; then
+     show_message FAILED_MOUNT_PARTITION "${DEV}"
+     exit 1
+  fi
+}
+
+#=======================================
+mount_part() {
+  local YN AMSURE_DEV AMSURE_FIND_LABEL OK PATCH_PART LABEL_PART STR_READ
+
+  if [ -d /sys/firmware/efi ]; then
+     UEFI=1;
+   else
+     UEFI=0;
+  fi
+  PART=$1
+  PATCH_PART=${PART}
+  LABEL_PART=${PART}
+  if [ "${PATCH_PART}" == "" ] ; then
      show_message NO_PARTITION_MOUNTING
      exit 1
   fi
-  if [ "${DEV}" == "/" ]; then
-     DEV=""
-  fi
+  FIND_DEV_LABEL=$(find_part_label "${LABEL_PART}")
   YN="yn"
   OK=0
   lsblk -f --output MODEL,NAME,LABEL,SIZE,UUID,SERIAL | grep -v "rom\|loop\|airoot\|sr"
   while [ "${OK}" = 0 ] ; do
-        STR_READ=`show_message SPECIFY_PARTITION_MOUNT "$1"`
-        read -p "${STR_READ}" AMSURE
-        LAST_SYMBOL=`echo ${AMSURE:$((${#AMSURE}-1)):1}`
+        if [ -n "${FIND_DEV_LABEL}" ]; then
+           while [ "$YN" = "${YN#*$AMSURE_FIND_LABEL}" ] ; do
+              STR_READ=`show_message FOUND_DRIVE_PARTITION "${PART}" "${FIND_DEV_LABEL}" "${LABEL_PART}"`
+              read -p "${STR_READ}" AMSURE_FIND_LABEL
+           done
+        fi
+        if [ ${AMSURE_FIND_LABEL} == "y" ]; then
+           AMSURE_DEV=${FIND_DEV_LABEL}
+        else
+           STR_READ=`show_message SPECIFY_PARTITION_MOUNT "$1"`
+           read -p "${STR_READ}" AMSURE_DEV
+        fi
+        LAST_SYMBOL=`echo ${AMSURE_DEV:$((${#AMSURE_DEV}-1)):1}`
         if [[ "${LAST_SYMBOL}" != *[[:digit:]]* ]]; then
            show_message NOT_RIGHT_VALUE
-           continue
-        elif ! ls -l "${AMSURE}" | grep "${AMSURE}" > /dev/null ; then
            OK=0
+           continue
+        elif ! ls -l "${AMSURE_DEV}" | grep "${AMSURE_DEV}" > /dev/null ; then
+           OK=0
+           continue
         else
            STR_READ=`show_message SPECIFY_DISK_PARTITION_LABEL "$1"`
            read -p "${STR_READ}" LABEL_PART
            if [ "${LABEL_PART}" == "" ] ; then
               LABEL_PART="$1"
            fi
-           if [ "${DEV}" = "swap" ] ; then
-              swapon | grep "${AMSURE}"  > /dev/null
-              if [ "$?" = 0 ]; then
-                 swapoff "${AMSURE}"
-              fi
-              mkswap -L "${LABEL_PART}" "${AMSURE}"
-              swapon "${AMSURE}"
+           # swap
+           if [ "${PART}" = "swap" ] ; then
+              mount_swap "${AMSURE_DEV}" "${LABEL_PART}"
+           # efi
+           elif [ "${PART}" = "efi" ] ; then
+              mount_efi "${AMSURE_DEV}" "${LABEL_PART}"
            else
-              if ! [ -d "/mnt/$DEV" ]; then
-                 mkdir "/mnt/$DEV"
-              fi
-              mount | grep "/mnt/$DEV"  > /dev/null
-              if [ "$?" = 0 ]; then
-                 umount "/mnt/$DEV"
-              fi
-              while [ "yn" = "${YN#*$AMSUREFORMAT}" ] ; do
-                   STR_READ=`show_message FORMAT_PARTITION_EXT4 "${AMSURE}"`
-                   read -p "${STR_READ}" AMSUREFORMAT
-              done
-              if [ "$AMSUREFORMAT" = "y" ] ; then
-                 mkfs.ext4 -F "$AMSURE" -L "$LABEL_PART"
-                 if [ "$?" != 0 ]; then
-                    show_message UNABLE_FORMAT_PARTITION "$AMSURE"
-                    exit 1
-                 fi
-              else
-                 e2label "$AMSURE" "$LABEL_PART"
-                 if [ "$?" != 0 ]; then
-                    show_message FAILED_SET_SECTION_LABEL "$AMSURE"
-                    return 1
-                 fi
-              fi
-              mount "$AMSURE" "/mnt/$DEV"
-              if [ "$?" != 0 ]; then
-                 show_message FAILED_MOUNT_PARTITION "$AMSURE"
-                 exit 1
-              fi
-          fi
-          OK=1
-       fi
+              mount_dev "${AMSURE_DEV}" "${LABEL_PART}" "${PATCH_PART}"
+           fi
+           OK=1
+        fi
   done
 }
 
@@ -196,7 +282,7 @@ partition_drive() {
         read -p "${STR_READ}" AMSURE
   done
   umount_part
-  if [ "$?" = 0 ]; then
+  if [ $? = 0 ]; then
      show_message UNABLE_UNMOUNT_PARTITION "/mnt"
      exit
   fi
@@ -220,9 +306,9 @@ partition_drive() {
               continue
            fi
            cfdisk "${AMSURE}"
-           if [ "$?" = 0 ]; then
+           if [ $? = 0 ]; then
               partprobe "${AMSURE}"
-              if ! [ "$?" = 0 ]; then
+              if ! [ $? = 0 ]; then
                  show_message FAILED_NOTIFY_PARTITION_TABLE
                  exit 1
               fi
@@ -236,7 +322,7 @@ partition_drive() {
 install_ssd(){
   #Определение SSD
   hdparm -I /dev/sda | grep TRIM  > /dev/null
-  if [ "$?" = 0 ]; then
+  if [ $? = 0 ]; then
      read -p "Для устройства /dev/sda есть поддержка TRIM, использовать ее?" AMSURE
      echo "Для устройства /dev/sda есть поддержка TRIM"
   fi

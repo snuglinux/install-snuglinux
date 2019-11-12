@@ -107,6 +107,7 @@ preparation_disk(){
   fi
   partition_drive
   mount_part "/"
+  mount_part "efi"
   mount_part "swap"
   OK=0;
   while [ "$OK" = 0 ] ; do
@@ -432,6 +433,10 @@ edit_pacman_conf(){
 #=======================================
 generating_fstab(){
   show_message GENERATING_FSTAB
+  if [ -f /mnt/etc/fstab ]; then
+     rm /mnt/etc/fstab
+     #rename /mnt/etc/fstab /mnt/etc/fstab_old
+  fi
   genfstab -L -p /mnt >> /mnt/etc/fstab
   if [ $? != 0 ]; then
      show_message FAILED_EXECUTE_COMMAND "genfstab -L -p /mnt >> /mnt/etc/fstab"
@@ -443,9 +448,9 @@ generating_fstab(){
 creating_bootable_ram_disk(){
   show_message CREATING_BOOTABLE_RAM_DISK
 
-  arch-chroot /mnt mkinitcpio -p linux
+  arch-chroot /mnt mkinitcpio -p linux-lts
   if [ $? != 0 ]; then
-     show_message FAILED_EXECUTE_COMMAND "arch-chroot /mnt mkinitcpio -p linux"
+     show_message FAILED_EXECUTE_COMMAND "arch-chroot /mnt mkinitcpio -p linux-lts"
      exit 1
   fi
 }
