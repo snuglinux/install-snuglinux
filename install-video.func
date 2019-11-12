@@ -74,7 +74,7 @@ install_video_ati(){
   elif [ "${AMSURE}" = "2" ]; then
      install_pkg "xf86-video-amdgpu mesa-vdpau lib32-mesa-vdpau lib32-mesa" "y"
      sed -i /mnt/etc/mkinitcpio.conf -e 's|MODULES=()|MODULES=(amdgpu)|g'
-     arch-chroot /mnt mkinitcpio -p linux
+     arch-chroot /mnt mkinitcpio -p linux-lts
      if ! [ -d /mnt/etc/X11/xorg.conf.d ]; then
         mkdir /mnt/etc/X11/xorg.conf.d
      fi
@@ -185,7 +185,7 @@ install_video_intel(){
   elif [ "$AMSURE" = "1" ]; then
      install_pkg "xf86-video-intel" "y"
      sed -i /mnt/etc/mkinitcpio.conf -e 's|MODULES=""|MODULES="i915"|g'
-     arch-chroot /mnt mkinitcpio -p linux
+     arch-chroot /mnt mkinitcpio -p linux-lts
      return 1
      # yes
   fi
