@@ -74,7 +74,7 @@ install_video_ati(){
   elif [ "${AMSURE}" = "2" ]; then
      install_pkg "xf86-video-amdgpu mesa-vdpau lib32-mesa-vdpau lib32-mesa" "y"
      sed -i /mnt/etc/mkinitcpio.conf -e 's|MODULES=()|MODULES=(amdgpu)|g'
-     arch-chroot /mnt mkinitcpio -p linux-lts
+     arch-chroot /mnt mkinitcpio -p linux$LINUX_VER
      if ! [ -d /mnt/etc/X11/xorg.conf.d ]; then
         mkdir /mnt/etc/X11/xorg.conf.d
      fi
@@ -123,7 +123,7 @@ install_video_nvidia(){
     return 1
     # yes
   fi
-  install_pkg "nvidia"$PREFIXDRIVER" nvidia"$PREFIXDRIVER"-utils opencl-nvidia"$PREFIXDRIVER" libvdpau" "Установить драйвер NVIDIA" "" "y" "n"
+  install_pkg "nvidia"$PREFIXDRIVER"$LINUX_VER nvidia"$PREFIXDRIVER"-utils opencl-nvidia"$PREFIXDRIVER" libvdpau" "Установить драйвер NVIDIA" "" "y" "n"
   arch-chroot /mnt nvidia-xconfig
   return 1
   # yes
@@ -185,7 +185,7 @@ install_video_intel(){
   elif [ "$AMSURE" = "1" ]; then
      install_pkg "xf86-video-intel" "y"
      sed -i /mnt/etc/mkinitcpio.conf -e 's|MODULES=""|MODULES="i915"|g'
-     arch-chroot /mnt mkinitcpio -p linux-lts
+     arch-chroot /mnt mkinitcpio -p linux$LINUX_VER
      return 1
      # yes
   fi

@@ -54,6 +54,7 @@ install_grub_uefi(){
      STR_READ=`show_message UEFI_DIRECTORY_DOES_NOT_EXIST /mnt/boot/efi`
      return 1
   fi
+  install_pkg "grub efibootmgr" "y"
   OK=0
   while [ "${OK}" = 0 ] ; do
      arch-chroot /mnt grub-install
@@ -76,19 +77,12 @@ install_grub_uefi(){
 #=======================================
 install_grub(){
   local STR_READ AMSURE OK
-  install_pkg "grub efibootmgr" "y"
   if [ $? != 0 ]; then
      show_message PACKAGE_NOT_INSTALLED "grub"
      exit 1
   fi
-  if [ -d /sys/firmware/efi ]; then
-     GRUB_UEFI=1;
-  else
-     GRUB_UEFI=0;
-  fi
-
   lsblk -d --output NAME,MODEL,SIZE,SERIAL | grep -v "rom\|loop\|airoot\|sr"
-  if [ $GRUB_UEFI = 0 ]; then
+  if [ $UEFI = 0 ]; then
      install_grub_bios
   else
      install_grub_uefi
@@ -215,11 +209,6 @@ mount_dev(){
 mount_part() {
   local YN AMSURE_DEV AMSURE_FIND_LABEL OK PATCH_PART LABEL_PART STR_READ
 
-  if [ -d /sys/firmware/efi ]; then
-     UEFI=1;
-   else
-     UEFI=0;
-  fi
   PART=$1
   PATCH_PART=${PART}
   LABEL_PART=${PART}
@@ -231,14 +220,14 @@ mount_part() {
   YN="yn"
   OK=0
   lsblk -f --output MODEL,NAME,LABEL,SIZE,UUID,SERIAL | grep -v "rom\|loop\|airoot\|sr"
-  while [ "${OK}" = 0 ] ; do
+  while [ "${OK}" = 0 ]; do
         if [ -n "${FIND_DEV_LABEL}" ]; then
            while [ "$YN" = "${YN#*$AMSURE_FIND_LABEL}" ] ; do
               STR_READ=`show_message FOUND_DRIVE_PARTITION "${PART}" "${FIND_DEV_LABEL}" "${LABEL_PART}"`
               read -p "${STR_READ}" AMSURE_FIND_LABEL
            done
         fi
-        if [ ${AMSURE_FIND_LABEL} == "y" ]; then
+        if [ "${AMSURE_FIND_LABEL}" == "y" ]; then
            AMSURE_DEV=${FIND_DEV_LABEL}
         else
            STR_READ=`show_message SPECIFY_PARTITION_MOUNT "$1"`

@@ -710,27 +710,27 @@ esac;;
 3_NVIDIA_340XX)
 ################
 case $lang in
-ru) echo -e "${FC_2}2${FC_3} - nvidia-340xx (для карт GeForce 8000/9000 и 100-300 series [NV5x, NV8x, NV9x и NVAx] года производства 2006-2010) ${FC_0}" | tee -a $LOG_FILE;;
-uk) echo -e "${FC_2}2${FC_3} - nvidia-340xx (для карт GeForce 8000/9000 і 100-300 series [NV5x, NV8x, NV9x і NVAx] року виробництва 2006-2010) ${FC_0}" | tee -a $LOG_FILE;;
-*)  echo -e "${FC_2}2${FC_3} - nvidia-340xx (for GeForce 8000/9000 and 100-300 series cards [NV5x, NV8x, NV9x and NVAx] of the year of manufacture 2006-2010) ${FC_0}" | tee -a $LOG_FILE;;
+ru) echo -e "${FC_2}3${FC_3} - nvidia-340xx (для карт GeForce 8000/9000 и 100-300 series [NV5x, NV8x, NV9x и NVAx] года производства 2006-2010) ${FC_0}" | tee -a $LOG_FILE;;
+uk) echo -e "${FC_2}3${FC_3} - nvidia-340xx (для карт GeForce 8000/9000 і 100-300 series [NV5x, NV8x, NV9x і NVAx] року виробництва 2006-2010) ${FC_0}" | tee -a $LOG_FILE;;
+*)  echo -e "${FC_2}3${FC_3} - nvidia-340xx (for GeForce 8000/9000 and 100-300 series cards [NV5x, NV8x, NV9x and NVAx] of the year of manufacture 2006-2010) ${FC_0}" | tee -a $LOG_FILE;;
 esac;;
 
 ################
 4_NVIDIA_304XX)
 ################
 case $lang in
-ru) echo -e "${FC_2}2${FC_3} - nvidia-304xx (для карт GeForce 6000/7000 series [NV4x и NV6x] года производства 2004-2006) ${FC_0}" | tee -a $LOG_FILE;;
-uk) echo -e "${FC_2}2${FC_3} - nvidia-304xx (для карт GeForce 6000/7000 series [NV4x і NV6x] року виробництва 2004-2006) ${FC_0}" | tee -a $LOG_FILE;;
-*)  echo -e "${FC_2}2${FC_3} - nvidia-304xx (for GeForce 6000/7000 series [NV4x and NV6x] cards of the year 2004-2006) ${FC_0}" | tee -a $LOG_FILE;;
+ru) echo -e "${FC_2}4${FC_3} - nvidia-304xx (для карт GeForce 6000/7000 series [NV4x и NV6x] года производства 2004-2006) ${FC_0}" | tee -a $LOG_FILE;;
+uk) echo -e "${FC_2}4${FC_3} - nvidia-304xx (для карт GeForce 6000/7000 series [NV4x і NV6x] року виробництва 2004-2006) ${FC_0}" | tee -a $LOG_FILE;;
+*)  echo -e "${FC_2}4${FC_3} - nvidia-304xx (for GeForce 6000/7000 series [NV4x and NV6x] cards of the year 2004-2006) ${FC_0}" | tee -a $LOG_FILE;;
 esac;;
 
 ################
 5_XF86_VIDEO_NOUVEAU)
 ################
 case $lang in
-ru) echo -e "${FC_2}4${FC_3} - xf86-video-nouveau (Драйвер с открытым исходным кодом 2D-ускорения для видео карт nVidia) ${FC_0}" | tee -a $LOG_FILE;;
-uk) echo -e "${FC_2}4${FC_3} - xf86-video-nouveau (Драйвер з відкритим вихідним кодом 2D-прискорення для відео карт nVidia) ${FC_0}" | tee -a $LOG_FILE;;
-*)  echo -e "${FC_2}4${FC_3} - xf86-video-nouveau (Open Source 2D acceleration driver for nVidia cards) ${FC_0}" | tee -a $LOG_FILE;;
+ru) echo -e "${FC_2}5${FC_3} - xf86-video-nouveau (Драйвер с открытым исходным кодом 2D-ускорения для видео карт nVidia) ${FC_0}" | tee -a $LOG_FILE;;
+uk) echo -e "${FC_2}5${FC_3} - xf86-video-nouveau (Драйвер з відкритим вихідним кодом 2D-прискорення для відео карт nVidia) ${FC_0}" | tee -a $LOG_FILE;;
+*)  echo -e "${FC_2}5${FC_3} - xf86-video-nouveau (Open Source 2D acceleration driver for nVidia cards) ${FC_0}" | tee -a $LOG_FILE;;
 esac;;
 
 ################

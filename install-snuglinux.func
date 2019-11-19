@@ -105,9 +105,17 @@ preparation_disk(){
      show_message FILE_NOT_FOUND "${PO_DIR}/install-partition.func"
      exit 1
   fi
+  if [ -d /sys/firmware/efi ]; then
+     UEFI=1;
+  else
+     UEFI=0;
+  fi
+
   partition_drive
   mount_part "/"
-  mount_part "efi"
+  if [ $UEFI = 1 ]; then
+      mount_part "efi"
+  fi
   mount_part "swap"
   OK=0;
   while [ "$OK" = 0 ] ; do
@@ -448,9 +456,9 @@ generating_fstab(){
 creating_bootable_ram_disk(){
   show_message CREATING_BOOTABLE_RAM_DISK
 
-  arch-chroot /mnt mkinitcpio -p linux-lts
+  arch-chroot /mnt mkinitcpio -p linux$LINUX_VER
   if [ $? != 0 ]; then
-     show_message FAILED_EXECUTE_COMMAND "arch-chroot /mnt mkinitcpio -p linux-lts"
+     show_message FAILED_EXECUTE_COMMAND "arch-chroot /mnt mkinitcpio -p linux$LINUX_VER"
      exit 1
   fi
 }
