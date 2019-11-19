@@ -21,6 +21,7 @@ find_part_label(){
 install_grub_bios(){
   AMSURE=""
   OK=0
+  install_pkg "grub" "y"
   while [ "${OK}" = 0 ] ; do
         STR_READ=`show_message SPECIFY_PARTITION_INSTALL_GRUB`
         read -p "${STR_READ}" AMSURE
@@ -30,6 +31,7 @@ install_grub_bios(){
         if ! ls -l "${AMSURE}" | grep "${AMSURE}" > /dev/null ; then
            OK=0
         else
+           #grub-install --root-directory=/mnt "${AMSURE}"
            arch-chroot /mnt grub-install "${AMSURE}"
            if [ $? != 0 ]; then
              show_message FAILED_EXECUTE_COMMAND "grub-install ${AMSURE}"
