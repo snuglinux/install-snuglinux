@@ -124,6 +124,7 @@ install_video_nvidia(){
     # yes
   fi
   install_pkg "nvidia"$PREFIXDRIVER"$LINUX_VER nvidia"$PREFIXDRIVER"-utils opencl-nvidia"$PREFIXDRIVER" libvdpau" "Установить драйвер NVIDIA" "" "y" "n"
+  install_pkg "nvidia"$PREFIXDRIVER"$LINUX_VER-dkms"
   arch-chroot /mnt nvidia-xconfig
   return 1
   # yes
