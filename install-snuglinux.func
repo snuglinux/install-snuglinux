@@ -527,6 +527,25 @@ set_password_user() {
 }
 
 #=======================================
+change_username(){
+   local STR_READ STR_USER_NAME
+   USERNAME=$1
+   if [ "${USERNAME}" = "" ] ; then
+      return 1
+   fi
+   STR_READ=`show_message CHANGE_USERNAME`
+   read -p "${STR_READ}" STR_USER_NAME
+      if [ -n "${STR_USER_NAME}" ]; then
+          arch-chroot /mnt chfn -f "${STR_USER_NAME}" "${USERNAME}"
+          if [ $? != 0 ]; then
+             show_message FAILED_CHANGE_FULL_USERNAME
+             return 1
+          fi
+       fi
+   return 0
+}
+
+#=======================================
 add_user(){
   local STR_READ OK USERNAME
 
@@ -548,6 +567,7 @@ add_user(){
         echo -e '#!/bin/sh'"\n\nexec startxfce4" > "/mnt/home/${USERNAME}/.xinitrc"
      fi
   fi
+  change_username "${USERNAME}"
   set_password_user "${USERNAME}"
   return 0
 }
