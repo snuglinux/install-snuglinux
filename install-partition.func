@@ -272,6 +272,7 @@ partition_drive() {
         STR_READ=`show_message SPLIT_DISK_PARTITIONS`
         read -p "${STR_READ}" AMSURE
   done
+  lsblk -e7 -d
   umount_part
   if [ $? = 0 ]; then
      show_message UNABLE_UNMOUNT_PARTITION "/mnt"
@@ -289,9 +290,9 @@ partition_drive() {
            elif [ "${AMSURE}" = "" ]; then
               AMSURE="/dev/sda"
               echo "/dev/sda"
-           elif [[ "${LAST_SYMBOL}" = *[[:digit:]]* ]]; then
-              show_message NOT_RIGHT_VALUE
-              continue
+           #elif [[ "${LAST_SYMBOL}" = *[[:digit:]]* ]]; then
+           #  show_message NOT_RIGHT_VALUE
+           #  continue
            elif ! ls -l "${AMSURE}" >/dev/null 2>/dev/null ; then
               show_message NOT_RIGHT_VALUE
               continue

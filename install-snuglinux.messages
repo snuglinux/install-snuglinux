@@ -494,9 +494,9 @@ esac;;
 SPECIFY_PARTITION_MOUNT*)
 ################
 case $lang in
-ru) echo -e "${FC_4}Укажите раздел для монтирования ${FC_3}$2${FC_0} (${FC_2}i${FC_4} - пропустить) ${FC_3}/dev/sda*${FC_0}: " | tee -a $LOG_FILE;;
-uk) echo -e "${FC_4}Вкажіть розділ для монтування ${FC_3}$2${FC_0} (${FC_2}i${FC_4} - пропустити) ${FC_3}/dev/sda*${FC_0}: " | tee -a $LOG_FILE;;
-*)  echo -e "${FC_4}Specify the mount partition ${FC_3}$2${FC_0} (${FC_2}i${FC_4} - skip) ${FC_3}/dev/sda*${FC_0}: " | tee -a $LOG_FILE;;
+ru) echo -e "${FC_4}Укажите раздел для монтирования ${FC_3}$2${FC_0} (${FC_2}i${FC_4} - пропустить) ${FC_3}/dev/sda*, /dev/nvme0n1p*${FC_0}: " | tee -a $LOG_FILE;;
+uk) echo -e "${FC_4}Вкажіть розділ для монтування ${FC_3}$2${FC_0} (${FC_2}i${FC_4} - пропустити) ${FC_3}/dev/sda*, /dev/nvme0n1p*${FC_0}: " | tee -a $LOG_FILE;;
+*)  echo -e "${FC_4}Specify the mount partition ${FC_3}$2${FC_0} (${FC_2}i${FC_4} - skip) ${FC_3}/dev/sda*, /dev/nvme0n1p*${FC_0}: " | tee -a $LOG_FILE;;
 esac;;
 
 ################
