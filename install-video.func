@@ -24,6 +24,7 @@ check_amdgpu(){
   CHIPSET_NAME[17]="POLARIS11"
   CHIPSET_NAME[18]="WANI"
   CHIPSET_NAME[18]="RAVEN"
+  CHIPSET_NAME[18]="PICASSO"
 
   for i in "${CHIPSET_NAME[@]}"; do
       echo "$VIDEO_CHIPSET" | grep "$i" > /dev/null

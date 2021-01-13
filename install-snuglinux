@@ -8,22 +8,6 @@ CONFIG_FILE=/etc/install-snuglinux.conf
 PO_DIR=${INSTALL_PREFIX}/share/snuglinux
 TMP_DIR=/tmp/snuglinux
 
-#=======================================
-download_updates_func(){
-   if ! [ -d "$TMP_DIR" ]; then
-      mkdir "$TMP_DIR"
-   fi
-   wget --quiet --tries=3 -c https://snuglinux.pp.ua/install/install-snuglinux.func     -P $TMP_DIR
-   wget --quiet --tries=3 -c https://snuglinux.pp.ua/install/install-partition.func     -P $TMP_DIR
-   wget --quiet --tries=3 -c https://snuglinux.pp.ua/install/install-video.func         -P $TMP_DIR
-   wget --quiet --tries=3 -c https://snuglinux.pp.ua/install/install-snuglinux.messages -P $TMP_DIR
-
-   if [ -f $TMP_DIR/install-snuglinux.func -a -f $TMP_DIR/install-partition.func -a -f $TMP_DIR/install-video.func -a -f $TMP_DIR/install-snuglinux.messages ]; then
-      PO_DIR=$TMP_DIR
-      source ${PO_DIR}/install-snuglinux.func
-   fi
-}
-
 if ! [ -f ${PO_DIR}/install-snuglinux.func ]; then
   case $lang in
        ru) echo -e "\e[31mОшибка:\e[0m не найден файл install-snuglinux.func в '${PO_DIR}'!!!";;
