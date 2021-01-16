@@ -3,10 +3,12 @@
 CURRENT_VERSION=0.0.0
 INSTALL_PREFIX=/usr
 BASE_NAME=`basename "$0"`
-REAL_ARCH=$(uname -m)
+INSTALL_ARCH=$(uname -m)
 CONFIG_FILE=/etc/install-snuglinux.conf
 PO_DIR=${INSTALL_PREFIX}/share/snuglinux
+DIR_CHROOT=/mnt
 TMP_DIR=/tmp/snuglinux
+
 
 if ! [ -f ${PO_DIR}/install-snuglinux.func ]; then
   case $lang in
@@ -33,51 +35,46 @@ if [ "$?" = 1 ]; then
    exit 1;
 fi
 
-download_updates_func
+edit_pacman_conf;
 
-NOT_INSTALL_PKG=$(not_installed_pkg "arch-install-scripts wget sed")
-if [ -n "$NOT_INSTALL_PKG" ] ; then
-   show_message PACKAGE_NOT_INSTALLED "$NOT_INSTALL_PKG"
-   exit 1;
-fi
+download_updates_func;
 
-select_type
+checking_installed_packages;
 
-preparation_disk
+select_type;
 
-edit_pacman_conf "/etc/pacman.conf"
+preparation_disk;
 
-show_message INSTALLING_BASIC_PACKAGES
-pacstrap /mnt base
-if [ "$?" != 0 ]; then
-   show_message FAILED_INSTALL_PACKAGE "base"
-   exit 1;
-fi
+install_basic_packages;
 
-system_language "/mnt"
+fix_system_chroot;
 
-edit_pacman_conf "/mnt/etc/pacman.conf"
+install_type;
 
-install_type
+install_video_driver;
 
-install_video_driver
+install_network_manager;
 
-install_network_manager
+generating_fstab;
 
-generating_fstab
+creating_bootable_ram_disk;
 
-creating_bootable_ram_disk
+install_bootloader;
 
-install_grub
+enter_localtime;
 
-enter_localtime
+enter_hostname;
 
-enter_hostname
+set_password_user "root";
 
-set_password_user "root"
+add_users;
 
-add_users
+clean_install_files;
 
-show_message PRESS_ANY_KEY_TO_REBOOT
+sync
+
+umount_part
+
+show_message PRESS_ANY_KEY_TO_REBOOT;
 read
 reboot

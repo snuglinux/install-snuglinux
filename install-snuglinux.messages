@@ -1,4 +1,6 @@
-lang=`echo $LANG | cut -b 1,2`
+#! /bin/bash
+
+lang=`echo $LANG | cut -b 1,2`;
 
 show_message() {
 
@@ -14,7 +16,9 @@ install-snuglinux - скрипт поможет Вам установить и �
 
 Используются следующие опции командной строки:
 				
- -v --version : Версия скрипта.
+ -v : Версия скрипта.
+				
+ -a : Установка версии для ARM устройства.
 				
  -h --help: Показать справку и выйти.
 				
@@ -29,7 +33,9 @@ install-snuglinux - скрипт допоможе встановити та на
 
 Використовуються наступні опції командного рядка:
 				
- -v --version : Версія скрипта.
+ -v : Версія скрипта.
+				
+ -a : Установка версії для ARM пристрої.
 				
  -h --help : Показати довідку і вийти.
 				
@@ -37,6 +43,7 @@ install-snuglinux - скрипт допоможе встановити та на
 
 EOFUSAGE
 ;;
+#'
 
 *)
 cat << EOFUSAGE
@@ -44,7 +51,9 @@ install-snuglinux - the script helps you to install and configure the distro to 
 
 Use the following command line options:
 				
- -v --version : Version of the script.
+ -v : Version of the script.
+				
+ -a : Installing the version for ARM.
 				
  -h --help : Show help and exit.
 				
@@ -75,6 +84,19 @@ uk) echo -e "${FC_2}Помилка:${FC_0} Файл ${FC_3}$2${FC_0} не зна
 esac
 ;;
 
+################
+DELETES_DISK_PARTITION_TABLE*)#######################################################
+################
+case $lang in
+ru) echo -e "${FC_2}Внимание: ${FC_3}Операция необратима !!!${FC_0}
+${FC_2}Вы желаете удалить таблицу разделов диска «${FC_3}$2${FC_2}»? ${FC_3}(y/n)${FC_4}" | tee -a $LOG_FILE;;
+uk) echo -e "${FC_2}Увага: ${FC_3}Операція незворотна !!!${FC_0}
+${FC_2}Ви бажаєте видаляти таблицю розділів диска «${FC_3}$2${FC_2}»? ${FC_3}(y/n)${FC_4}" | tee -a $LOG_FILE;;
+*)  echo -e "${FC_2}Warning: ${FC_3}The operation is irreversible !!!${FC_0}
+${FC_2}Do you want to delete the disk partition table «${FC_3}$2${FC_2}»? ${FC_3}(y/n)${FC_4}" | tee -a $LOG_FILE;;
+esac
+;;
+
 ###############
 UNKNOWN_ARG)##########################################################
 ###############
@@ -96,7 +118,7 @@ esac
 ;;
 
 ###########
-NO_ARCHIVE)##############################################################
+NO_ARCHIVE*)##############################################################
 ###########
 case $lang in
 ru) echo -e "${FC_3}$2${FC_0} не является архивом" | tee -a $LOG_FILE;;
@@ -156,12 +178,42 @@ esac
 ;;
 
 ##########
+RUN_COMMAND_AGAIN*)###################################################
+############
+case $lang in
+ru) echo -e "Выполнить команду ${FC_3}$2${FC_0} еще раз? ${FC_3}(y/n)${FC_4}: ${FC_0}" | tee -a $LOG_FILE;;
+uk) echo -e "Виконати команду ${FC_3}$2${FC_0} ще раз? ${FC_3}(y/n)${FC_4}: ${FC_0}" | tee -a $LOG_FILE;;
+*)  echo -e "Run the command ${FC_3}$2${FC_0} again ? ${FC_3}(y/n)${FC_4}: ${FC_0}" | tee -a $LOG_FILE;;
+esac
+;;
+
+##########
+DELETE_CORRUPTED_FILE*)###################################################
+############
+case $lang in
+ru) echo -e "Удалить поврежденный файл ${FC_3}$2${FC_0}? ${FC_3}(y/n)${FC_4}: ${FC_0}" | tee -a $LOG_FILE;;
+uk) echo -e "Видалити пошкоджений файл ${FC_3}$2${FC_0}? ${FC_3}(y/n)${FC_4}: ${FC_0}" | tee -a $LOG_FILE;;
+*)  echo -e "Delete corrupted file ${FC_3}$2${FC_0}? ${FC_3}(y/n)${FC_4}: ${FC_0}" | tee -a $LOG_FILE;;
+esac
+;;
+
+##########
 FAILED_TO_CREATE_DIR*)###################################################
 ############
 case $lang in
 ru) echo -e "${FC_2}Ошибка:${FC_0} Не удалось создать каталог ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
 uk) echo -e "${FC_2}Помилка:${FC_0} Не вдалося створити каталог ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
 *)  echo -e "${FC_2}ERROR:${FC_0} Failed to create directory ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
+esac
+;;
+
+##########
+ARCHIVE_UNZIPPING_ERROR*)###################################################
+############
+case $lang in
+ru) echo -e "${FC_2}Ошибка:${FC_0} Ошибка разархивирования архива ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
+uk) echo -e "${FC_2}Помилка:${FC_0} Помилка розархівування архіву ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
+*)  echo -e "${FC_2}ERROR:${FC_0} Archive unzipping error ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
 esac
 ;;
 
@@ -206,6 +258,16 @@ esac
 ;;
 
 ################
+FAILED_COPY_FILE*)
+################
+case $lang in
+ru) echo -e "${FC_2}Ошибка:${FC_0} Не удалось скопировать файл ${FC_2}$2${FC_0}" | tee -a $LOG_FILE;;
+uk) echo -e "${FC_2}Помилка:${FC_0} Не вдалось скопірувати файл ${FC_2}$2${FC_0}" | tee -a $LOG_FILE;;
+*)  echo -e "${FC_2}ERROR:${FC_0} Failed to copy file ${FC_2}$2${FC_0}" | tee -a $LOG_FILE;;
+esac
+;;
+
+################
 FAILED_UPDATE)
 ################
 case $lang in
@@ -216,12 +278,42 @@ esac
 ;;
 
 ################
+DOWNLOAD_ROOTFS)
+################
+case $lang in
+ru) echo -e "${FC_3}Загрузка файла с rootfs${FC_0}" | tee -a $LOG_FILE;;
+uk) echo -e "${FC_3}Завантаження файлу з rootfs${FC_0}" | tee -a $LOG_FILE;;
+*)  echo -e "${FC_3}Download a file from rootfs${FC_0}" | tee -a $LOG_FILE;;
+esac
+;;
+
+################
+UNZIP_ROOTFS)
+################
+case $lang in
+ru) echo -e "${FC_3}Распаковка архива с rootfs${FC_0}" | tee -a $LOG_FILE;;
+uk) echo -e "${FC_3}Розпакування архіву з rootfs${FC_0}" | tee -a $LOG_FILE;;
+*)  echo -e "${FC_3}Unpacking an archive with rootfs${FC_0}" | tee -a $LOG_FILE;;
+esac
+;;
+
+################
 PING_SERVER*)
 ################
 case $lang in
 ru) echo -e "Проверка доступности сервера ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
 uk) echo -e "Перевірка доступності сервера ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
 *)  echo -e "Checking access to the server ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
+esac
+;;
+
+################
+SUPPORT_TRIM*)
+################
+case $lang in
+ru) echo -e "Для устройства ${FC_3}$2${FC_0} есть поддержка TRIM" | tee -a $LOG_FILE;;
+uk) echo -e "Для пристрою ${FC_3}$2${FC_0} є підтримка TRIM" | tee -a $LOG_FILE;;
+*)  echo -e "There is TRIM support for the ${FC_3}$2${FC_0} device" | tee -a $LOG_FILE;;
 esac
 ;;
 
@@ -266,12 +358,12 @@ esac
 ;;
 
 ################
-SPECIFY_PARTITION_INSTALL_GRUB)
+SPECIFY_PARTITION_INSTALL*)
 ################
 case $lang in
-ru) echo -e "${FC_4}Укажите раздел для установки grub (Enter по умолчанию ${FC_3}/dev/sda${FC_0}): " | tee -a $LOG_FILE;;
-uk) echo -e "${FC_4}Вкажіть розділ для установки grub (Enter за замовчуванням ${FC_3}/dev/sda${FC_0}): " | tee -a $LOG_FILE;;
-*)  echo -e "${FC_4}Specify the partition for installing grub (Enter by default ${FC_3}/dev/sda${FC_0}): " | tee -a $LOG_FILE;;
+ru) echo -e "${FC_4}Укажите раздел для установки ${FC_4}$2${FC_0} (Enter по умолчанию ${FC_3}$3${FC_0}): " | tee -a $LOG_FILE;;
+uk) echo -e "${FC_4}Вкажіть розділ для установки ${FC_4}$2${FC_0} (Enter за замовчуванням ${FC_3}$3${FC_0}): " | tee -a $LOG_FILE;;
+*)  echo -e "${FC_4}Specify the partition for installing ${FC_4}$2${FC_0} (Enter by default ${FC_3}$3${FC_0}): " | tee -a $LOG_FILE;;
 esac
 ;;
 
@@ -282,6 +374,16 @@ case $lang in
 ru) echo -e "${FC_2}Ошибка:${FC_0} Каталог ${FC_4}$2${FC_0} для установки UEFI не существует!" | tee -a $LOG_FILE;;
 uk) echo -e "${FC_2}Помилка:${FC_0} Каталог ${FC_4}$2${FC_0} для установки UEFI не існує!" | tee -a $LOG_FILE;;
 *)  echo -e "${FC_2}ERROR:${FC_0} The directory ${FC_4}$2${FC_0} for installing UEFI does not exist!" | tee -a $LOG_FILE;;
+esac
+;;
+
+################
+FAILED_CHECK_MD5SUM_FILE*)
+################
+case $lang in
+ru) echo -e "${FC_2}Ошибка:${FC_0} Неудачная проверка md5sum файла ${FC_4}$2${FC_0}!" | tee -a $LOG_FILE;;
+uk) echo -e "${FC_2}Помилка:${FC_0} Невдала перевірка md5sum файлу ${FC_4}$2${FC_0}!" | tee -a $LOG_FILE;;
+*)  echo -e "${FC_2}ERROR:${FC_0} Failed check of md5sum file ${FC_4}$2${FC_0}!" | tee -a $LOG_FILE;;
 esac
 ;;
 
@@ -325,6 +427,16 @@ case $lang in
 ru) echo -e "${FC_2}Ошибка:${FC_0} Не удалось загрузить файл ${FC_3}$2${FC_0}!" | tee -a $LOG_FILE;;
 uk) echo -e "${FC_2}Помилка:${FC_0} Не вдалося завантажити файл ${FC_3}$2${FC_0}!" | tee -a $LOG_FILE;;
 *)  echo -e "${FC_2}ERROR:${FC_0} Could not load file ${FC_3}$2${FC_0}!" | tee -a $LOG_FILE;;
+esac
+;;
+
+################
+FAILED_DELETE_FILE*)
+################
+case $lang in
+ru) echo -e "${FC_2}Ошибка:${FC_0} Не удалось удалить файл ${FC_3}$2${FC_0}!" | tee -a $LOG_FILE;;
+uk) echo -e "${FC_2}Помилка:${FC_0} Не вдалося видалити файл ${FC_3}$2${FC_0}!" | tee -a $LOG_FILE;;
+*)  echo -e "${FC_2}ERROR:${FC_0} Failed to delete file ${FC_3}$2${FC_0}!" | tee -a $LOG_FILE;;
 esac
 ;;
 
@@ -414,8 +526,8 @@ FAILED_NOTIFY_PARTITION_TABLE)
 ################
 case $lang in
 ru) echo -e "${FC_2}Ошибка:${FC_0} Не удалось информировать изменения таблицы разделов!" | tee -a $LOG_FILE;;
-uk) echo -e "${FC_2}Помилка:{FC_0} Не вдалося інформувати зміни таблиць розділів!" | tee -a $LOG_FILE;;
-*)  echo -e "${FC_2}ERROR:{FC_0} Failed to notify changes to the partition table!" | tee -a $LOG_FILE;;
+uk) echo -e "${FC_2}Помилка:${FC_0} Не вдалося інформувати зміни таблиць розділів!" | tee -a $LOG_FILE;;
+*)  echo -e "${FC_2}ERROR:${FC_0} Failed to notify changes to the partition table!" | tee -a $LOG_FILE;;
 esac;;
 
 ################
@@ -494,9 +606,9 @@ esac;;
 SPECIFY_PARTITION_MOUNT*)
 ################
 case $lang in
-ru) echo -e "${FC_4}Укажите раздел для монтирования ${FC_3}$2${FC_0} (${FC_2}i${FC_4} - пропустить) ${FC_3}/dev/sda*, /dev/nvme0n1p*${FC_0}: " | tee -a $LOG_FILE;;
-uk) echo -e "${FC_4}Вкажіть розділ для монтування ${FC_3}$2${FC_0} (${FC_2}i${FC_4} - пропустити) ${FC_3}/dev/sda*, /dev/nvme0n1p*${FC_0}: " | tee -a $LOG_FILE;;
-*)  echo -e "${FC_4}Specify the mount partition ${FC_3}$2${FC_0} (${FC_2}i${FC_4} - skip) ${FC_3}/dev/sda*, /dev/nvme0n1p*${FC_0}: " | tee -a $LOG_FILE;;
+ru) echo -e "${FC_4}Укажите раздел для монтирования ${FC_3}$2${FC_0} (${FC_2}i${FC_4} - пропустить) ${FC_3}/dev/sda*${FC_0}: " | tee -a $LOG_FILE;;
+uk) echo -e "${FC_4}Вкажіть розділ для монтування ${FC_3}$2${FC_0} (${FC_2}i${FC_4} - пропустити) ${FC_3}/dev/sda*${FC_0}: " | tee -a $LOG_FILE;;
+*)  echo -e "${FC_4}Specify the mount partition ${FC_3}$2${FC_0} (${FC_2}i${FC_4} - skip) ${FC_3}/dev/sda*${FC_0}: " | tee -a $LOG_FILE;;
 esac;;
 
 ################
@@ -524,6 +636,15 @@ case $lang in
 ru) echo -e "${FC_4}Установка базовых пакетов${FC_0}" | tee -a $LOG_FILE;;
 uk) echo -e "${FC_4}Установка базових пакетів${FC_0}" | tee -a $LOG_FILE;;
 *)  echo -e "${FC_4}Installing basic packages${FC_0}" | tee -a $LOG_FILE;;
+esac;;
+
+################
+INITIALIZE_PACMAN_KEY)
+################
+case $lang in
+ru) echo -e "${FC_4}Инициализация ключей pacman${FC_0}" | tee -a $LOG_FILE;;
+uk) echo -e "${FC_4}Ініціалізація ключей pacman${FC_0}" | tee -a $LOG_FILE;;
+*)  echo -e "${FC_4}Initialize pacman keys${FC_0}" | tee -a $LOG_FILE;;
 esac;;
 
 ################
@@ -803,6 +924,15 @@ case $lang in
 ru) echo -e "${FC_4}Для продолжения нажмите любую клавишу${FC_0}" | tee -a $LOG_FILE;;
 uk) echo -e "${FC_4}Для продовження натисніть будь-яку клавішу${FC_0}" | tee -a $LOG_FILE;;
 *)  echo -e "${FC_4}To continue, press any key${FC_0}" | tee -a $LOG_FILE;;
+esac;;
+
+################
+INSTALL_VERSION_ARM)
+################
+case $lang in
+ru) echo -e "${FC_4}Установка версии для ${FC_3}ARM${FC_4} устройства${FC_0}" | tee -a $LOG_FILE;;
+uk) echo -e "${FC_4}Установка версії для ${FC_3}ARM${FC_4} пристрою${FC_0}" | tee -a $LOG_FILE;;
+*)  echo -e "${FC_4}Installing the version for ${FC_3}ARM${FC_0}" | tee -a $LOG_FILE;;
 esac;;
 
 ################

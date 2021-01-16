@@ -2,6 +2,9 @@
 
 #=======================================
 check_amdgpu(){
+
+  download_file_list "amdgpu";
+
   VIDEO_CHIPSET=`lspci | grep -i --color vga`
   VIDEO_CHIPSET=`echo $VIDEO_CHIPSET | tr a-z A-Z`
 
@@ -24,7 +27,6 @@ check_amdgpu(){
   CHIPSET_NAME[17]="POLARIS11"
   CHIPSET_NAME[18]="WANI"
   CHIPSET_NAME[18]="RAVEN"
-  CHIPSET_NAME[18]="PICASSO"
 
   for i in "${CHIPSET_NAME[@]}"; do
       echo "$VIDEO_CHIPSET" | grep "$i" > /dev/null
@@ -74,12 +76,12 @@ install_video_ati(){
      # yes
   elif [ "${AMSURE}" = "2" ]; then
      install_pkg "xf86-video-amdgpu mesa-vdpau lib32-mesa-vdpau lib32-mesa" "y"
-     sed -i /mnt/etc/mkinitcpio.conf -e 's|MODULES=()|MODULES=(amdgpu)|g'
-     arch-chroot /mnt mkinitcpio -p linux$LINUX_VER
-     if ! [ -d /mnt/etc/X11/xorg.conf.d ]; then
-        mkdir /mnt/etc/X11/xorg.conf.d
+     sed -i $DIR_CHROOT/etc/mkinitcpio.conf -e 's|MODULES=()|MODULES=(amdgpu)|g'
+     arch-chroot $DIR_CHROOT mkinitcpio -p linux$LINUX_VER
+     if ! [ -d $DIR_CHROOT/etc/X11/xorg.conf.d ]; then
+        mkdir $DIR_CHROOT/etc/X11/xorg.conf.d
      fi
-     cp /mnt/usr/share/X11/xorg.conf.d/10-amdgpu.conf /mnt/etc/X11/xorg.conf.d/10-amdgpu.conf
+     cp $DIR_CHROOT/usr/share/X11/xorg.conf.d/10-amdgpu.conf $DIR_CHROOT/etc/X11/xorg.conf.d/10-amdgpu.conf
      return 1
      # yes
   fi
@@ -126,7 +128,7 @@ install_video_nvidia(){
   fi
   install_pkg "nvidia"$PREFIXDRIVER"$LINUX_VER nvidia"$PREFIXDRIVER"-utils opencl-nvidia"$PREFIXDRIVER" libvdpau" "Установить драйвер NVIDIA" "" "y" "n"
   install_pkg "nvidia"$PREFIXDRIVER"$LINUX_VER-dkms"
-  arch-chroot /mnt nvidia-xconfig
+  arch-chroot $DIR_CHROOT nvidia-xconfig
   return 1
   # yes
 }
@@ -186,9 +188,57 @@ install_video_intel(){
      # no
   elif [ "$AMSURE" = "1" ]; then
      install_pkg "xf86-video-intel" "y"
-     sed -i /mnt/etc/mkinitcpio.conf -e 's|MODULES=""|MODULES="i915"|g'
-     arch-chroot /mnt mkinitcpio -p linux$LINUX_VER
+     sed -i $DIR_CHROOT/etc/mkinitcpio.conf -e 's|MODULES=""|MODULES="i915"|g'
+     arch-chroot $DIR_CHROOT mkinitcpio -p linux$LINUX_VER
      return 1
      # yes
+  fi
+}
+
+#=======================================
+install_video_driver(){
+  local NVIDIA ATI INTEL VIDEO INSTALL_VIDEO
+  if [ -f "${PO_DIR}/install-video.func" ]; then
+     source "${PO_DIR}/install-video.func"
+  else
+     show_message FILE_NOT_FOUND "${PO_DIR}/install-video.func"
+     exit 1
+  fi
+  NOT_INSTALL_PKG=$(not_installed_pkg "xorg-server" "$DIR_CHROOT")
+  if [ -n "$NOT_INSTALL_PKG" ] ; then
+     installed_pkg "xorg-server" "$DIR_CHROOT"
+     if [ $? = 0 ]; then
+        return 1;
+     fi
+  fi
+  INSTALL_VIDEO="no"
+  VIDEO=`lspci | grep -i --color vga`
+
+  NVIDIA=`echo $VIDEO | grep "NVIDIA"`
+  if [ "${NVIDIA}" ]; then
+     install_video_nvidia
+     if [ $? = 1 ]; then
+        INSTALL_VIDEO="yes"
+     fi
+  fi
+  ATI=`echo ${VIDEO} | grep "Radeon"`
+  if [ "$ATI" ]; then
+     install_video_ati
+     if [ $? = 1 ]; then
+        INSTALL_VIDEO="yes"
+     fi
+  fi
+  INTEL=`echo ${VIDEO} | grep "Intel"`
+  if [ "${INTEL}" ]; then
+     install_video_intel
+     if [ $? = 1 ]; then
+        INSTALL_VIDEO="yes"
+     fi
+  fi
+  if [ "${INSTALL_VIDEO}" == "no" ]; then
+     install_video_vesa
+     if [ $? = 1 ]; then
+        INSTALL_VIDEO="yes"
+     fi
   fi
 }

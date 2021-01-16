@@ -1,5 +1,7 @@
 #! /bin/bash
 
+YN="yn"
+
 # Loading message file
 if [ -f "${PO_DIR}/$BASE_NAME.messages" ]; then
    . "${PO_DIR}/$BASE_NAME.messages"
@@ -19,6 +21,22 @@ else
    source "$CONFIG_FILE"
 fi
 
+# install-partition.func
+if [ -f "${PO_DIR}/install-partition.func" ]; then
+   . "${PO_DIR}/install-partition.func"
+else
+   show_message FILE_NOT_FOUND "${PO_DIR}/install-partition.func"
+   exit 1
+fi
+
+# install-video.func
+if [ -f "${PO_DIR}/install-video.func" ]; then
+   source "${PO_DIR}/install-video.func"
+else
+   show_message FILE_NOT_FOUND "${PO_DIR}/install-video.func"
+   exit 1
+fi
+
 pacman -Sy
 
 # To determine in pacman yes
@@ -28,7 +46,7 @@ YES_CHAR="$(pacman -Sddw bash --noconfirm | grep '? \[' | cut -d"[" -f2 | cut -d
 system_language() {
   local UP_LANG_SELECT LANG_UTF8 STR_READ
 
-  PATH_INST=$1
+  PATH_CHROOT=$1
 
   if ! [ -f ~/.config/lang.conf  ]; then
      while [ "${LIST_LANG}" = "${LIST_LANG#*$LANG_SELECT}" ] ; do
@@ -45,20 +63,36 @@ system_language() {
   source ~/.config/lang.conf
   UP_LANG_SELECT=`echo "${LANG_SELECT^^}"`
   LANG_UTF8=${LANG_SELECT}"_"${UP_LANG_SELECT}.UTF-8
-  if [ -z "${PATH_INST}" ]; then
-     loadkeys ${LANG_SELECT}
+  if [ -z "${PATH_CHROOT}" ]; then
+     #loadkeys ${LANG_SELECT}
      export LANG=${LANG_UTF8}
      setfont cyr-sun16
+     if [ $? != 0 ]; then
+        show_message CONTINUE_PRESS_ANY_KEY
+        read
+        return 1
+     fi
      clear
   else
-     arch-chroot ${PATH_INST} loadkeys ${LANG_SELECT}
-     arch-chroot ${PATH_INST} setfont cyr-sun16
-     echo -e "LANG=${LANG_UTF8}" > ${PATH_INST}/etc/locale.conf
-     echo -e "KEYMAP=${LANG_SELECT}\nFONT=cyr-sun16\nFONT_MAP=" > ${PATH_INST}/etc/vconsole.conf
-     sed -i ${PATH_INST}/etc/locale.gen -e 's|#\(en_US.UTF-8 UTF-8\)|\1|'
-     sed -i ${PATH_INST}/etc/locale.gen -e 's|#\(uk_UA.UTF-8 UTF-8\)|\1|'
-     sed -i ${PATH_INST}/etc/locale.gen -e 's|#\(ru_RU.UTF-8 UTF-8\)|\1|'
-     arch-chroot ${PATH_INST} locale-gen
+     #arch-chroot ${PATH_CHROOT} loadkeys ${LANG_SELECT}
+     arch-chroot ${PATH_CHROOT} setfont cyr-sun16
+     arch-chroot ${PATH_CHROOT} localectl set-keymap us ${LANG_SELECT} --no-convert
+     if [ $? != 0 ]; then
+        show_message CONTINUE_PRESS_ANY_KEY
+        read
+        return 1
+     fi
+     echo -e "LANG=${LANG_UTF8}" > ${PATH_CHROOT}/etc/locale.conf
+     #echo -e "KEYMAP=${LANG_SELECT}\nFONT=cyr-sun16\nFONT_MAP=" > ${PATH_CHROOT}/etc/vconsole.conf
+     sed -i ${PATH_CHROOT}/etc/locale.gen -e "s|#\(en_US.UTF-8 UTF-8\)|\1|"
+     sed -i ${PATH_CHROOT}/etc/locale.gen -e "s|#\(${LANG_UTF8} UTF-8\)|\1|"
+     #sed -i ${PATH_CHROOT}/etc/locale.gen -e 's|#\(ru_RU.UTF-8 UTF-8\)|\1|'
+     arch-chroot ${PATH_CHROOT} locale-gen
+     if [ $? != 0 ]; then
+        show_message CONTINUE_PRESS_ANY_KEY
+        read
+        return 1
+     fi
   fi
 }
 
@@ -67,10 +101,10 @@ download_updates_func(){
    if ! [ -d "$TMP_DIR" ]; then
       mkdir "$TMP_DIR"
    fi
-   wget --quiet --tries=3 -c https://snuglinux.pp.ua/install/install-snuglinux.func     -P $TMP_DIR
-   wget --quiet --tries=3 -c https://snuglinux.pp.ua/install/install-partition.func     -P $TMP_DIR
-   wget --quiet --tries=3 -c https://snuglinux.pp.ua/install/install-video.func         -P $TMP_DIR
-   wget --quiet --tries=3 -c https://snuglinux.pp.ua/install/install-snuglinux.messages -P $TMP_DIR
+   wget --quiet --tries=3 -c https://snuglinux.pp.ua/install/install-snuglinux.func     -P $TMP_DIR -nc
+   wget --quiet --tries=3 -c https://snuglinux.pp.ua/install/install-partition.func     -P $TMP_DIR -nc
+   wget --quiet --tries=3 -c https://snuglinux.pp.ua/install/install-video.func         -P $TMP_DIR -nc
+   wget --quiet --tries=3 -c https://snuglinux.pp.ua/install/install-snuglinux.messages -P $TMP_DIR -nc
 
    if [ -f $TMP_DIR/install-snuglinux.func -a -f $TMP_DIR/install-partition.func -a -f $TMP_DIR/install-video.func -a -f $TMP_DIR/install-snuglinux.messages ]; then
       PO_DIR=$TMP_DIR
@@ -85,6 +119,10 @@ set_options(){
              -v)
                 show_message CURRENT_VERSION
                 exit 0
+                ;;
+             -a)
+                show_message INSTALL_VERSION_ARM
+                INSTALL_ARCH="arm"
                 ;;
              -h|--help)
                 show_message SHOW_USAGE
@@ -112,44 +150,6 @@ ping_server() {
 }
 
 #=======================================
-preparation_disk(){
-  local OK AMSURE
-
-  if [ -f "${PO_DIR}/install-partition.func" ]; then
-     . "${PO_DIR}/install-partition.func"
-  else
-     show_message FILE_NOT_FOUND "${PO_DIR}/install-partition.func"
-     exit 1
-  fi
-  if [ -d /sys/firmware/efi ]; then
-     UEFI=1;
-  else
-     UEFI=0;
-  fi
-
-  partition_drive
-  mount_part "/"
-  if [ $UEFI = 1 ]; then
-      mount_part "efi"
-  fi
-  mount_part "swap"
-  OK=0;
-  while [ "$OK" = 0 ] ; do
-      STR_READ=`show_message SPECIFY_MOUNTING_PARTITION`
-      read -p "${STR_READ}" AMSURE
-      if [ "${AMSURE}" = "i" ]; then
-         OK=1
-         continue
-      elif [ "${AMSURE}" = "" ]; then
-         show_message NOT_RIGHT_VALUE
-         OK=0
-      else
-         mount_part "${AMSURE}"
-      fi
-  done
-}
-
-#=======================================
 ping_server() {
   show_message PING_SERVER $SNUG_SERVER
   res=1
@@ -167,14 +167,13 @@ ping_server() {
 # 1 - name sevice
 # 2 - do not ask questions (noconfirm)
 install_sevice(){
-  local YN INSTALLSYSTEMD SERVICE STR_READ
+  local INSTALLSYSTEMD SERVICE STR_READ
 
   SERVICE="$1"
   NOCONFIRM="$2"
   if [ "${SERVICE}" == "" ]; then
      return 1
   fi
-  YN="yn"
   echo "${SERVICE}" | grep service > /dev/null
   if [ $? != 0 ]; then
      SERVICE="${SERVICE}.service"
@@ -188,8 +187,8 @@ install_sevice(){
      done
   fi
   if [ "$INSTALLSYSTEMD" == "y" ]; then
-     if ls -l "/mnt/usr/lib/systemd/system" | grep "${SERVICE}" > /dev/null ; then
-        arch-chroot /mnt systemctl enable "${SERVICE}"
+     if ls -l "$DIR_CHROOT/usr/lib/systemd/system" | grep "${SERVICE}" > /dev/null ; then
+        arch-chroot $DIR_CHROOT systemctl enable "${SERVICE}"
         if [ $? = 0 ]; then
            show_message DEMON_AUTOSTART ${SERVICE}
         else
@@ -198,7 +197,7 @@ install_sevice(){
            return 1
         fi
      else
-        show_message FILE_NOT_FOUND "/mnt/usr/lib/systemd/system/${SERVICE}"
+        show_message FILE_NOT_FOUND "$DIR_CHROOT/usr/lib/systemd/system/${SERVICE}"
         read
         return 1
      fi
@@ -229,7 +228,6 @@ not_installed_pkg() {
   echo ${inst_list}
 }
 
-
 #=======================================
 installed_pkg() {
   local NAME_PKG PATH_CHROOT INSTALL_PKG
@@ -254,11 +252,11 @@ pacman_list() {
 
   LIST_PKG="$1"
   OPTION="$2"
-#  RESULT_STR='/usr/bin/arch-chroot /mnt pacman -S --noconfirm'
+#  RESULT_STR='/usr/bin/arch-chroot $DIR_CHROOT pacman -S --noconfirm'
   if [ $OPTION == "1" ]; then
-     RESULT_STR='yes "$YES_CHAR" | /usr/bin/arch-chroot /mnt pacman -S --noconfirm --needed'
+     RESULT_STR='yes "$YES_CHAR" | /usr/bin/arch-chroot $DIR_CHROOT pacman -S --noconfirm --needed'
   else
-     RESULT_STR='yes | /usr/bin/arch-chroot /mnt pacman -S --needed'
+     RESULT_STR='yes | /usr/bin/arch-chroot $DIR_CHROOT pacman -S --needed'
   fi
   for i in ${LIST_PKG[@]} ; do
       RESULT_STR="${RESULT_STR} ${i}"
@@ -272,10 +270,9 @@ pacman_list() {
 # 2 - do not ask questions (noconfirm)
 # 3 - systemd service name
 install_pkg() {
-  local YN INSTALL INSTALL_PKG SYSTEMD STR_READ AMSURE PACMAN_CMD
+  local INSTALL INSTALL_PKG SYSTEMD STR_READ AMSURE PACMAN_CMD
 
-  INSTALL_PKG=$(not_installed_pkg "$1" "/mnt")
-  YN="yn"
+  INSTALL_PKG=$(not_installed_pkg "$1" "$DIR_CHROOT")
   NOCONFIRM="$2"
   SYSTEMD="$3"
   INSTALL=0
@@ -300,8 +297,8 @@ install_pkg() {
         PACMAN_CMD=`pacman_list "${INSTALL_PKG}" "2"`
         eval ${PACMAN_CMD}
      fi
-#     arch-chroot /mnt pacman -S --noconfirm "${INSTALL_PKG}"
-#     arch-chroot /mnt pacman -S "${INSTALL_PKG}"
+#     arch-chroot $DIR_CHROOT pacman -S --noconfirm "${INSTALL_PKG}"
+#     arch-chroot $DIR_CHROOT pacman -S "${INSTALL_PKG}"
      if [ $? = 0 ]; then
         show_message SUCCESSFULLY_INSTALLED_PACKAGE "${INSTALL_PKG}"
         INSTALL=1
@@ -321,60 +318,10 @@ install_pkg() {
 }
 
 #=======================================
-install_video_driver(){
-  local NVIDIA ATI INTEL VIDEO INSTALL_VIDEO
-
-  if [ -f "${PO_DIR}/install-video.func" ]; then
-     source "${PO_DIR}/install-video.func"
-  else
-     show_message FILE_NOT_FOUND "${PO_DIR}/install-video.func"
-     exit 1
-  fi
-  NOT_INSTALL_PKG=$(not_installed_pkg "xorg-server" "/mnt")
-  if [ -n "$NOT_INSTALL_PKG" ] ; then
-     installed_pkg "xorg-server" "/mnt"
-     if [ $? = 0 ]; then
-        return 1;
-     fi
-  fi
-
-  INSTALL_VIDEO="no"
-  VIDEO=`lspci | grep -i --color vga`
-
-  NVIDIA=`echo $VIDEO | grep "NVIDIA"`
-  if [ "${NVIDIA}" ]; then
-     install_video_nvidia
-     if [ $? = 1 ]; then
-        INSTALL_VIDEO="yes"
-     fi
-  fi
-  ATI=`echo ${VIDEO} | grep "Radeon"`
-  if [ "$ATI" ]; then
-     install_video_ati
-     if [ $? = 1 ]; then
-        INSTALL_VIDEO="yes"
-     fi
-  fi
-  INTEL=`echo ${VIDEO} | grep "Intel"`
-  if [ "${INTEL}" ]; then
-     install_video_intel
-     if [ $? = 1 ]; then
-        INSTALL_VIDEO="yes"
-     fi
-  fi
-  if [ "${INSTALL_VIDEO}" == "no" ]; then
-     install_video_vesa
-     if [ $? = 1 ]; then
-        INSTALL_VIDEO="yes"
-     fi
-  fi
-}
-
-#=======================================
 install_network_manager(){
    local ARRAY AMSURE INSTALL_X
 
-   installed_pkg "xorg-server" "/mnt"
+   installed_pkg "xorg-server" "$DIR_CHROOT"
    INSTALL_X="$?"
 
    ARRAY="0123"
@@ -428,42 +375,44 @@ install_network_manager(){
 
 #=======================================
 edit_pacman_conf(){
-  local PATH_TO_FILE F
+  local PATH_CHROOT FILE F
 
-  PATH_TO_FILE="$1"
-  show_message MAKING_CHANGES_TO_FILE "${PATH_TO_FILE}"
-  if [ "$REAL_ARCH" = "x86_64" ] ; then
-     grep "#\[multilib]" $PATH_TO_FILE > /dev/null
+  PATH_CHROOT="$1";
+  FILE="$PATH_CHROOT/etc/pacman.conf";
+  show_message MAKING_CHANGES_TO_FILE "${FILE}"
+  if [ "$INSTALL_ARCH" = "x86_64" ] ; then
+     grep "#\[multilib]" $FILE > /dev/null
      if [ "$?" = 0 ]; then
-        F=`sed -n '/\#\[multilib]/{=}' $PATH_TO_FILE`
+        F=`sed -n '/\#\[multilib]/{=}' $FILE`
         let "F = $F + 1"
-        sed -i $PATH_TO_FILE -e 's|\#\[multilib\]|\[multilib\]|g'
-        sed -i $PATH_TO_FILE -e "$F s|\#Include = \/etc\/pacman.d\/mirrorlist|Include = \/etc\/pacman.d\/mirrorlist|g"
+        sed -i $FILE -e 's|\#\[multilib\]|\[multilib\]|g'
+        sed -i $FILE -e "$F s|\#Include = \/etc\/pacman.d\/mirrorlist|Include = \/etc\/pacman.d\/mirrorlist|g"
      fi
   fi
 
-  grep "\[snuglinux-core]" $PATH_TO_FILE > /dev/null
+  grep "\[snuglinux-core]" $FILE > /dev/null
   if [ $? = 1 ]; then
-     F=`sed -n '/after the header, and they will be used before the default mirrors./{=}' $PATH_TO_FILE`
+     F=`sed -n '/after the header, and they will be used before the default mirrors./{=}' $FILE`
      let "F = $F + 1"
-     sed -i $PATH_TO_FILE -e $F"a\[snuglinux-core]"
+     sed -i $FILE -e $F"a\[snuglinux-core]"
      let "F = $F + 1"
-     sed -i $PATH_TO_FILE -e $F"a\SigLevel = Optional TrustAll"
+     sed -i $FILE -e $F"a\SigLevel = Optional TrustAll"
      let "F = $F + 1"
-     sed -i $PATH_TO_FILE -e $F"a\Server = https://snuglinux.pp.ua/repo/core/"'$arch'"\n"
+     sed -i $FILE -e $F"a\Server = https://snuglinux.pp.ua/repo/core/"'$arch'"\n"
   fi
+  sed -i 's/^# Server/Server/' "${PATH_CHROOT}/etc/pacman.d/mirrorlist"
 }
 
 #=======================================
 generating_fstab(){
   show_message GENERATING_FSTAB
-  if [ -f /mnt/etc/fstab ]; then
-     rm /mnt/etc/fstab
-     #rename /mnt/etc/fstab /mnt/etc/fstab_old
+  if [ -f $DIR_CHROOT/etc/fstab ]; then
+     rm $DIR_CHROOT/etc/fstab
+     #rename $DIR_CHROOT/etc/fstab $DIR_CHROOT/etc/fstab_old
   fi
-  genfstab -L -p /mnt >> /mnt/etc/fstab
+  genfstab -L -p $DIR_CHROOT >> $DIR_CHROOT/etc/fstab
   if [ $? != 0 ]; then
-     show_message FAILED_EXECUTE_COMMAND "genfstab -L -p /mnt >> /mnt/etc/fstab"
+     show_message FAILED_EXECUTE_COMMAND "genfstab -L -p $DIR_CHROOT >> $DIR_CHROOT/etc/fstab"
      exit 1
   fi
 }
@@ -471,12 +420,7 @@ generating_fstab(){
 #=======================================
 creating_bootable_ram_disk(){
   show_message CREATING_BOOTABLE_RAM_DISK
-
-  arch-chroot /mnt mkinitcpio -p linux$LINUX_VER
-  if [ $? != 0 ]; then
-     show_message FAILED_EXECUTE_COMMAND "arch-chroot /mnt mkinitcpio -p linux$LINUX_VER"
-     exit 1
-  fi
+  run_command_chroot "mkinitcpio -p linux$LINUX_VER"
 }
 
 #=======================================
@@ -486,17 +430,17 @@ enter_localtime(){
   LOCALTIME="Europe/Kiev"
   show_message ENTER_LOCALTIME
 
-  NOT_INSTALL_PKG=$(not_installed_pkg "tzdata" "/mnt")
+  NOT_INSTALL_PKG=$(not_installed_pkg "tzdata" "$DIR_CHROOT")
   if [ -n "${NOT_INSTALL_PKG}" ] ; then
      show_message PACKAGE_NOT_INSTALLED "${NOT_INSTALL_PKG}"
      exit 1;
   fi
-  if [ -f /mnt/etc/localtime ]; then
-     rm /mnt/etc/localtime
+  if [ -f $DIR_CHROOT/etc/localtime ]; then
+     rm $DIR_CHROOT/etc/localtime
   fi
-  ln -s /usr/share/zoneinfo/${LOCALTIME} /mnt/etc/localtime
-  #arch-chroot /mnt timedatectl set-timezone Europe/Kiev
-  #arch-chroot /mnt timedatectl set-ntp true
+  ln -s /usr/share/zoneinfo/${LOCALTIME} $DIR_CHROOT/etc/localtime
+  #arch-chroot $DIR_CHROOT timedatectl set-timezone Europe/Kiev
+  #arch-chroot $DIR_CHROOT timedatectl set-ntp true
   if [ $? != 0 ]; then
      show_message FAILED_SET_TIMEZONE
      return 1
@@ -512,7 +456,7 @@ enter_hostname(){
   STR_READ=`show_message ENTER_HOST_NAME`
   read -p "${STR_READ}" LOCALHOST
   if [ -n "${LOCALHOST}" ]; then
-     echo -e "${LOCALHOST}" >  "/mnt/etc/hostname"
+     echo -e "${LOCALHOST}" >  "$DIR_CHROOT/etc/hostname"
      if [ $? != 0 ]; then
         show_message FAILED_SET_HOSTNAME
         return 1
@@ -533,7 +477,7 @@ set_password_user() {
   OK=0;
   while [ "$OK" = 0 ] ; do
      show_message ENTER_USER_PASSWORD "${USERNAME}"
-     arch-chroot /mnt passwd "${USERNAME}"
+     arch-chroot $DIR_CHROOT passwd "${USERNAME}"
      if [ $? = 0 ]; then
         OK=1;
      else
@@ -552,7 +496,7 @@ change_username(){
    STR_READ=`show_message CHANGE_USERNAME`
    read -p "${STR_READ}" STR_USER_NAME
       if [ -n "${STR_USER_NAME}" ]; then
-          arch-chroot /mnt chfn -f "${STR_USER_NAME}" "${USERNAME}"
+          arch-chroot $DIR_CHROOT chfn -f "${STR_USER_NAME}" "${USERNAME}"
           if [ $? != 0 ]; then
              show_message FAILED_CHANGE_FULL_USERNAME
              return 1
@@ -570,17 +514,17 @@ add_user(){
      show_message NOT_RIGHT_VALUE
      return 1
   fi
-  arch-chroot /mnt useradd -m -g users -G "audio,games,lp,optical,power,scanner,storage,video,wheel,disk,uucp,dbus" -s /bin/bash "${USERNAME}"
+  arch-chroot $DIR_CHROOT useradd -m -g users -G "audio,games,lp,optical,power,scanner,storage,video,wheel,disk,uucp,dbus" -s /bin/bash "${USERNAME}"
   if [ $? != 0 ]; then
      show_message FAILED_CREATE_USER "${USERNAME}"
      return 1
   fi
-  installed_pkg "xfce4-session" "/mnt"
+  installed_pkg "xfce4-session" "$DIR_CHROOT"
   if [ $? = 1 ]; then
      if [ "${USERNAME}" == "root" ]; then
-        echo -e '#!/bin/sh'"\n\nexec startxfce4" > "/mnt/${USERNAME}/.xinitrc"
+        echo -e '#!/bin/sh'"\n\nexec startxfce4" > "$DIR_CHROOT/${USERNAME}/.xinitrc"
      else
-        echo -e '#!/bin/sh'"\n\nexec startxfce4" > "/mnt/home/${USERNAME}/.xinitrc"
+        echo -e '#!/bin/sh'"\n\nexec startxfce4" > "$DIR_CHROOT/home/${USERNAME}/.xinitrc"
      fi
   fi
   change_username "${USERNAME}"
@@ -612,13 +556,19 @@ add_users(){
 
 #=======================================
 download_type(){
-  local STR_N FILE_LISTS TMP_DOWN TYPE
+  local STR_N FILE_LISTS TMP_DOWN TYPE ARCH_ARM
 
+  if [ "$INSTALL_ARCH" == "arm" ] ; then
+     ARCH_ARM="-arm"
+  else
+     ARCH_ARM=""
+  fi
   show_message LOADING_DATA_SERVER ${SNUG_SERVER}
   TMP_DOWN="/tmp/snuglinux/install/types"
   FILE_LISTS=$TMP_DOWN"/lists"
   rm -fr $TMP_DOWN
-  wget --quiet --tries=3 -c https://${SNUG_SERVER}/install/types/lists -P $TMP_DOWN
+  mkdir -p $TMP_DOWN
+  wget --quiet --tries=3 -c https://${SNUG_SERVER}/install/types/lists$ARCH_ARM -O $TMP_DOWN/lists
   if [ $? != 0 ]; then
      show_message FAILED_LOAD_FILE https://${SNUG_SERVER}/install/types/lists
      exit 1;
@@ -640,6 +590,8 @@ download_type(){
 #=======================================
 select_type() {
   local STR_N TYPE OK STR_READ
+
+  select_arm_type
 
   download_type
 
@@ -694,8 +646,8 @@ download_pkg(){
   if [ -f ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME} ]; then
      rm -f ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME}
   fi
-#  if ! [ -d /mnt/$TMP_DOWN/$TYPE/pack ]; then
-#     mkdit -p /mnt/$TMP_DOWN/$TYPE/pack
+#  if ! [ -d $DIR_CHROOT/$TMP_DOWN/$TYPE/pack ]; then
+#     mkdit -p $DIR_CHROOT/$TMP_DOWN/$TYPE/pack
 #  fi
   wget --quiet --tries=3 -c https://${SNUG_SERVER}/install/types/${TYPE}/pack/${PKG_NAME} -P ${TMP_DOWN}/${TYPE}/pack
   if [ $? = 0 ]; then
@@ -708,6 +660,7 @@ download_pkg(){
 #=======================================
 install_type() {
   local TYPE STR_PKG FILE_PKG VARS IFS_OLD
+
   TYPE=`sed -n ${SELECT_TYPE}p $FILE_LISTS`;
   if ! [ -f ${TMP_DOWN}/${TYPE}/packages ]; then
      show_message FILE_NOT_FOUND "${TMP_DOWN}/${TYPE}/packages"
@@ -728,4 +681,208 @@ install_type() {
       fi
   done
   IFS=$IFS_OLD
+}
+
+#=======================================
+run_command_chroot(){
+  local STR_READ OK COMMAND_NAME
+
+  OK=0;
+  COMMAND_NAME=$*;
+  while [ "$OK" = 0 ] ; do
+      arch-chroot $DIR_CHROOT $COMMAND_NAME
+      if ! [ $? = 0 ]; then
+         AMSURE=
+         show_message FAILED_EXECUTE_COMMAND $COMMAND_NAME;
+         STR_READ=`show_message RUN_COMMAND_AGAIN $COMMAND_NAME`;
+         read -p "${STR_READ}" AMSURE
+         if [ $AMSURE == "y" ]; then
+            OK=0;
+         elif [ $AMSURE == "n" ]; then
+            OK=1;
+            exit 1;
+         fi
+      else
+         OK=1;
+      fi
+  done
+}
+
+#=======================================
+fix_system_chroot(){
+   if [[ "$INSTALL_ARCH" == "arm" ]] && [[ $(uname -m) == "x86_64" ]] ; then
+      # что бы работать под другой архитектурой в chroot нужно скопировать qemu-arm-static в chroot/usr/bin
+      if ! [ -f "$DIR_CHROOT/usr/bin" ]; then
+         sudo cp /usr/bin/qemu-arm-static $DIR_CHROOT/usr/bin
+         if ! [ $? = 0 ]; then
+            show_message FAILED_COPY_FILE "«qemu-arm-static»";
+            exit 1;
+         fi
+      fi
+      # что бы в chroot заработал DNS
+      #sudo rm $DIR_CHROOT/etc/resolv.conf
+      #sudo cp -a $DIR_CHROOT/etc/resolvconf.conf $DIR_CHROOT/etc/resolv.conf
+      LINUX_VER="-$ARM_ARCH";
+   fi
+   system_language "$DIR_CHROOT";
+   edit_pacman_conf "$DIR_CHROOT";
+   pacman_key_init;
+}
+
+#=======================================
+pacman_key_init(){
+   show_message INITIALIZE_PACMAN_KEY
+
+   run_command_chroot "pacman-key --init"
+   run_command_chroot "pacman-key --populate archlinuxarm"
+   run_command_chroot "pacman -Syu --noconfirm"
+}
+
+#=======================================
+install_basic_packages(){
+   show_message INSTALLING_BASIC_PACKAGES
+   if [ "$INSTALL_ARCH" == "arm" ] ; then
+      download_rootfs;
+      unzip_rootfs;
+   else
+      pacstrap $DIR_CHROOT base
+      if [ "$?" != 0 ]; then
+         show_message FAILED_INSTALL_PACKAGE "base"
+         exit 1;
+      fi
+   fi
+}
+
+#=======================================
+unzip_rootfs(){
+   local STR_READ AMSURE
+
+   show_message UNZIP_ROOTFS
+   cd $TMP_DIR
+   if [ -f ArchLinuxARM-$ARM_ARCH-latest.tar.gz ]; then
+      bsdtar -xvpf ArchLinuxARM-$ARM_ARCH-latest.tar.gz -C "$DIR_CHROOT"
+      if ! [ $? = 0 ]; then
+         show_message ARCHIVE_UNZIPPING_ERROR "«ArchLinuxARM-$ARM_ARCH-latest.tar.gz»";
+         AMSURE=
+         STR_READ=` show_message DELETE_CORRUPTED_FILE "«ArchLinuxARM-$ARM_ARCH-latest.tar.gz»"`;
+         while [ "$YN" = "${YN#*$AMSURE}" ] ; do
+            read -p $STR_READ AMSURE
+         done
+         if [ $AMSURE == "y" ]; then
+            rm "ArchLinuxARM-$ARM_ARCH-latest.tar.gz";
+            if ! [ $? = 0 ]; then
+               show_message FAILED_DELETE_FILE "«ArchLinuxARM-$ARM_ARCH-latest.tar.gz»";
+               exit 1;
+            fi
+         fi
+         exit 1;
+       fi
+   fi
+}
+
+#=======================================
+download_rootfs(){
+   show_message DOWNLOAD_ROOTFS
+   cd $TMP_DIR
+   if ! [ -f ArchLinuxARM-$ARM_ARCH-latest.tar.gz.md5 ]; then
+      wget http://de4.mirror.archlinuxarm.org/os/ArchLinuxARM-$ARM_ARCH-latest.tar.gz.md5 -O ArchLinuxARM-$ARM_ARCH-latest.tar.gz.md5
+      if ! [ $? = 0 ]; then
+         show_message FAILED_LOAD_FILE "«ArchLinuxARM-$ARM_ARCH-latest.tar.gz.md5»";
+         exit 1;
+      fi
+   fi
+   if ! [ -f ArchLinuxARM-$ARM_ARCH-latest.tar.gz ]; then
+      wget http://de4.mirror.archlinuxarm.org/os/ArchLinuxARM-$ARM_ARCH-latest.tar.gz -O ArchLinuxARM-$ARM_ARCH-latest.tar.gz
+      if ! [ $? = 0 ]; then
+         show_message FAILED_LOAD_FILE "«ArchLinuxARM-$ARM_ARCH-latest.tar.gz»";
+         exit 1;
+      fi
+   fi
+   md5sum --status -c ArchLinuxARM-$ARM_ARCH-latest.tar.gz.md5
+   if ! [ $? = 0 ]; then
+      show_message FAILED_CHECK_MD5SUM_FILE "«ArchLinuxARM-$ARM_ARCH-latest.tar.gz»";
+      exit 1;
+   fi
+}
+
+#=======================================
+download_file_list(){
+  local FILE_LISTS TMP_DOWN TYPE
+
+  TYPE=$1;
+
+  TMP_DOWN="$TMP_DIR/install"
+  FILE_LISTS="$TMP_DOWN/$TYPE"
+  mkdir -p $TMP_DOWN
+  wget --quiet --tries=3 -c https://${SNUG_SERVER}/install/$TYPE -O $FILE_LISTS
+  if [ $? != 0 ]; then
+     show_message FAILED_LOAD_FILE https://${SNUG_SERVER}/install/$TYPE
+     exit 1;
+  fi
+}
+
+#=======================================
+# Функция для выбора ARM устройства
+select_arm_type() {
+  local STR_N STR STR_READ FILE_LISTS OK SELECT_TYPE
+
+  ARM_MODEL=
+  ARM_ARCH=
+  if [ "$INSTALL_ARCH" != "arm" ] ; then
+     return
+  fi
+
+  download_file_list "list-arm-devices";
+
+  TMP_DOWN="/tmp/snuglinux/install"
+  FILE_LISTS=${TMP_DOWN}"/list-arm-devices"
+  if ! [ -f ${FILE_LISTS} ]; then
+     show_message FILE_NOT_FOUND ${FILE_LISTS}
+     exit 1;
+  fi
+  STR_N=0;
+  while read line ; do
+       let STR_N=${STR_N}+1;
+       printf "${FC_6}%-3s${FC_3}%-5s${FC_0} \n" "$STR_N" "${line%% *}"
+  done < ${FILE_LISTS}
+
+  OK=0;
+  STR_READ=`show_message SELECT_TYPE`
+  while [ "${OK}" = 0 ] ; do
+      read -p "${STR_READ}" SELECT_TYPE
+      if [[ "${SELECT_TYPE}" != *[[:digit:]]* ]]; then
+         show_message NOT_RIGHT_VALUE
+         continue
+      fi
+      STR=`sed -n ${SELECT_TYPE}p $FILE_LISTS`;
+      ARM_MODEL=${STR%% *};
+      ARM_ARCH=${STR##* };
+      if [[ $SELECT_TYPE -le $STR_N && $SELECT_TYPE -ne 0 ]] ; then
+         OK=1;
+      else
+         show_message NOT_RIGHT_VALUE
+      fi
+  done
+}
+
+#=======================================
+checking_installed_packages(){
+   local ARM_PKG NOT_INSTALL_PKG
+   if [[ "$INSTALL_ARCH" == "arm" ]] && [[ $(uname -m) == "x86_64" ]] ; then
+      ARM_PKG="binfmt-qemu-static-sl";
+   fi
+   NOT_INSTALL_PKG=$(not_installed_pkg "arch-install-scripts wget sed $ARM_PKG")
+   if [ -n "$NOT_INSTALL_PKG" ] ; then
+      pacman -Sy arch-install-scripts wget sed $ARM_PKG;
+      if [ "$?" = 1 ]; then
+         show_message PACKAGE_NOT_INSTALLED "$NOT_INSTALL_PKG"
+         exit 1;
+      fi
+   fi
+}
+
+#=======================================
+clean_install_files(){
+   rm $DIR_CHROOT/usr/bin/qemu-arm-static
+   run_command_chroot "pacman -Scc --noconfirm"
 }

@@ -19,11 +19,12 @@ find_part_label(){
 
 #=======================================
 install_grub_bios(){
-  AMSURE=""
+  local STR_READ AMSURE OK
+
   OK=0
   install_pkg "grub" "y"
   while [ "${OK}" = 0 ] ; do
-        STR_READ=`show_message SPECIFY_PARTITION_INSTALL_GRUB`
+        STR_READ=`show_message SPECIFY_PARTITION_INSTALL "grub" "/dev/sda"`
         read -p "${STR_READ}" AMSURE
         if [ "${AMSURE}" = "" ] ; then
            AMSURE="/dev/sda"
@@ -31,19 +32,19 @@ install_grub_bios(){
         if ! ls -l "${AMSURE}" | grep "${AMSURE}" > /dev/null ; then
            OK=0
         else
-           #grub-install --root-directory=/mnt "${AMSURE}"
-           arch-chroot /mnt grub-install "${AMSURE}"
+           #grub-install --root-directory=$DIR_CHROOT "${AMSURE}"
+           arch-chroot $DIR_CHROOT grub-install "${AMSURE}"
            if [ $? != 0 ]; then
              show_message FAILED_EXECUTE_COMMAND "grub-install ${AMSURE}"
              return 1
            fi
-           arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+           arch-chroot $DIR_CHROOT grub-mkconfig -o /boot/grub/grub.cfg
            if [ $? != 0 ]; then
              show_message FAILED_EXECUTE_COMMAND "grub-mkconfig -o /boot/grub/grub.cfg"
              return 1
            fi
-           arch-chroot /mnt sed -i /boot/grub/grub.cfg -e 's|timeout=5|timeout=1|g'
-           arch-chroot /mnt sed -i -e "s|Arch Linux|Snug Linux|g" /boot/grub/grub.cfg
+           arch-chroot $DIR_CHROOT sed -i /boot/grub/grub.cfg -e 's|timeout=5|timeout=1|g'
+           arch-chroot $DIR_CHROOT sed -i -e "s|Arch Linux|Snug Linux|g" /boot/grub/grub.cfg
            OK=1
        fi
   done
@@ -52,25 +53,27 @@ install_grub_bios(){
 
 #=======================================
 install_grub_uefi(){
-  if ! [ -d "/mnt/boot/efi" ]; then
-     STR_READ=`show_message UEFI_DIRECTORY_DOES_NOT_EXIST /mnt/boot/efi`
+  local STR_READ OK
+
+  if ! [ -d "$DIR_CHROOT/boot/efi" ]; then
+     STR_READ=`show_message UEFI_DIRECTORY_DOES_NOT_EXIST $DIR_CHROOT/boot/efi`
      return 1
   fi
   install_pkg "grub efibootmgr" "y"
   OK=0
   while [ "${OK}" = 0 ] ; do
-     arch-chroot /mnt grub-install
+     arch-chroot $DIR_CHROOT grub-install
      if [ $? != 0 ]; then
         show_message FAILED_EXECUTE_COMMAND "grub-install"
         return 1
      fi
-     arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+     arch-chroot $DIR_CHROOT grub-mkconfig -o /boot/grub/grub.cfg
      if [ $? != 0 ]; then
         show_message FAILED_EXECUTE_COMMAND "grub-mkconfig -o /boot/grub/grub.cfg"
         return 1
      fi
-     arch-chroot /mnt sed -i /boot/grub/grub.cfg -e 's|timeout=5|timeout=1|g'
-     arch-chroot /mnt sed -i -e "s|Arch Linux|Snug Linux|g" /boot/grub/grub.cfg
+     arch-chroot $DIR_CHROOT sed -i /boot/grub/grub.cfg -e 's|timeout=5|timeout=1|g'
+     arch-chroot $DIR_CHROOT sed -i -e "s|Arch Linux|Snug Linux|g" /boot/grub/grub.cfg
      OK=1
   done
   return 0
@@ -78,31 +81,64 @@ install_grub_uefi(){
 
 #=======================================
 install_grub(){
-  local STR_READ AMSURE OK
-  if [ $? != 0 ]; then
-     show_message PACKAGE_NOT_INSTALLED "grub"
-     exit 1
-  fi
-  lsblk -d --output NAME,MODEL,SIZE,SERIAL | grep -v "rom\|loop\|airoot\|sr"
   if [ $UEFI = 0 ]; then
      install_grub_bios
   else
      install_grub_uefi
   fi
-  return 0
+}
+
+#=======================================
+install_uboot(){
+  local STR_READ AMSURE OK
+
+  OK=0
+  install_pkg "uboot-$ARM_MODEL" "y"
+  while [ "${OK}" = 0 ] ; do
+        STR_READ=`show_message SPECIFY_PARTITION_INSTALL "uboot" "/dev/sdb"`
+        read -p "${STR_READ}" AMSURE
+        if [ "${AMSURE}" = "" ] ; then
+           AMSURE="/dev/sdb"
+        fi
+        if ! ls -l "${AMSURE}" | grep "${AMSURE}" > /dev/null ; then
+           OK=0
+        else
+           dd if=$DIR_CHROOT/boot/u-boot-sunxi-with-spl.bin of=${AMSURE} bs=1024 seek=8
+           OK=1
+       fi
+  done
+}
+
+#=======================================
+# Install operating system loader
+install_bootloader(){
+  lsblk -e7 -d --output NAME,MODEL,SIZE,SERIAL | grep -v "rom\|loop\|airoot\|sr"
+  if [ "$INSTALL_ARCH" == "arm" ] ; then
+     install_uboot;
+  else
+     install_grub;
+  fi
 }
 
 #=======================================
 umount_part() {
-  mount | grep "/mnt"  > /dev/null
+  local PATCH_PART
+
+  PATCH_PART=$1
+
+  mount | grep ${PATCH_PART}  > /dev/null
   if [ $? = 0 ]; then
-     umount -R "/mnt"
+     umount -R ${PATCH_PART}
   fi
-  swapon | grep "${AMSURE}"  > /dev/null
+  swapon | grep "${PATCH_PART}"  > /dev/null
   if [ $? = 0 ]; then
-     swapoff "${AMSURE}"
+     swapoff "${PATCH_PART}"
   fi
-  mount | grep "/mnt"  > /dev/null
+  mount | grep ${PATCH_PART}  > /dev/null
+  if [ $? = 0 ]; then
+     umount -R ${PATCH_PART}
+  fi
+  mount | grep "${PATCH_PART}"  > /dev/null
   if [ $? != 0 ]; then
      return 1
   fi
@@ -111,21 +147,20 @@ umount_part() {
 
 #=======================================
 mount_efi(){
-  local YN DEV AMSURE_FORMAT LABEL_PART
+  local DEV AMSURE_FORMAT LABEL_PART
 
   DEV=$1
   LABEL_PART=$2
 
-  YN="yn"
-  if ! [ -d "/mnt/boot" ]; then
-     mkdir "/mnt/boot"
+  if ! [ -d "$DIR_CHROOT/boot" ]; then
+     mkdir "$DIR_CHROOT/boot"
   fi
-  if ! [ -d "/mnt/boot/efi" ]; then
-     mkdir "/mnt/boot/efi"
+  if ! [ -d "$DIR_CHROOT/boot/efi" ]; then
+     mkdir "$DIR_CHROOT/boot/efi"
   fi
-  mount | grep "/mnt/boot/efi"  > /dev/null
+  mount | grep "$DIR_CHROOT/boot/efi"  > /dev/null
   if [ $? = 0 ]; then
-     umount "/mnt/boot/efi"
+     umount "$DIR_CHROOT/boot/efi"
   fi
   while [ "yn" = "${YN#*$AMSURE_FORMAT}" ] ; do
      STR_READ=`show_message FORMAT_PARTITION "${DEV}" "Fat32"`
@@ -144,7 +179,7 @@ mount_efi(){
         return 1
      fi
   fi
-  mount "${DEV}" "/mnt/boot/efi"
+  mount "${DEV}" "$DIR_CHROOT/boot/efi"
   if [ $? != 0 ]; then
      show_message FAILED_MOUNT_PARTITION "${DEV}"
      exit 1
@@ -167,7 +202,7 @@ mount_swap(){
 
 #=======================================
 mount_dev(){
-  local YN AMSURE AMSURE_FORMAT DEV PATCH_PART LABEL_PART
+  local AMSURE AMSURE_FORMAT DEV PATCH_PART LABEL_PART
 
   DEV=$1
   LABEL_PART=$2
@@ -175,13 +210,12 @@ mount_dev(){
   if [ "${PATCH_PART:0:1}" == "/" ]; then
      PATCH_PART=${PATCH_PART:1}
   fi
-  YN="yn"
-  if ! [ -d "/mnt/${PATCH_PART}" ]; then
-     mkdir "/mnt/${PATCH_PART}"
+  if ! [ -d "$DIR_CHROOT/${PATCH_PART}" ]; then
+     mkdir "$DIR_CHROOT/${PATCH_PART}"
   fi
-  mount | grep "/mnt/${PATCH_PART}"  > /dev/null
+  mount | grep "$DIR_CHROOT/${PATCH_PART}"  > /dev/null
   if [ $? = 0 ]; then
-     umount "/mnt/${PATCH_PART}"
+     umount "$DIR_CHROOT/${PATCH_PART}"
   fi
   while [ "yn" = "${YN#*$AMSURE_FORMAT}" ] ; do
      STR_READ=`show_message FORMAT_PARTITION "${AMSURE}" "Ext4"`
@@ -200,7 +234,7 @@ mount_dev(){
         return 1
      fi
   fi
-  mount "${DEV}" "/mnt/${PATCH_PART}"
+  mount "${DEV}" "$DIR_CHROOT/${PATCH_PART}"
   if [ $? != 0 ]; then
      show_message FAILED_MOUNT_PARTITION "${DEV}"
      exit 1
@@ -209,17 +243,16 @@ mount_dev(){
 
 #=======================================
 mount_part() {
-  local YN AMSURE_DEV AMSURE_FIND_LABEL OK PATCH_PART LABEL_PART STR_READ
+  local AMSURE_DEV AMSURE_FIND_LABEL OK PART PATCH_PART LABEL_PART STR_READ
 
   PART=$1
-  PATCH_PART=${PART}
-  LABEL_PART=${PART}
+  PATCH_PART=$1
+  LABEL_PART=$1
   if [ "${PATCH_PART}" == "" ] ; then
      show_message NO_PARTITION_MOUNTING
      exit 1
   fi
   FIND_DEV_LABEL=$(find_part_label "${LABEL_PART}")
-  YN="yn"
   OK=0
   lsblk -f --output MODEL,NAME,LABEL,SIZE,UUID,SERIAL | grep -v "rom\|loop\|airoot\|sr"
   while [ "${OK}" = 0 ]; do
@@ -264,24 +297,39 @@ mount_part() {
 }
 
 #=======================================
-partition_drive() {
-  local AMSURE YN OK STR_READ LAST_SYMBOL
+deletes_disk_partition_table(){
+  local AMSURE OK STR_READ DEV
 
-  YN="yn"
+  DEV=$1
+
+  while [ "$YN" = "${YN#*$AMSURE}" ] ; do
+        STR_READ=`show_message DELETES_DISK_PARTITION_TABLE $DEV`
+        read -p "${STR_READ}" AMSURE
+  done
+  if [ "${AMSURE}" = "y" ] ; then
+     dd if=/dev/zero of=$DEV bs=1M count=8;
+  fi
+}
+
+#=======================================
+partition_drive() {
+  local AMSURE OK STR_READ LAST_SYMBOL
+
   while [ "$YN" = "${YN#*$AMSURE}" ] ; do
         STR_READ=`show_message SPLIT_DISK_PARTITIONS`
         read -p "${STR_READ}" AMSURE
   done
-  lsblk -e7 -d
-  umount_part
+  umount_part "$DIR_CHROOT"
   if [ $? = 0 ]; then
-     show_message UNABLE_UNMOUNT_PARTITION "/mnt"
+     show_message UNABLE_UNMOUNT_PARTITION "$DIR_CHROOT"
      exit
   fi
   if [ "${AMSURE}" = "y" ] ; then
+     lsblk -e7 -d --output NAME,MODEL,SIZE,SERIAL | grep -v "rom\|loop\|airoot\|sr"
      OK=0
      while [ "${OK}" = 0 ] ; do
            STR_READ=`show_message SPECIFY_PARTITION`
+           AMSURE=
            read -p "${STR_READ}" AMSURE
            LAST_SYMBOL=`echo ${AMSURE:$((${#AMSURE}-1)):1}`
            if [ "${AMSURE}" = "i" ]; then
@@ -290,13 +338,16 @@ partition_drive() {
            elif [ "${AMSURE}" = "" ]; then
               AMSURE="/dev/sda"
               echo "/dev/sda"
-           #elif [[ "${LAST_SYMBOL}" = *[[:digit:]]* ]]; then
-           #  show_message NOT_RIGHT_VALUE
-           #  continue
+           elif [[ "${LAST_SYMBOL}" = *[[:digit:]]* ]]; then
+              show_message NOT_RIGHT_VALUE
+              continue
            elif ! ls -l "${AMSURE}" >/dev/null 2>/dev/null ; then
               show_message NOT_RIGHT_VALUE
               continue
            fi
+           efinition_ssd;
+           # Deletes the disk partition table.
+           deletes_disk_partition_table "${AMSURE}";
            cfdisk "${AMSURE}"
            if [ $? = 0 ]; then
               partprobe "${AMSURE}"
@@ -311,11 +362,50 @@ partition_drive() {
 }
 
 #=======================================
-install_ssd(){
-  #Определение SSD
-  hdparm -I /dev/sda | grep TRIM  > /dev/null
+preparation_disk(){
+  local OK AMSURE
+
+  if [ "$INSTALL_ARCH" = "arm" ] ; then
+     UEFI=0;
+  else
+     if [ -d /sys/firmware/efi ]; then
+        UEFI=1;
+     else
+        UEFI=0;
+     fi
+  fi
+  partition_drive
+  mount_part "/"
+  if [ $UEFI = 1 ]; then
+      mount_part "efi"
+  fi
+  mount_part "swap"
+  OK=0;
+  while [ "$OK" = 0 ] ; do
+      STR_READ=`show_message SPECIFY_MOUNTING_PARTITION`
+      read -p "${STR_READ}" AMSURE
+      if [ "${AMSURE}" = "i" ]; then
+         OK=1
+         continue
+      elif [ "${AMSURE}" = "" ]; then
+         show_message NOT_RIGHT_VALUE
+         OK=0
+      else
+         mount_part "${AMSURE}"
+      fi
+  done
+}
+
+#=======================================
+# Определение SSD
+definition_ssd(){
+  local PART
+
+  PART=$1
+
+  hdparm -I $PART | grep TRIM  > /dev/null
   if [ $? = 0 ]; then
-     read -p "Для устройства /dev/sda есть поддержка TRIM, использовать ее?" AMSURE
-     echo "Для устройства /dev/sda есть поддержка TRIM"
+     #read -p "Для устройства /dev/sda есть поддержка TRIM, использовать ее?" AMSURE
+     show_message SUPPORT_TRIM $PART
   fi
 }
