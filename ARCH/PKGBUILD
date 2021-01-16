@@ -1,5 +1,5 @@
 pkgname=install-snuglinux
-pkgver=0.0.11
+pkgver=0.0.18
 pkgrel=1
 pkgdesc="Console script to install and configure distribution snuglinux"
 arch=('any')
@@ -7,14 +7,15 @@ url="https://github.com/snuglinux/install-snuglinux"
 license=('GPL2')
 depends=("openssl" "grep")
 source=("https://github.com/snuglinux/${pkgname}/archive/${pkgver}.tar.gz")
-md5sums=('b3cbde2f8c9eee2c69449624385cbb57')
+backup=('etc/install-snuglinux.conf')
+md5sums=('bc4f8e3919cd9235c39ddf5d25a8fcb6')
 
 package(){
   cd "$srcdir/${pkgname}-$pkgver"
 
   # Create folders
   install -d "$pkgdir/usr/share/snuglinux"
-  install -d "$pkgdir/etc"
+  install -d -m755 "$pkgdir/etc"
   install -d "$pkgdir/usr/bin"
   install -d "$pkgdir/usr/share/doc/${pkgname}"
   install -d "$pkgdir/usr/share/licenses/${pkgname}"
@@ -25,6 +26,8 @@ package(){
   install -m644 install-snuglinux.func      "$pkgdir/usr/share/snuglinux"
   install -m644 install-partition.func      "$pkgdir/usr/share/snuglinux"
   install -m644 install-video.func          "$pkgdir/usr/share/snuglinux"
+  install -m644 list-arm-devices            "$pkgdir/usr/share/snuglinux"
+  install -m644 amdgpu                      "$pkgdir/usr/share/snuglinux"
   install -m644 README.md                   "$pkgdir/usr/share/doc/${pkgname}/README"
   install -Dm 644 COPYING                   "$pkgdir/usr/share/licenses/${pkgname}/LICENSE"
   install -Dm 644 install-snuglinux.conf    "$pkgdir/etc"
