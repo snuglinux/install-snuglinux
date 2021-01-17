@@ -486,6 +486,15 @@ uk) echo -e "${FC_4}Виконується установка пакета: ${FC
 esac;;
 
 ################
+SYSTEM_REBOOT)
+################
+case $lang in
+ru) echo -e "${FC_4}Нажмите ${FC_2}«r»${FC_4} для перезагрузки, ${FC_3}«q»${FC_4} для выхода${FC_0}" | tee -a $LOG_FILE;;
+uk) echo -e "${FC_4}Натисніть ${FC_2}«r»${FC_4} для перезавантаження, ${FC_3}«q»${FC_4} для виходу${FC_0}" | tee -a $LOG_FILE;;
+*)  echo -e "${FC_4}Press ${FC_2}«r»${FC_4} to reboot, ${FC_3}«q»${FC_4} to exit${FC_0}" | tee -a $LOG_FILE;;
+esac;;
+
+################
 WANT_INSTALL_PACKAGE*)
 ################
 case $lang in

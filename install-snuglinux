@@ -75,6 +75,4 @@ sync
 
 umount_part
 
-show_message PRESS_ANY_KEY_TO_REBOOT;
-read
-reboot
+system_reboot

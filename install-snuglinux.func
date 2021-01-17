@@ -688,9 +688,9 @@ run_command_chroot(){
   local STR_READ OK COMMAND_NAME
 
   OK=0;
-  COMMAND_NAME=$1;
+  COMMAND_NAME=$@;
   while [ "$OK" = 0 ] ; do
-      `arch-chroot ${DIR_CHROOT} bash -c "${COMMAND_NAME}"`
+      arch-chroot ${DIR_CHROOT} bash -c "${COMMAND_NAME}"
       if ! [ $? = 0 ]; then
          AMSURE=
          show_message FAILED_EXECUTE_COMMAND ${COMMAND_NAME};
@@ -884,4 +884,18 @@ checking_installed_packages(){
 clean_install_files(){
    rm $DIR_CHROOT/usr/bin/qemu-arm-static
    run_command_chroot "pacman -Scc --noconfirm"
+}
+
+#=======================================
+system_reboot(){
+   local KEY AMSURE STR_READ
+
+   KEY="qr"
+   STR_READ=`show_message SYSTEM_REBOOT`
+   while [ "$KEY" = "${KEY#*$AMSURE}" ] ; do
+       read -p "${STR_READ}" AMSURE
+   done
+   if [ $AMSURE == "r" ]; then
+      reboot
+   fi
 }
