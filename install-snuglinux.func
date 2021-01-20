@@ -688,18 +688,19 @@ run_command_chroot(){
   local STR_READ OK COMMAND_NAME
 
   OK=0;
-  COMMAND_NAME=$@;
+  COMMAND_NAME=$*;
   while [ "$OK" = 0 ] ; do
-      arch-chroot ${DIR_CHROOT} bash -c "${COMMAND_NAME}"
+      arch-chroot $DIR_CHROOT $COMMAND_NAME
       if ! [ $? = 0 ]; then
          AMSURE=
-         show_message FAILED_EXECUTE_COMMAND ${COMMAND_NAME};
-         STR_READ=`show_message RUN_COMMAND_AGAIN ${COMMAND_NAME}`;
+         show_message FAILED_EXECUTE_COMMAND $COMMAND_NAME;
+         STR_READ=`show_message RUN_COMMAND_AGAIN $COMMAND_NAME`;
          read -p "${STR_READ}" AMSURE
-         if [ ${AMSURE} == "y" ]; then
+         if [ $AMSURE == "y" ]; then
             OK=0;
-         elif [ ${AMSURE} == "n" ]; then
+         elif [ $AMSURE == "n" ]; then
             OK=1;
+            exit 1;
          fi
       else
          OK=1;
@@ -733,7 +734,11 @@ pacman_key_init(){
    show_message INITIALIZE_PACMAN_KEY
 
    run_command_chroot "pacman-key --init"
-   run_command_chroot "pacman-key --populate archlinuxarm"
+   if [[ "$INSTALL_ARCH" == "arm" ]]
+      run_command_chroot "pacman-key --populate archlinuxarm";
+   else
+      run_command_chroot "pacman-key --populate archlinux";
+   fi
    run_command_chroot "pacman -Syu --noconfirm"
 }
 
@@ -884,18 +889,4 @@ checking_installed_packages(){
 clean_install_files(){
    rm $DIR_CHROOT/usr/bin/qemu-arm-static
    run_command_chroot "pacman -Scc --noconfirm"
-}
-
-#=======================================
-system_reboot(){
-   local KEY AMSURE STR_READ
-
-   KEY="qr"
-   STR_READ=`show_message SYSTEM_REBOOT`
-   while [ "$KEY" = "${KEY#*$AMSURE}" ] ; do
-       read -p "${STR_READ}" AMSURE
-   done
-   if [ $AMSURE == "r" ]; then
-      reboot
-   fi
 }
