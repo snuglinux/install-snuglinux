@@ -112,7 +112,7 @@ install_uboot(){
 #=======================================
 # Install operating system loader
 install_bootloader(){
-  lsblk -e7 -d --output NAME,MODEL,SIZE,SERIAL | grep -v "rom\|loop\|airoot\|sr"
+  lsblk -e7 -d -p -o NAME,MODEL,SIZE,SERIAL | grep -v "rom\|loop\|airoot\|sr"
   if [ "$INSTALL_ARCH" == "arm" ] ; then
      install_uboot;
   else
@@ -312,6 +312,20 @@ deletes_disk_partition_table(){
 }
 
 #=======================================
+check_if_disk_exists(){
+   local DEV STR
+
+   DEV=$1
+
+   STR=`lsblk -e7 -d -o NAME -p -P| grep $DEV > /dev/null`
+   if [ $? = 0 ]; then
+      return 0
+   else
+      return 1
+   fi
+}
+
+#=======================================
 partition_drive() {
   local AMSURE OK STR_READ LAST_SYMBOL
 
@@ -325,7 +339,7 @@ partition_drive() {
      exit
   fi
   if [ "${AMSURE}" = "y" ] ; then
-     lsblk -e7 -d --output NAME,MODEL,SIZE,SERIAL | grep -v "rom\|loop\|airoot\|sr"
+     lsblk -e7 -d -p -o NAME,MODEL,SIZE,SERIAL | grep -v "rom\|loop\|airoot\|sr"
      OK=0
      while [ "${OK}" = 0 ] ; do
            STR_READ=`show_message SPECIFY_PARTITION`
@@ -338,14 +352,14 @@ partition_drive() {
            elif [ "${AMSURE}" = "" ]; then
               AMSURE="/dev/sda"
               echo "/dev/sda"
-           elif [[ "${LAST_SYMBOL}" = *[[:digit:]]* ]]; then
-              show_message NOT_RIGHT_VALUE
-              continue
-           elif ! ls -l "${AMSURE}" >/dev/null 2>/dev/null ; then
-              show_message NOT_RIGHT_VALUE
-              continue
+           else
+              check_if_disk_exists;
+              if [ $? = 0 ]; then
+                 show_message NOT_RIGHT_VALUE
+                 continue
+               fi
            fi
-           efinition_ssd;
+           definition_ssd "${AMSURE}";
            # Deletes the disk partition table.
            deletes_disk_partition_table "${AMSURE}";
            cfdisk "${AMSURE}"
@@ -403,7 +417,7 @@ definition_ssd(){
 
   PART=$1
 
-  hdparm -I $PART | grep TRIM  > /dev/null
+  hdparm -I $PART | grep "TRIM"  > /dev/null
   if [ $? = 0 ]; then
      #read -p "Для устройства /dev/sda есть поддержка TRIM, использовать ее?" AMSURE
      show_message SUPPORT_TRIM $PART
