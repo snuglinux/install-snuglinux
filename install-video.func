@@ -51,7 +51,7 @@ install_video_ati(){
      ARRAY="01"
   fi
   show_message SPECIFY_VIDEO_DRIVER
-  show_message 0_DO_NOT_INSTALL
+  show_message DO_NOT_INSTALL 0
   show_message 1_XF86_VIDEO_ATI
   if [ ${CHECK_AMDGPU} = 1 ]; then
      show_message 2_XF86_VIDEO_AMDGPU
@@ -95,7 +95,7 @@ install_video_nvidia(){
   ARRAY="01234"
 
   show_message SPECIFY_VIDEO_DRIVER
-  show_message 0_DO_NOT_INSTALL
+  show_message DO_NOT_INSTALL 0
   show_message 1_NVIDIA
   show_message 2_NVIDIA_390XX
   show_message 3_NVIDIA_340XX
@@ -139,7 +139,7 @@ install_video_vesa(){
 
   ARRAY="01"
   show_message SPECIFY_VIDEO_DRIVER
-  show_message 0_DO_NOT_INSTALL
+  show_message DO_NOT_INSTALL 0
   show_message 1_XF86_VIDEO_VESA
 
   STR_READ=`show_message CHOOSE_INSTALLATION_OPTION`
@@ -169,7 +169,7 @@ install_video_intel(){
 
   ARRAY="01"
   show_message SPECIFY_VIDEO_DRIVER
-  show_message 0_DO_NOT_INSTALL
+  show_message DO_NOT_INSTALL 0
   show_message 1_XF86_VIDEO_INTEL
 
   STR_READ=`show_message CHOOSE_INSTALLATION_OPTION`

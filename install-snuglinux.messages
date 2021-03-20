@@ -783,12 +783,12 @@ uk) echo -e "${FC_4}Создание загрузочного RAM диска ${F
 esac;;
 
 ################
-0_DO_NOT_INSTALL)
+DO_NOT_INSTALL*)
 ################
 case $lang in
-ru) echo -e "${FC_2}0${FC_3} - не устанавливать ${FC_0}" | tee -a $LOG_FILE;;
-uk) echo -e "${FC_2}0${FC_3} - не встановлювати ${FC_0}" | tee -a $LOG_FILE;;
-*)  echo -e "${FC_2}0${FC_3} - do not install ${FC_0}" | tee -a $LOG_FILE;;
+ru) echo -e "${FC_2}$2${FC_3} - не устанавливать ${FC_0}" | tee -a $LOG_FILE;;
+uk) echo -e "${FC_2}$2${FC_3} - не встановлювати ${FC_0}" | tee -a $LOG_FILE;;
+*)  echo -e "${FC_2}$2${FC_3} - do not install ${FC_0}" | tee -a $LOG_FILE;;
 esac;;
 
 ################
@@ -891,30 +891,39 @@ uk) echo -e "${FC_4}Вкажіть програму для управління 
 esac;;
 
 ################
-1_DHCPCD)
+SYSTEMD_NETWORKD*)
 ################
 case $lang in
-ru) echo -e "${FC_2}1${FC_3} - dhcpcd (DHCP клиент) ${FC_0}" | tee -a $LOG_FILE;;
-uk) echo -e "${FC_2}1${FC_3} - dhcpcd (DHCP клієнт) ${FC_0}" | tee -a $LOG_FILE;;
-*)  echo -e "${FC_2}1${FC_3} - dhcpcd (DHCP client) ${FC_0}" | tee -a $LOG_FILE;;
+ru) echo -e "${FC_2}$2${FC_3} - systemd-networkd (cистемный демон для управления сетевыми настройками) ${FC_0}" | tee -a $LOG_FILE;;
+uk) echo -e "${FC_2}$2${FC_3} - systemd-networkd (системний демон для управління мережевими настройками) ${FC_0}" | tee -a $LOG_FILE;;
+*)  echo -e "${FC_2}$2${FC_3} - systemd-networkd (system daemon for managing network settings) ${FC_0}" | tee -a $LOG_FILE;;
 esac;;
 
 ################
-2_NETWORK_MANAGER)
+DHCPCD*)
 ################
 case $lang in
-ru) echo -e "${FC_2}2${FC_3} - networkmanager (Менеджер сетевых подключений NetworkManager) ${FC_0}" | tee -a $LOG_FILE;;
-uk) echo -e "${FC_2}2${FC_3} - networkmanager (Менеджер підключення до мережі NetworkManager) ${FC_0}" | tee -a $LOG_FILE;;
-*)  echo -e "${FC_2}2${FC_3} - networkmanager (Network connection manager NetworkManager) ${FC_0}" | tee -a $LOG_FILE;;
+ru) echo -e "${FC_2}$2${FC_3} - dhcpcd (DHCP клиент) ${FC_0}" | tee -a $LOG_FILE;;
+uk) echo -e "${FC_2}$2${FC_3} - dhcpcd (DHCP клієнт) ${FC_0}" | tee -a $LOG_FILE;;
+*)  echo -e "${FC_2}$2${FC_3} - dhcpcd (DHCP client) ${FC_0}" | tee -a $LOG_FILE;;
 esac;;
 
 ################
-3_WICD)
+NETWORK_MANAGER*)
 ################
 case $lang in
-ru) echo -e "${FC_2}3${FC_3} - wicd (Менеджер сетевых подключений wicd) ${FC_0}" | tee -a $LOG_FILE;;
-uk) echo -e "${FC_2}3${FC_3} - wicd (Менеджер підключення до мережі wicd) ${FC_0}" | tee -a $LOG_FILE;;
-*)  echo -e "${FC_2}3${FC_3} - wicd (Network connection manager wicd) ${FC_0}" | tee -a $LOG_FILE;;
+ru) echo -e "${FC_2}$2${FC_3} - networkmanager (Менеджер сетевых подключений NetworkManager) ${FC_0}" | tee -a $LOG_FILE;;
+uk) echo -e "${FC_2}$2${FC_3} - networkmanager (Менеджер підключення до мережі NetworkManager) ${FC_0}" | tee -a $LOG_FILE;;
+*)  echo -e "${FC_2}$2${FC_3} - networkmanager (Network connection manager NetworkManager) ${FC_0}" | tee -a $LOG_FILE;;
+esac;;
+
+################
+WICD*)
+################
+case $lang in
+ru) echo -e "${FC_2}$2${FC_3} - wicd (Менеджер сетевых подключений wicd) ${FC_0}" | tee -a $LOG_FILE;;
+uk) echo -e "${FC_2}$2${FC_3} - wicd (Менеджер підключення до мережі wicd) ${FC_0}" | tee -a $LOG_FILE;;
+*)  echo -e "${FC_2}$2${FC_3} - wicd (Network connection manager wicd) ${FC_0}" | tee -a $LOG_FILE;;
 esac;;
 
 ################

@@ -51,6 +51,8 @@ fix_system_chroot;
 
 install_type;
 
+install_pkg_devices;
+
 install_video_driver;
 
 install_network_manager;

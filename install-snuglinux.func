@@ -319,17 +319,28 @@ install_pkg() {
 
 #=======================================
 install_network_manager(){
-   local ARRAY AMSURE INSTALL_X
+   local ARRAY AMSURE INSTALL_X TYPE
 
    installed_pkg "xorg-server" "$DIR_CHROOT"
    INSTALL_X="$?"
 
+   TMP_DOWN="$TMP_DIR/install/types"
+   TYPE=`sed -n ${SELECT_TYPE}p $FILE_LISTS`;
+   FILE_NETWORK="${TMP_DOWN}/${TYPE}/network_manager"
+   if [ -f $FILE_NETWORK ]; then
+      if [ -s $FILE_NETWORK ]; then
+         source $FILE_NETWORK
+         return 1
+      fi
+   fi
+
    ARRAY="0123"
    show_message SPECIFY_NETWORK_MANAGER
-   show_message 0_DO_NOT_INSTALL
-   show_message 1_DHCPCD
-   show_message 2_NETWORK_MANAGER
-   show_message 3_WICD
+   show_message DO_NOT_INSTALL 0
+   show_message SYSTEMD_NETWORKD 1
+   show_message DHCPCD 2
+   show_message NETWORK_MANAGER 3
+   show_message WICD 4
    STR_READ=`show_message CHOOSE_INSTALLATION_OPTION`
    OK=0
    while [ "${OK}" = 0 ] ; do
@@ -344,9 +355,11 @@ install_network_manager(){
    if [ "$AMSURE" = "0" ]; then
       return 0
    elif [ "$AMSURE" = "1" ]; then
+      install_sevice "systemd-networkd.service" "y"
+   elif [ "$AMSURE" = "2" ]; then
       install_sevice "dhcpcd.service" "y"
       return 1
-   elif [ "$AMSURE" = "2" ]; then
+   elif [ "$AMSURE" = "3" ]; then
         install_pkg "networkmanager" "y"
         install_sevice "NetworkManager-dispatcher" "y"
         install_sevice "NetworkManager" "y"
@@ -357,12 +370,12 @@ install_network_manager(){
            install_pkg "networkmanager-vpnc" "y"
            install_pkg "networkmanager-openconnect" "y"
         fi
-        install_pkg "bluez" "Поддержка Bluetooth bluez"
-        install_pkg "modemmanager" "Сервис для управления модемами" "ModemManager"
+        install_pkg "bluez"
+        install_pkg "modemmanager" "n" "ModemManager"
 #        install_pkg "openresolv" "resolv.conf управления конф. (resolvconf) пакет (openresolv)"
 #        install_pkg "ppp" "Реализует Point-to-Point протокол для удаленного доступа (ppp)"
        return 1
-   elif [ "$AMSURE" = "3" ]; then
+   elif [ "$AMSURE" = "4" ]; then
         install_pkg "wicd" "y"
         install_sevice "wicd" "y"
         if [ "${INSTALL_X}" = "1" ] ; then
@@ -370,7 +383,6 @@ install_network_manager(){
         fi
         return 1
    fi
-   #install_sevice systemd-networkd.service
 }
 
 #=======================================
@@ -564,7 +576,7 @@ download_type(){
      ARCH_ARM=""
   fi
   show_message LOADING_DATA_SERVER ${SNUG_SERVER}
-  TMP_DOWN="/tmp/snuglinux/install/types"
+  TMP_DOWN="$TMP_DIR/install/types"
   FILE_LISTS=$TMP_DOWN"/lists"
   rm -fr $TMP_DOWN
   mkdir -p $TMP_DOWN
@@ -584,18 +596,19 @@ download_type(){
        if [ $? != 0 ]; then
           show_message FAILED_LOAD_FILE https://${SNUG_SERVER}/install/types/$TYPE/packages
        fi
+       wget --quiet --tries=3 -c https://${SNUG_SERVER}/install/types/$TYPE/network_manager -P $TMP_DOWN/$TYPE
   done < $FILE_LISTS
 }
 
 #=======================================
 select_type() {
-  local STR_N TYPE OK STR_READ
+  local STR_N TYPE OK STR_READ TMP_DOWN
 
   select_arm_type
 
   download_type
 
-  TMP_DOWN="/tmp/snuglinux/install/types"
+  TMP_DOWN="$TMP_DIR/install/types"
   FILE_LISTS=${TMP_DOWN}"/lists"
   if ! [ -f ${FILE_LISTS} ]; then
      show_message FILE_NOT_FOUND ${FILE_LISTS}
@@ -635,11 +648,27 @@ select_type() {
 }
 
 #=======================================
+install_pkg_devices(){
+  local TMP_DOWN
+
+  if [ "$INSTALL_ARCH" == "arm" ]; then
+     TMP_DOWN="$TMP_DIR/install/devices"
+     mkdir -p ${TMP_DOWN}
+     wget --quiet --tries=3 -c https://${SNUG_SERVER}/install/devices/${ARM_MODEL} -O ${TMP_DOWN}/${ARM_MODEL}
+     if [ $? = 0 ]; then
+        if [ -f ${TMP_DOWN}/${ARM_MODEL} ]; then
+           source ${TMP_DOWN}/${ARM_MODEL}
+        fi
+     fi
+  fi
+}
+
+#=======================================
 download_pkg(){
   local FILE_LISTS TMP_DOWN TYPE PKG_NAME
 
   PKG_NAME=$1
-  TMP_DOWN="/tmp/snuglinux/install/types"
+  TMP_DOWN="$TMP_DIR/install/types"
   FILE_LISTS=${TMP_DOWN}"/lists"
 
   TYPE=`sed -n ${SELECT_TYPE}p $FILE_LISTS`;
@@ -659,8 +688,9 @@ download_pkg(){
 
 #=======================================
 install_type() {
-  local TYPE STR_PKG FILE_PKG VARS IFS_OLD
+  local TYPE STR_PKG FILE_PKG VARS IFS_OLD TMP_DOWN
 
+  TMP_DOWN="$TMP_DIR/install/types"
   TYPE=`sed -n ${SELECT_TYPE}p $FILE_LISTS`;
   if ! [ -f ${TMP_DOWN}/${TYPE}/packages ]; then
      show_message FILE_NOT_FOUND "${TMP_DOWN}/${TYPE}/packages"
@@ -685,22 +715,29 @@ install_type() {
 
 #=======================================
 run_command_chroot(){
-  local STR_READ OK COMMAND_NAME
+  local STR_READ OK COMMAND CONFIRM
 
-  OK=0;
-  COMMAND_NAME=$*;
+  OK=0; CONFIRM=0;
+  COMMAND=$@;
   while [ "$OK" = 0 ] ; do
-      arch-chroot $DIR_CHROOT $COMMAND_NAME
+      if [ "${COMMAND: -9}" == "confirm=y" ]; then
+         COMMAND=${COMMAND::${#COMMAND}-9};
+         CONFIRM=1;
+      fi
+      arch-chroot ${DIR_CHROOT} bash -c "${COMMAND}"
+      if [ ${CONFIRM}==1 ]; then
+         OK=1;
+         break;
+      fi
       if ! [ $? = 0 ]; then
          AMSURE=
-         show_message FAILED_EXECUTE_COMMAND $COMMAND_NAME;
-         STR_READ=`show_message RUN_COMMAND_AGAIN $COMMAND_NAME`;
+         show_message FAILED_EXECUTE_COMMAND ${COMMAND};
+         STR_READ=`show_message RUN_COMMAND_AGAIN ${COMMAND}`;
          read -p "${STR_READ}" AMSURE
-         if [ $AMSURE == "y" ]; then
+         if [ ${AMSURE} == "y" ]; then
             OK=0;
-         elif [ $AMSURE == "n" ]; then
+         elif [ ${AMSURE} == "n" ]; then
             OK=1;
-            exit 1;
          fi
       else
          OK=1;
@@ -734,10 +771,10 @@ pacman_key_init(){
    show_message INITIALIZE_PACMAN_KEY
 
    run_command_chroot "pacman-key --init"
-   if [[ "$INSTALL_ARCH" == "arm" ]]
-      run_command_chroot "pacman-key --populate archlinuxarm";
+   if [ "$INSTALL_ARCH" == "arm" ]; then
+      run_command_chroot "pacman-key --populate archlinuxarm"
    else
-      run_command_chroot "pacman-key --populate archlinux";
+      run_command_chroot "pacman-key --populate archlinux"
    fi
    run_command_chroot "pacman -Syu --noconfirm"
 }
@@ -745,7 +782,7 @@ pacman_key_init(){
 #=======================================
 install_basic_packages(){
    show_message INSTALLING_BASIC_PACKAGES
-   if [ "$INSTALL_ARCH" == "arm" ] ; then
+   if [ "$INSTALL_ARCH" == "arm" ]; then
       download_rootfs;
       unzip_rootfs;
    else
@@ -828,7 +865,7 @@ download_file_list(){
 #=======================================
 # Функция для выбора ARM устройства
 select_arm_type() {
-  local STR_N STR STR_READ FILE_LISTS OK SELECT_TYPE
+  local STR_N STR STR_READ FILE_LISTS OK SELECT_TYPE TMP_DOWN
 
   ARM_MODEL=
   ARM_ARCH=
@@ -838,7 +875,7 @@ select_arm_type() {
 
   download_file_list "list-arm-devices";
 
-  TMP_DOWN="/tmp/snuglinux/install"
+  TMP_DOWN="$TMP_DIR/install"
   FILE_LISTS=${TMP_DOWN}"/list-arm-devices"
   if ! [ -f ${FILE_LISTS} ]; then
      show_message FILE_NOT_FOUND ${FILE_LISTS}
@@ -889,4 +926,18 @@ checking_installed_packages(){
 clean_install_files(){
    rm $DIR_CHROOT/usr/bin/qemu-arm-static
    run_command_chroot "pacman -Scc --noconfirm"
+}
+
+#=======================================
+system_reboot(){
+   local KEY AMSURE STR_READ
+
+   KEY="qr"
+   STR_READ=`show_message SYSTEM_REBOOT`
+   while [ "$KEY" = "${KEY#*$AMSURE}" ] ; do
+       read -p "${STR_READ}" AMSURE
+   done
+   if [ $AMSURE == "r" ]; then
+      reboot
+   fi
 }

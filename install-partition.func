@@ -125,7 +125,7 @@ umount_part() {
   local PATCH_PART
 
   PATCH_PART=$1
-
+  cd /
   mount | grep ${PATCH_PART}  > /dev/null
   if [ $? = 0 ]; then
      umount -R ${PATCH_PART}
@@ -133,10 +133,6 @@ umount_part() {
   swapon | grep "${PATCH_PART}"  > /dev/null
   if [ $? = 0 ]; then
      swapoff "${PATCH_PART}"
-  fi
-  mount | grep ${PATCH_PART}  > /dev/null
-  if [ $? = 0 ]; then
-     umount -R ${PATCH_PART}
   fi
   mount | grep "${PATCH_PART}"  > /dev/null
   if [ $? != 0 ]; then
@@ -319,9 +315,9 @@ check_if_disk_exists(){
 
    STR=`lsblk -e7 -d -o NAME -p -P| grep $DEV > /dev/null`
    if [ $? = 0 ]; then
-      return 0
-   else
       return 1
+   else
+      return 0
    fi
 }
 
@@ -353,7 +349,7 @@ partition_drive() {
               AMSURE="/dev/sda"
               echo "/dev/sda"
            else
-              check_if_disk_exists;
+              check_if_disk_exists $AMSURE;
               if [ $? = 0 ]; then
                  show_message NOT_RIGHT_VALUE
                  continue
