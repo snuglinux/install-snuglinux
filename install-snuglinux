@@ -29,7 +29,7 @@ if [ "$?" = 1 ]; then
    exit 1;
 fi
 
-edit_pacman_conf;
+edit_pacman_conf "/etc";
 
 download_updates_func;
 
