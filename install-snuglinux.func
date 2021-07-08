@@ -1,5 +1,12 @@
 #! /bin/bash
 
+BASE_NAME="install-snuglinux"
+INSTALL_ARCH=$(uname -m)
+CONFIG_FILE=/etc/install-snuglinux.conf
+INSTALL_PREFIX=/usr
+PO_DIR=${INSTALL_PREFIX}/share/snuglinux
+DIR_CHROOT=/mnt
+TMP_DIR=/tmp/snuglinux
 YN="yn"
 
 # Loading message file
@@ -114,6 +121,7 @@ download_updates_func(){
 
 #========================
 set_options(){
+  INSTALL_ARCH=`uname -m`
   while [ ! -z "$1" ]; do
         case $1 in
              -v)

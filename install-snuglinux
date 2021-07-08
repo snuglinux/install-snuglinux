@@ -2,13 +2,7 @@
 
 CURRENT_VERSION=0.0.0
 INSTALL_PREFIX=/usr
-BASE_NAME=`basename "$0"`
-INSTALL_ARCH=$(uname -m)
-CONFIG_FILE=/etc/install-snuglinux.conf
 PO_DIR=${INSTALL_PREFIX}/share/snuglinux
-DIR_CHROOT=/mnt
-TMP_DIR=/tmp/snuglinux
-
 
 if ! [ -f ${PO_DIR}/install-snuglinux.func ]; then
   case $lang in
