@@ -28,24 +28,6 @@ else
    source "$CONFIG_FILE"
 fi
 
-# install-partition.func
-if [ -f "${PO_DIR}/install-partition.func" ]; then
-   . "${PO_DIR}/install-partition.func"
-else
-   show_message FILE_NOT_FOUND "${PO_DIR}/install-partition.func"
-   exit 1
-fi
-
-# install-video.func
-if [ -f "${PO_DIR}/install-video.func" ]; then
-   source "${PO_DIR}/install-video.func"
-else
-   show_message FILE_NOT_FOUND "${PO_DIR}/install-video.func"
-   exit 1
-fi
-
-pacman -Sy
-
 # To determine in pacman yes
 YES_CHAR="$(pacman -Sddw bash --noconfirm | grep '? \[' | cut -d"[" -f2 | cut -d"/" -f1)"
 
@@ -395,10 +377,10 @@ install_network_manager(){
 
 #=======================================
 edit_pacman_conf(){
-  local PATH FILE F
+  local PATH_FILE FILE F
 
-  PATH="$1";
-  FILE="${PATH}/pacman.conf";
+  PATH_FILE="$1";
+  FILE="${PATH_FILE}/pacman.conf";
   show_message MAKING_CHANGES_TO_FILE "${FILE}"
   if [ "$INSTALL_ARCH" = "x86_64" ] ; then
      grep "#\[multilib]" $FILE > /dev/null
@@ -420,7 +402,7 @@ edit_pacman_conf(){
      let "F = $F + 1"
      sed -i $FILE -e $F"a\Server = https://snuglinux.pp.ua/repo/core/"'$arch'"\n"
   fi
-  sed -i 's/^# Server/Server/' "${PATH}/pacman.d/mirrorlist"
+  sed -i 's/^# Server/Server/' "${PATH_FILE}/pacman.d/mirrorlist"
 }
 
 #=======================================
