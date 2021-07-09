@@ -402,6 +402,12 @@ edit_pacman_conf(){
      let "F = $F + 1"
      sed -i $FILE -e $F"a\Server = https://snuglinux.pp.ua/repo/core/"'$arch'"\n"
   fi
+}
+
+#=======================================
+edit_pacman_mirrorlist(){
+  local PATH_FILE
+
   sed -i 's/^# Server/Server/' "${PATH_FILE}/pacman.d/mirrorlist"
 }
 
@@ -753,6 +759,7 @@ fix_system_chroot(){
    fi
    system_language "$DIR_CHROOT";
    edit_pacman_conf "$DIR_CHROOT/etc";
+   edit_pacman_mirrorlist "$DIR_CHROOT/etc";
    pacman_key_init;
 }
 

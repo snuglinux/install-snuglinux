@@ -49,6 +49,8 @@ fi
 
 edit_pacman_conf "/etc";
 
+edit_pacman_mirrorlist "/etc";
+
 download_updates_func;
 
 checking_installed_packages;
