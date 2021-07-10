@@ -33,9 +33,9 @@ YES_CHAR="$(pacman -Sddw bash --noconfirm | grep '? \[' | cut -d"[" -f2 | cut -d
 
 #=======================================
 system_language() {
-  local UP_LANG_SELECT LANG_UTF8 STR_READ
+  local PATH_FILE UP_LANG_SELECT LANG_UTF8 STR_READ
 
-  PATH_CHROOT=$1
+  PATH_FILE=$1
 
   if ! [ -f ~/.config/lang.conf  ]; then
      while [ "${LIST_LANG}" = "${LIST_LANG#*$LANG_SELECT}" ] ; do
@@ -52,7 +52,7 @@ system_language() {
   source ~/.config/lang.conf
   UP_LANG_SELECT=`echo "${LANG_SELECT^^}"`
   LANG_UTF8=${LANG_SELECT}"_"${UP_LANG_SELECT}.UTF-8
-  if [ -z "${PATH_CHROOT}" ]; then
+  if [ -z "${PATH_FILE}" ]; then
      #loadkeys ${LANG_SELECT}
      export LANG=${LANG_UTF8}
      setfont cyr-sun16
@@ -63,20 +63,20 @@ system_language() {
      fi
      clear
   else
-     #arch-chroot ${PATH_CHROOT} loadkeys ${LANG_SELECT}
-     arch-chroot ${PATH_CHROOT} setfont cyr-sun16
-     arch-chroot ${PATH_CHROOT} localectl set-keymap us ${LANG_SELECT} --no-convert
+     #arch-chroot ${PATH_FILE} loadkeys ${LANG_SELECT}
+     arch-chroot ${PATH_FILE} setfont cyr-sun16
+     arch-chroot ${PATH_FILE} localectl set-keymap us ${LANG_SELECT} --no-convert
      if [ $? != 0 ]; then
         show_message CONTINUE_PRESS_ANY_KEY
         read
         return 1
      fi
-     echo -e "LANG=${LANG_UTF8}" > ${PATH_CHROOT}/etc/locale.conf
-     #echo -e "KEYMAP=${LANG_SELECT}\nFONT=cyr-sun16\nFONT_MAP=" > ${PATH_CHROOT}/etc/vconsole.conf
-     sed -i ${PATH_CHROOT}/etc/locale.gen -e "s|#\(en_US.UTF-8 UTF-8\)|\1|"
-     sed -i ${PATH_CHROOT}/etc/locale.gen -e "s|#\(${LANG_UTF8} UTF-8\)|\1|"
-     #sed -i ${PATH_CHROOT}/etc/locale.gen -e 's|#\(ru_RU.UTF-8 UTF-8\)|\1|'
-     arch-chroot ${PATH_CHROOT} locale-gen
+     echo -e "LANG=${LANG_UTF8}" > ${PATH_FILE}/etc/locale.conf
+     #echo -e "KEYMAP=${LANG_SELECT}\nFONT=cyr-sun16\nFONT_MAP=" > ${PATH_FILE}/etc/vconsole.conf
+     sed -i ${PATH_FILE}/etc/locale.gen -e "s|#\(en_US.UTF-8 UTF-8\)|\1|"
+     sed -i ${PATH_FILE}/etc/locale.gen -e "s|#\(${LANG_UTF8} UTF-8\)|\1|"
+     #sed -i ${PATH_FILE}/etc/locale.gen -e 's|#\(ru_RU.UTF-8 UTF-8\)|\1|'
+     arch-chroot ${PATH_FILE} locale-gen
      if [ $? != 0 ]; then
         show_message CONTINUE_PRESS_ANY_KEY
         read
