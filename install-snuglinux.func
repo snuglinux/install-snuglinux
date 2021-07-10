@@ -408,6 +408,7 @@ edit_pacman_conf(){
 edit_pacman_mirrorlist(){
   local PATH_FILE
 
+  PATH_FILE="$1";
   sed -i 's/^# Server/Server/' "${PATH_FILE}/pacman.d/mirrorlist"
 }
 
