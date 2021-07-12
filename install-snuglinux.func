@@ -140,19 +140,6 @@ ping_server() {
 }
 
 #=======================================
-ping_server() {
-  show_message PING_SERVER $SNUG_SERVER
-  res=1
-  /bin/ping ${SNUG_SERVER} -c 3 > /dev/null 2>&1 && res=0
-  if [ ${res} -ne 0 ]; then
-     show_message NOT_ACCESS_SERVER $SNUG_SERVER
-     exit 1
-  else
-     show_message OK
-  fi
-}
-
-#=======================================
 # Example: install_sevice "1" "2"
 # 1 - name sevice
 # 2 - do not ask questions (noconfirm)
