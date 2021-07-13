@@ -224,21 +224,25 @@ installed_pkg() {
 }
 
 #=======================================
-pacman_install_list() {
+pacman_install() {
   local LIST_PKG RESULT_STR
 
   LIST_PKG="$1"
-  OPTION="$2"
-#  RESULT_STR='/usr/bin/arch-chroot $DIR_CHROOT pacman -S --noconfirm'
-  if [ $OPTION == "1" ]; then
-     RESULT_STR='yes "$YES_CHAR" | /usr/bin/arch-chroot $DIR_CHROOT pacman -S --noconfirm --needed'
-  else
-     RESULT_STR='yes | /usr/bin/arch-chroot $DIR_CHROOT pacman -S --needed'
-  fi
-  for i in ${LIST_PKG[@]} ; do
-      RESULT_STR="${RESULT_STR} ${i}"
-  done
-  echo "${RESULT_STR}"
+  expect -c '
+    #  exp_internal 1
+    set timeout -1
+    spawn /usr/bin/arch-chroot '$DIR_CHROOT' pacman -S '$LIST_PKG'
+    expect {
+        "=1):" {
+            interact
+            exit
+        }
+        "*Y/n*" {
+            send "y\r"
+            exp_continue
+        }
+    }
+    expect eof'
 }
 
 #=======================================
@@ -268,14 +272,7 @@ install_pkg() {
      AMSURE="y"
   fi
   if [ "${AMSURE}" = "y" ]; then
-     PACMAN_CMD=`pacman_install_list "${INSTALL_PKG}" "1"`
-     eval ${PACMAN_CMD}
-     if ! [ $? = 0 ]; then
-        PACMAN_CMD=`pacman_install_list "${INSTALL_PKG}" "2"`
-        eval ${PACMAN_CMD}
-     fi
-#     arch-chroot $DIR_CHROOT pacman -S --noconfirm "${INSTALL_PKG}"
-#     arch-chroot $DIR_CHROOT pacman -S "${INSTALL_PKG}"
+     pacman_install "${INSTALL_PKG}"
      if [ $? = 0 ]; then
         show_message SUCCESSFULLY_INSTALLED_PACKAGE "${INSTALL_PKG}"
         INSTALL=1
@@ -909,7 +906,9 @@ checking_installed_packages(){
 
 #=======================================
 clean_install_files(){
-   rm $DIR_CHROOT/usr/bin/qemu-arm-static
+   if [[ "$INSTALL_ARCH" == "arm" ]] && [[ $(uname -m) == "x86_64" ]] ; then
+      rm $DIR_CHROOT/usr/bin/qemu-arm-static
+   fi
    run_command_chroot "pacman -Scc --noconfirm"
 }
 

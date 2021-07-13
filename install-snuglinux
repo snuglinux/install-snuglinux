@@ -1,6 +1,6 @@
 #! /bin/bash
 
-CURRENT_VERSION=0.0.0
+CURRENT_VERSION=0.0.22
 INSTALL_PREFIX=/usr
 PO_DIR=${INSTALL_PREFIX}/share/snuglinux
 
@@ -31,8 +31,6 @@ else
    exit 1
 fi
 
-pacman -Sy
-
 system_language
 
 set_options $*
@@ -41,6 +39,8 @@ if [[ $EUID -ne 0 ]]; then
    show_message I_M_NOT_ROOT
    exit 1
 fi
+
+pacman -Sy
 
 ping_server
 if [ "$?" = 1 ]; then

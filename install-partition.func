@@ -59,7 +59,9 @@ install_grub_uefi(){
      STR_READ=`show_message UEFI_DIRECTORY_DOES_NOT_EXIST $DIR_CHROOT/boot/efi`
      return 1
   fi
-  install_pkg "grub efibootmgr" "y"
+  install_pkg "grub" "y"
+  install_pkg "efibootmgr" "y"
+
   OK=0
   while [ "${OK}" = 0 ] ; do
      arch-chroot $DIR_CHROOT grub-install
