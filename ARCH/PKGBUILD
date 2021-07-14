@@ -1,5 +1,5 @@
 pkgname=install-snuglinux
-pkgver=0.0.23
+pkgver=0.0.24
 pkgrel=1
 pkgdesc="Console script to install and configure distribution snuglinux"
 arch=('any')
@@ -8,7 +8,7 @@ license=('GPL2')
 depends=("openssl" "grep" "sed" "wget" "expect")
 source=("https://github.com/snuglinux/${pkgname}/archive/${pkgver}.tar.gz")
 backup=('etc/install-snuglinux.conf')
-md5sums=('2b65e8a05b74a5d4660558d34bb11c8e')
+md5sums=('3aa4b115eee4fbc76eacfe886abf36ff')
 
 package(){
   cd "$srcdir/${pkgname}-$pkgver"
