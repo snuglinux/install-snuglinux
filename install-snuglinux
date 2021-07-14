@@ -63,9 +63,9 @@ install_basic_packages;
 
 fix_system_chroot;
 
-install_type;
+install_type_pkg;
 
-install_pkg_devices;
+install_devices_pkg;
 
 install_video_driver;
 
@@ -89,6 +89,6 @@ clean_install_files;
 
 sync
 
-umount_part
+umount_part "/mnt"
 
 system_reboot

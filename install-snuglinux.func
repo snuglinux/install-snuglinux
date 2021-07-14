@@ -206,6 +206,7 @@ not_installed_pkg() {
 }
 
 #=======================================
+# Determines if the package is installed on the operating system
 installed_pkg() {
   local NAME_PKG PATH_CHROOT INSTALL_PKG
 
@@ -224,14 +225,36 @@ installed_pkg() {
 }
 
 #=======================================
-pacman_install() {
-  local LIST_PKG RESULT_STR
+download_pkg(){
+  local FILE_LISTS TMP_DOWN TYPE PKG_NAME
 
-  LIST_PKG="$1"
+  PKG_NAME=$1
+  TMP_DOWN="$TMP_DIR/install/types"
+  FILE_LISTS=${TMP_DOWN}"/lists"
+  ADD_PACKAGES=
+  ADD_SEVICES=
+
+  TYPE=`sed -n ${SELECT_TYPE}p $FILE_LISTS`;
+  if [ -f ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME} ]; then
+     rm -f ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME}
+  fi
+  wget --quiet --tries=3 -c https://${SNUG_SERVER}/install/types/${TYPE}/pack/${PKG_NAME} -P ${TMP_DOWN}/${TYPE}/pack
+  if [ $? = 0 ]; then
+     if [ -f ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME} ]; then
+        source ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME}
+     fi
+  fi
+}
+
+#=======================================
+pacman_install() {
+  local LIST_PKG
+
+  LIST_PKG=$@
   expect -c '
     #  exp_internal 1
     set timeout -1
-    spawn /usr/bin/arch-chroot '$DIR_CHROOT' pacman -S '$LIST_PKG'
+    spawn /usr/bin/arch-chroot '$DIR_CHROOT' pacman -S '"$LIST_PKG"'
     expect {
         "=1):" {
             interact
@@ -272,11 +295,13 @@ install_pkg() {
      AMSURE="y"
   fi
   if [ "${AMSURE}" = "y" ]; then
-     pacman_install "${INSTALL_PKG}"
+     download_pkg "${INSTALL_PKG}"
+     pacman_install "${INSTALL_PKG} ${ADD_PACKAGES}"
      if [ $? = 0 ]; then
         show_message SUCCESSFULLY_INSTALLED_PACKAGE "${INSTALL_PKG}"
         INSTALL=1
         install_sevice "${SYSTEMD}"
+        install_sevice "${ADD_SEVICES}"
      else
         show_message FAILED_INSTALL_PACKAGE "${INSTALL_PKG}"
         INSTALL=0
@@ -629,7 +654,7 @@ select_type() {
 }
 
 #=======================================
-install_pkg_devices(){
+install_devices_pkg(){
   local TMP_DOWN
 
   if [ "$INSTALL_ARCH" == "arm" ]; then
@@ -645,30 +670,7 @@ install_pkg_devices(){
 }
 
 #=======================================
-download_pkg(){
-  local FILE_LISTS TMP_DOWN TYPE PKG_NAME
-
-  PKG_NAME=$1
-  TMP_DOWN="$TMP_DIR/install/types"
-  FILE_LISTS=${TMP_DOWN}"/lists"
-
-  TYPE=`sed -n ${SELECT_TYPE}p $FILE_LISTS`;
-  if [ -f ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME} ]; then
-     rm -f ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME}
-  fi
-#  if ! [ -d $DIR_CHROOT/$TMP_DOWN/$TYPE/pack ]; then
-#     mkdit -p $DIR_CHROOT/$TMP_DOWN/$TYPE/pack
-#  fi
-  wget --quiet --tries=3 -c https://${SNUG_SERVER}/install/types/${TYPE}/pack/${PKG_NAME} -P ${TMP_DOWN}/${TYPE}/pack
-  if [ $? = 0 ]; then
-     if [ -f ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME} ]; then
-        source ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME}
-     fi
-  fi
-}
-
-#=======================================
-install_type() {
+install_type_pkg() {
   local TYPE STR_PKG FILE_PKG VARS IFS_OLD TMP_DOWN
 
   TMP_DOWN="$TMP_DIR/install/types"
@@ -687,9 +689,6 @@ install_type() {
       VARS=$(echo $line | tr " " "\n");
       STR_PKG=( ${VARS} )
       install_pkg "${STR_PKG[0]}" "${STR_PKG[1]}" "${STR_PKG[2]}"
-      if [ $? = 0 ]; then
-         download_pkg "${STR_PKG[0]}"
-      fi
   done
   IFS=$IFS_OLD
 }
@@ -830,16 +829,16 @@ download_rootfs(){
 
 #=======================================
 download_file_list(){
-  local FILE_LISTS TMP_DOWN TYPE
+  local FILE_LISTS TMP_DOWN DOWN_FILE
 
-  TYPE=$1;
+  DOWN_FILE=$1;
 
   TMP_DOWN="$TMP_DIR/install"
-  FILE_LISTS="$TMP_DOWN/$TYPE"
+  FILE_LISTS="$TMP_DOWN/$DOWN_FILE"
   mkdir -p $TMP_DOWN
-  wget --quiet --tries=3 -c https://${SNUG_SERVER}/install/$TYPE -O $FILE_LISTS
+  wget --quiet --tries=3 -c https://${SNUG_SERVER}/install/$DOWN_FILE -O $FILE_LISTS
   if [ $? != 0 ]; then
-     show_message FAILED_LOAD_FILE https://${SNUG_SERVER}/install/$TYPE
+     show_message FAILED_LOAD_FILE https://${SNUG_SERVER}/install/$DOWN_FILE
      exit 1;
   fi
 }
