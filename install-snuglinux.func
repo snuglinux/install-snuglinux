@@ -1,7 +1,6 @@
 #! /bin/bash
 
 BASE_NAME="install-snuglinux"
-INSTALL_ARCH=$(uname -m)
 CONFIG_FILE=/etc/install-snuglinux.conf
 INSTALL_PREFIX=/usr
 PO_DIR=${INSTALL_PREFIX}/share/snuglinux

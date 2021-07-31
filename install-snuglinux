@@ -40,7 +40,7 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-pacman -Sy
+pacman -Syy
 
 ping_server
 if [ "$?" = 1 ]; then
