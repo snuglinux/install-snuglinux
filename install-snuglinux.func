@@ -152,7 +152,10 @@ install_sevice(){
   fi
   echo "${SERVICE}" | grep service > /dev/null
   if [ $? != 0 ]; then
-     SERVICE="${SERVICE}.service"
+     echo "${SERVICE}" | grep .socket > /dev/null
+     if [ $? != 0 ]; then
+        SERVICE="${SERVICE}.service"
+     fi
   fi
   if [ "${NOCONFIRM}" = "y" ]; then
      INSTALLSYSTEMD="y"
@@ -163,7 +166,17 @@ install_sevice(){
      done
   fi
   if [ "$INSTALLSYSTEMD" == "y" ]; then
-     if ls -l "$DIR_CHROOT/usr/lib/systemd/system" | grep "${SERVICE}" > /dev/null ; then
+     echo "${SERVICE}" | grep .socket. > /dev/null
+     if [ $? == 0 ]; then
+        arch-chroot $DIR_CHROOT systemctl enable --now "${SERVICE}"
+        if [ $? = 0 ]; then
+           show_message DEMON_AUTOSTART ${SERVICE}
+        else
+           show_message CONTINUE_PRESS_ANY_KEY
+           read
+           return 1
+        fi
+     elif ls -l "$DIR_CHROOT/usr/lib/systemd/system" | grep "${SERVICE}" > /dev/null ; then
         arch-chroot $DIR_CHROOT systemctl enable "${SERVICE}"
         if [ $? = 0 ]; then
            show_message DEMON_AUTOSTART ${SERVICE}
