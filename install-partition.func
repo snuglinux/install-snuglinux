@@ -43,8 +43,6 @@ install_grub_bios(){
              show_message FAILED_EXECUTE_COMMAND "grub-mkconfig -o /boot/grub/grub.cfg"
              return 1
            fi
-           #arch-chroot $DIR_CHROOT sed -i /boot/grub/grub.cfg -e 's|timeout=5|timeout=1|g'
-           #arch-chroot $DIR_CHROOT sed -i -e "s|Arch Linux|Snug Linux|g" /boot/grub/grub.cfg
            OK=1
        fi
   done
@@ -74,8 +72,6 @@ install_grub_uefi(){
         show_message FAILED_EXECUTE_COMMAND "grub-mkconfig -o /boot/grub/grub.cfg"
         return 1
      fi
-     #arch-chroot $DIR_CHROOT sed -i /boot/grub/grub.cfg -e 's|timeout=5|timeout=1|g'
-     #arch-chroot $DIR_CHROOT sed -i -e "s|Arch Linux|Snug Linux|g" /boot/grub/grub.cfg
      OK=1
   done
   return 0
