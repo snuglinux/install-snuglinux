@@ -22,7 +22,7 @@ install_grub_bios(){
   local STR_READ AMSURE OK
 
   OK=0
-  install_pkg "grub" "y"
+  install_pkg "grub-sl" "y"
   while [ "${OK}" = 0 ] ; do
         STR_READ=`show_message SPECIFY_PARTITION_INSTALL "grub" "/dev/sda"`
         read -p "${STR_READ}" AMSURE
@@ -43,8 +43,8 @@ install_grub_bios(){
              show_message FAILED_EXECUTE_COMMAND "grub-mkconfig -o /boot/grub/grub.cfg"
              return 1
            fi
-           arch-chroot $DIR_CHROOT sed -i /boot/grub/grub.cfg -e 's|timeout=5|timeout=1|g'
-           arch-chroot $DIR_CHROOT sed -i -e "s|Arch Linux|Snug Linux|g" /boot/grub/grub.cfg
+           #arch-chroot $DIR_CHROOT sed -i /boot/grub/grub.cfg -e 's|timeout=5|timeout=1|g'
+           #arch-chroot $DIR_CHROOT sed -i -e "s|Arch Linux|Snug Linux|g" /boot/grub/grub.cfg
            OK=1
        fi
   done
@@ -59,7 +59,7 @@ install_grub_uefi(){
      STR_READ=`show_message UEFI_DIRECTORY_DOES_NOT_EXIST $DIR_CHROOT/boot/efi`
      return 1
   fi
-  install_pkg "grub" "y"
+  install_pkg "grub-sl" "y"
   install_pkg "efibootmgr" "y"
 
   OK=0
@@ -74,8 +74,8 @@ install_grub_uefi(){
         show_message FAILED_EXECUTE_COMMAND "grub-mkconfig -o /boot/grub/grub.cfg"
         return 1
      fi
-     arch-chroot $DIR_CHROOT sed -i /boot/grub/grub.cfg -e 's|timeout=5|timeout=1|g'
-     arch-chroot $DIR_CHROOT sed -i -e "s|Arch Linux|Snug Linux|g" /boot/grub/grub.cfg
+     #arch-chroot $DIR_CHROOT sed -i /boot/grub/grub.cfg -e 's|timeout=5|timeout=1|g'
+     #arch-chroot $DIR_CHROOT sed -i -e "s|Arch Linux|Snug Linux|g" /boot/grub/grub.cfg
      OK=1
   done
   return 0

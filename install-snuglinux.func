@@ -917,6 +917,9 @@ checking_installed_packages(){
 
 #=======================================
 clean_install_files(){
+   if [[ "$INSTALL_ARCH" == "arm" ]] ; then
+      run_command_chroot "userdel -r alarm"
+   fi
    if [[ "$INSTALL_ARCH" == "arm" ]] && [[ $(uname -m) == "x86_64" ]] ; then
       rm $DIR_CHROOT/usr/bin/qemu-arm-static
    fi
