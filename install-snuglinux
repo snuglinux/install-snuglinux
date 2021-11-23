@@ -4,6 +4,8 @@ CURRENT_VERSION=0.0.22
 INSTALL_PREFIX=/usr
 PO_DIR=${INSTALL_PREFIX}/share/snuglinux
 
+pacman -Syy
+
 if ! [ -f ${PO_DIR}/install-snuglinux.func ]; then
   case $lang in
        ru) echo -e "\e[31mОшибка:\e[0m не найден файл install-snuglinux.func в '${PO_DIR}'!!!";;
@@ -40,7 +42,6 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-pacman -Syy
 
 ping_server
 if [ "$?" = 1 ]; then
