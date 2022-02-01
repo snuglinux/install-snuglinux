@@ -82,7 +82,7 @@ install_video_nvidia(){
   local ARRAY AMSURE PREFIXDRIVER STR_READ OK
 
   PREFIXDRIVER=""
-  ARRAY="01234"
+  ARRAY="012345"
 
   show_message SPECIFY_VIDEO_DRIVER
   show_message DO_NOT_INSTALL 0
