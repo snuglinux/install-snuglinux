@@ -971,6 +971,15 @@ case $lang in
   *)  echo -e "${FC_4}Enter your full username (first name, last name): ${FC_0}" | tee -a $LOG_FILE;;
 esac;;
 
+################
+OVERWRITE_EXISTING_TRAP)
+################
+case $lang in
+  ru) echo -e "${FC_4}(ОШИБКА): попытка перезаписать существующую ловушку EXIT ${FC_0}" | tee -a $LOG_FILE;;
+  uk) echo -e "${FC_4}(ПОМИЛКА): спроба перезаписати існуючу пастку EXIT ${FC_0}" | tee -a $LOG_FILE;;
+  *)  echo -e "${FC_4}(BUG): attempting to overwrite existing EXIT trap ${FC_0}" | tee -a $LOG_FILE;;
+esac;;
+
 *)
 echo -e "Unknown string $1";
 exit 1

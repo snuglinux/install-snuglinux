@@ -67,7 +67,7 @@ install_video_ati(){
   elif [ "${AMSURE}" = "2" ]; then
      install_pkg "xf86-video-amdgpu" "y"
      sed -i $DIR_CHROOT/etc/mkinitcpio.conf -e 's|MODULES=()|MODULES=(amdgpu)|g'
-     arch-chroot $DIR_CHROOT mkinitcpio -p linux$LINUX_VER
+     chroot $DIR_CHROOT mkinitcpio -p linux$LINUX_VER
      if ! [ -d $DIR_CHROOT/etc/X11/xorg.conf.d ]; then
         mkdir $DIR_CHROOT/etc/X11/xorg.conf.d
      fi
@@ -82,7 +82,7 @@ install_video_nvidia(){
   local ARRAY AMSURE PREFIXDRIVER STR_READ OK
 
   PREFIXDRIVER=""
-  ARRAY="012345"
+  ARRAY="01234"
 
   show_message SPECIFY_VIDEO_DRIVER
   show_message DO_NOT_INSTALL 0
@@ -121,7 +121,7 @@ install_video_nvidia(){
   install_pkg "opencl-nvidia$PREFIXDRIVER" "y"
   install_pkg "libvdpau" "y"
   install_pkg "nvidia$PREFIXDRIVER$LINUX_VER-dkms"
-  arch-chroot $DIR_CHROOT nvidia-xconfig
+  chroot $DIR_CHROOT nvidia-xconfig
   return 1
   # yes
 }
@@ -182,7 +182,7 @@ install_video_intel(){
   elif [ "$AMSURE" = "1" ]; then
      install_pkg "xf86-video-intel" "y"
      sed -i $DIR_CHROOT/etc/mkinitcpio.conf -e 's|MODULES=""|MODULES="i915"|g'
-     arch-chroot $DIR_CHROOT mkinitcpio -p linux$LINUX_VER
+     chroot $DIR_CHROOT mkinitcpio -p linux$LINUX_VER
      return 1
      # yes
   fi

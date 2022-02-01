@@ -1,6 +1,44 @@
 #! /bin/bash
 
 #=======================================
+chroot_add_mount() {
+  mount "$@" && CHROOT_ACTIVE_MOUNTS=("$2" "${CHROOT_ACTIVE_MOUNTS[@]}")
+}
+
+#=======================================
+chroot_maybe_add_mount() {
+  local cond=$1; shift
+  if eval "$cond"; then
+    chroot_add_mount "$@"
+  fi
+}
+
+#=======================================
+chroot_teardown() {
+  if (( ${#CHROOT_ACTIVE_MOUNTS[@]} )); then
+    umount "${CHROOT_ACTIVE_MOUNTS[@]}"
+  fi
+  unset CHROOT_ACTIVE_MOUNTS
+}
+
+#=======================================
+chroot_setup() {
+  CHROOT_ACTIVE_MOUNTS=()
+  [[ $(trap -p EXIT) ]] && show_message OVERWRITE_EXISTING_TRAP
+  trap 'chroot_teardown' EXIT
+
+  chroot_add_mount proc "$DIR_CHROOT/proc" -t proc -o nosuid,noexec,nodev &&
+  chroot_add_mount sys "$DIR_CHROOT/sys" -t sysfs -o nosuid,noexec,nodev,ro &&
+  ignore_error chroot_maybe_add_mount "[[ -d '$DIR_CHROOT/sys/firmware/efi/efivars' ]]" \
+               efivarfs "$DIR_CHROOT/sys/firmware/efi/efivars" -t efivarfs -o nosuid,noexec,nodev &&
+  chroot_add_mount udev "$DIR_CHROOT/dev" -t devtmpfs -o mode=0755,nosuid &&
+  chroot_add_mount devpts "$DIR_CHROOT/dev/pts" -t devpts -o mode=0620,gid=5,nosuid,noexec &&
+  chroot_add_mount shm "$DIR_CHROOT/dev/shm" -t tmpfs -o mode=1777,nosuid,nodev &&
+  chroot_add_mount /run "$DIR_CHROOT/run" --bind &&
+  chroot_add_mount tmp "$DIR_CHROOT/tmp" -t tmpfs -o mode=1777,strictatime,nodev,nosuid
+}
+
+#=======================================
 find_part_label(){
   local find_label=$1
   lsblk -f --output NAME,LABEL,TYPE -p -n -P 2>&1 | while read line; do
@@ -22,7 +60,7 @@ install_grub_bios(){
   local STR_READ AMSURE OK
 
   OK=0
-  install_pkg "grub-sl" "y"
+  install_pkg "grub" "y"
   while [ "${OK}" = 0 ] ; do
         STR_READ=`show_message SPECIFY_PARTITION_INSTALL "grub" "/dev/sda"`
         read -p "${STR_READ}" AMSURE
@@ -33,16 +71,18 @@ install_grub_bios(){
            OK=0
         else
            #grub-install --root-directory=$DIR_CHROOT "${AMSURE}"
-           arch-chroot $DIR_CHROOT grub-install "${AMSURE}"
+           chroot $DIR_CHROOT grub-install "${AMSURE}"
            if [ $? != 0 ]; then
              show_message FAILED_EXECUTE_COMMAND "grub-install ${AMSURE}"
              return 1
            fi
-           arch-chroot $DIR_CHROOT grub-mkconfig -o /boot/grub/grub.cfg
+           chroot $DIR_CHROOT grub-mkconfig -o /boot/grub/grub.cfg
            if [ $? != 0 ]; then
              show_message FAILED_EXECUTE_COMMAND "grub-mkconfig -o /boot/grub/grub.cfg"
              return 1
            fi
+           chroot $DIR_CHROOT sed -i /boot/grub/grub.cfg -e 's|timeout=5|timeout=1|g'
+           chroot $DIR_CHROOT sed -i -e "s|Arch Linux|Snug Linux|g" /boot/grub/grub.cfg
            OK=1
        fi
   done
@@ -57,21 +97,23 @@ install_grub_uefi(){
      STR_READ=`show_message UEFI_DIRECTORY_DOES_NOT_EXIST $DIR_CHROOT/boot/efi`
      return 1
   fi
-  install_pkg "grub-sl" "y"
+  install_pkg "grub" "y"
   install_pkg "efibootmgr" "y"
 
   OK=0
   while [ "${OK}" = 0 ] ; do
-     arch-chroot $DIR_CHROOT grub-install
+     chroot $DIR_CHROOT grub-install
      if [ $? != 0 ]; then
         show_message FAILED_EXECUTE_COMMAND "grub-install"
         return 1
      fi
-     arch-chroot $DIR_CHROOT grub-mkconfig -o /boot/grub/grub.cfg
+     chroot $DIR_CHROOT grub-mkconfig -o /boot/grub/grub.cfg
      if [ $? != 0 ]; then
         show_message FAILED_EXECUTE_COMMAND "grub-mkconfig -o /boot/grub/grub.cfg"
         return 1
      fi
+     chroot $DIR_CHROOT sed -i /boot/grub/grub.cfg -e 's|timeout=5|timeout=1|g'
+     chroot $DIR_CHROOT sed -i -e "s|Arch Linux|Snug Linux|g" /boot/grub/grub.cfg
      OK=1
   done
   return 0

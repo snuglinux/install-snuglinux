@@ -31,6 +31,12 @@ fi
 YES_CHAR="$(pacman -Sddw bash --noconfirm | grep '? \[' | cut -d"[" -f2 | cut -d"/" -f1)"
 
 #=======================================
+ignore_error() {
+  "$@" 2>/dev/null
+  return 0
+}
+
+#=======================================
 system_language() {
   local PATH_FILE UP_LANG_SELECT LANG_UTF8 STR_READ
 
@@ -62,9 +68,9 @@ system_language() {
      fi
      clear
   else
-     #arch-chroot ${PATH_FILE} loadkeys ${LANG_SELECT}
-     arch-chroot ${PATH_FILE} setfont cyr-sun16
-     arch-chroot ${PATH_FILE} localectl set-keymap us ${LANG_SELECT} --no-convert
+     #chroot ${PATH_FILE} loadkeys ${LANG_SELECT}
+     chroot ${PATH_FILE} setfont cyr-sun16
+     chroot ${PATH_FILE} localectl set-keymap us ${LANG_SELECT} --no-convert
      if [ $? != 0 ]; then
         show_message CONTINUE_PRESS_ANY_KEY
         read
@@ -75,7 +81,7 @@ system_language() {
      sed -i ${PATH_FILE}/etc/locale.gen -e "s|#\(en_US.UTF-8 UTF-8\)|\1|"
      sed -i ${PATH_FILE}/etc/locale.gen -e "s|#\(${LANG_UTF8} UTF-8\)|\1|"
      #sed -i ${PATH_FILE}/etc/locale.gen -e 's|#\(ru_RU.UTF-8 UTF-8\)|\1|'
-     arch-chroot ${PATH_FILE} locale-gen
+     chroot ${PATH_FILE} locale-gen
      if [ $? != 0 ]; then
         show_message CONTINUE_PRESS_ANY_KEY
         read
@@ -168,7 +174,7 @@ install_sevice(){
   if [ "$INSTALLSYSTEMD" == "y" ]; then
      echo "${SERVICE}" | grep .socket. > /dev/null
      if [ $? == 0 ]; then
-        arch-chroot $DIR_CHROOT systemctl enable --now "${SERVICE}"
+        chroot $DIR_CHROOT systemctl enable --now "${SERVICE}"
         if [ $? = 0 ]; then
            show_message DEMON_AUTOSTART ${SERVICE}
         else
@@ -177,7 +183,7 @@ install_sevice(){
            return 1
         fi
      elif ls -l "$DIR_CHROOT/usr/lib/systemd/system" | grep "${SERVICE}" > /dev/null ; then
-        arch-chroot $DIR_CHROOT systemctl enable "${SERVICE}"
+        chroot $DIR_CHROOT systemctl enable "${SERVICE}"
         if [ $? = 0 ]; then
            show_message DEMON_AUTOSTART ${SERVICE}
         else
@@ -208,7 +214,7 @@ not_installed_pkg() {
      if [ -z "${path_chroot}" ]; then
         pkg=`pacman -Qsq "${i}" | grep -x "${i}"`;
      else
-        pkg=`arch-chroot "${path_chroot}" pacman -Qsq "${i}" | grep -x "${i}"`;
+        pkg=`chroot "${path_chroot}" pacman -Qsq "${i}" | grep -x "${i}"`;
      fi
      if [ -z "${pkg}" ]; then
         inst_list="${inst_list} ${i}"
@@ -227,7 +233,7 @@ installed_pkg() {
   if [ -z "${PATH_CHROOT}" ]; then
      INSTALL_PKG=`pacman -Qsq "${NAME_PKG}" | grep -x "${NAME_PKG}"`;
   else
-     INSTALL_PKG=`arch-chroot "${PATH_CHROOT}" pacman -Qsq "${NAME_PKG}" | grep -x "${NAME_PKG}"`;
+     INSTALL_PKG=`chroot "${PATH_CHROOT}" pacman -Qsq "${NAME_PKG}" | grep -x "${NAME_PKG}"`;
   fi
   if [ -z "${INSTALL_PKG}" ]; then
      return 0
@@ -266,7 +272,7 @@ pacman_install() {
   expect -c '
     #  exp_internal 1
     set timeout -1
-    spawn /usr/bin/arch-chroot '$DIR_CHROOT' pacman -S '"$LIST_PKG"'
+    spawn /usr/bin/chroot '$DIR_CHROOT' pacman -S '"$LIST_PKG"'
     expect {
         "=1):" {
             interact
@@ -469,8 +475,8 @@ enter_localtime(){
      rm $DIR_CHROOT/etc/localtime
   fi
   ln -s /usr/share/zoneinfo/${LOCALTIME} $DIR_CHROOT/etc/localtime
-  #arch-chroot $DIR_CHROOT timedatectl set-timezone Europe/Kiev
-  #arch-chroot $DIR_CHROOT timedatectl set-ntp true
+  #chroot $DIR_CHROOT timedatectl set-timezone Europe/Kiev
+  #chroot $DIR_CHROOT timedatectl set-ntp true
   if [ $? != 0 ]; then
      show_message FAILED_SET_TIMEZONE
      return 1
@@ -507,7 +513,7 @@ set_password_user() {
   OK=0;
   while [ "$OK" = 0 ] ; do
      show_message ENTER_USER_PASSWORD "${USERNAME}"
-     arch-chroot $DIR_CHROOT passwd "${USERNAME}"
+     chroot $DIR_CHROOT passwd "${USERNAME}"
      if [ $? = 0 ]; then
         OK=1;
      else
@@ -526,7 +532,7 @@ change_username(){
    STR_READ=`show_message CHANGE_USERNAME`
    read -p "${STR_READ}" STR_USER_NAME
       if [ -n "${STR_USER_NAME}" ]; then
-          arch-chroot $DIR_CHROOT chfn -f "${STR_USER_NAME}" "${USERNAME}"
+          chroot $DIR_CHROOT chfn -f "${STR_USER_NAME}" "${USERNAME}"
           if [ $? != 0 ]; then
              show_message FAILED_CHANGE_FULL_USERNAME
              return 1
@@ -544,7 +550,7 @@ add_user(){
      show_message NOT_RIGHT_VALUE
      return 1
   fi
-  arch-chroot $DIR_CHROOT useradd -m -g users -G "audio,games,lp,optical,power,scanner,storage,video,wheel,disk,uucp,dbus" -s /bin/bash "${USERNAME}"
+  chroot $DIR_CHROOT useradd -m -g users -G "audio,games,lp,optical,power,scanner,storage,video,wheel,disk,uucp,dbus" -s /bin/bash "${USERNAME}"
   if [ $? != 0 ]; then
      show_message FAILED_CREATE_USER "${USERNAME}"
      return 1
@@ -716,7 +722,7 @@ run_command_chroot(){
          COMMAND=${COMMAND::${#COMMAND}-9};
          CONFIRM=1;
       fi
-      arch-chroot ${DIR_CHROOT} bash -c "${COMMAND}"
+      chroot ${DIR_CHROOT} bash -c "${COMMAND}"
       if [ ${CONFIRM}==1 ]; then
          OK=1;
          break;
