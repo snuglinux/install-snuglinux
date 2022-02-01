@@ -268,22 +268,8 @@ download_pkg(){
 pacman_install() {
   local LIST_PKG
 
-  LIST_PKG=$@
-  expect -c '
-    #  exp_internal 1
-    set timeout -1
-    spawn /usr/bin/chroot '$DIR_CHROOT' pacman -S '"$LIST_PKG"'
-    expect {
-        "=1):" {
-            interact
-            exit
-        }
-        "*Y/n*" {
-            send "y\r"
-            exp_continue
-        }
-    }
-    expect eof'
+  LIST_PKG=$*
+  pacinstall --cachedir=${DIR_CHROOT}/var/cache/pacman/pkg/ --root=${DIR_CHROOT} ${LIST_PKG} --yolo
 }
 
 #=======================================
@@ -314,7 +300,7 @@ install_pkg() {
   fi
   if [ "${AMSURE}" = "y" ]; then
      download_pkg "${INSTALL_PKG}"
-     pacman_install "${INSTALL_PKG} ${ADD_PACKAGES}"
+     pacman_install ${INSTALL_PKG} ${ADD_PACKAGES}
      if [ $? = 0 ]; then
         show_message SUCCESSFULLY_INSTALLED_PACKAGE "${INSTALL_PKG}"
         INSTALL=1
