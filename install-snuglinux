@@ -1,6 +1,6 @@
 #! /bin/bash
 
-CURRENT_VERSION=0.0.22
+CURRENT_VERSION=0.0.0
 INSTALL_PREFIX=/usr
 PO_DIR=${INSTALL_PREFIX}/share/snuglinux
 
@@ -40,8 +40,6 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-pacman -Sy
-
 ping_server
 if [ "$?" = 1 ]; then
    exit 1;
@@ -51,9 +49,9 @@ edit_pacman_conf "/etc";
 
 edit_pacman_mirrorlist "/etc";
 
-download_updates_func;
-
 checking_installed_packages;
+
+download_updates_func;
 
 select_type;
 

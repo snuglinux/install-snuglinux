@@ -77,7 +77,7 @@ system_language() {
         return 1
      fi
      echo -e "LANG=${LANG_UTF8}" > ${PATH_FILE}/etc/locale.conf
-     #echo -e "KEYMAP=${LANG_SELECT}\nFONT=cyr-sun16\nFONT_MAP=" > ${PATH_FILE}/etc/vconsole.conf
+     echo -e "KEYMAP=${LANG_SELECT}\nFONT=cyr-sun16\nFONT_MAP=" > ${PATH_FILE}/etc/vconsole.conf
      sed -i ${PATH_FILE}/etc/locale.gen -e "s|#\(en_US.UTF-8 UTF-8\)|\1|"
      sed -i ${PATH_FILE}/etc/locale.gen -e "s|#\(${LANG_UTF8} UTF-8\)|\1|"
      #sed -i ${PATH_FILE}/etc/locale.gen -e 's|#\(ru_RU.UTF-8 UTF-8\)|\1|'
@@ -777,6 +777,7 @@ install_basic_packages(){
          exit 1;
       fi
    fi
+   chroot ${DIR_CHROOT} pacman -Sy
 }
 
 #=======================================
@@ -894,6 +895,7 @@ select_arm_type() {
 #=======================================
 checking_installed_packages(){
    local ARM_PKG NOT_INSTALL_PKG
+   pacman -Sy
    if [[ "$INSTALL_ARCH" == "arm" ]] && [[ $(uname -m) == "x86_64" ]] ; then
       ARM_PKG="binfmt-qemu-static-sl";
    fi
