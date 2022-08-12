@@ -269,6 +269,7 @@ pacman_install() {
   local LIST_PKG
 
   LIST_PKG=$*
+  LIST_PKG=`echo ${LIST_PKG} | tr ' ' '\n'`
   pacinstall --cachedir=${DIR_CHROOT}/var/cache/pacman/pkg/ --root=${DIR_CHROOT} ${LIST_PKG} --yolo
 }
 
