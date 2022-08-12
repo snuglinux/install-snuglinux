@@ -161,6 +161,9 @@ umount_part() {
   local PATCH_PART
 
   PATCH_PART=$1
+  if [ -n "`ps -A | grep gpg-agent`" ]; then
+     killall gpg-agent
+  fi
   cd /
   mount | grep ${PATCH_PART}  > /dev/null
   if [ $? = 0 ]; then

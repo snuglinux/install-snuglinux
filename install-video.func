@@ -133,7 +133,7 @@ install_video_vesa(){
   ARRAY="01"
   show_message SPECIFY_VIDEO_DRIVER
   show_message DO_NOT_INSTALL 0
-  show_message 1_XF86_VIDEO_VESA
+  show_message INSTALL_XF86_VIDEO_VESA 1
 
   STR_READ=`show_message CHOOSE_INSTALLATION_OPTION`
   OK=0
@@ -158,11 +158,11 @@ install_video_vesa(){
 install_video_intel(){
   local ARRAY AMSURE STR_READ OK
 
-  ARRAY="02"
+  ARRAY="012"
   show_message SPECIFY_VIDEO_DRIVER
   show_message DO_NOT_INSTALL 0
-  show_message 1_XF86_VIDEO_INTEL
-  show_message 2_NOMODESET
+  show_message INSTALL_XF86_VIDEO_INTEL 1
+  show_message INSTALL_NOMODESET 2
 
   STR_READ=`show_message CHOOSE_INSTALLATION_OPTION`
   OK=0
@@ -185,7 +185,7 @@ install_video_intel(){
      return 1
      # yes
   elif [ "$AMSURE" = "2" ]; then
-     install_pkg "nomodeset" "y"
+     echo "not implemented yet"
      return 1
      # yes
   fi

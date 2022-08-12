@@ -810,21 +810,30 @@ case $lang in
 esac;;
 
 ################
-1_XF86_VIDEO_VESA)
+INSTALL_XF86_VIDEO_VESA)
 ################
 case $lang in
-  ru) echo -e "${FC_2}1${FC_3} - xf86-video-vesa (X.org vesa видео драйвер) ${FC_0}" | tee -a $LOG_FILE;;
-  uk) echo -e "${FC_2}1${FC_3} - xf86-video-vesa (X.org vesa відео драйвер) ${FC_0}" | tee -a $LOG_FILE;;
-  *)  echo -e "${FC_2}1${FC_3} - xf86-video-vesa (X.org vesa video driver) ${FC_0}" | tee -a $LOG_FILE;;
+  ru) echo -e "${FC_2}$2${FC_3} - xf86-video-vesa (X.org vesa видео драйвер) ${FC_0}" | tee -a $LOG_FILE;;
+  uk) echo -e "${FC_2}$2${FC_3} - xf86-video-vesa (X.org vesa відео драйвер) ${FC_0}" | tee -a $LOG_FILE;;
+  *)  echo -e "${FC_2}$2${FC_3} - xf86-video-vesa (X.org vesa video driver) ${FC_0}" | tee -a $LOG_FILE;;
 esac;;
 
 ################
-1_XF86_VIDEO_INTEL)
+INSTALL_XF86_VIDEO_INTEL)
 ################
 case $lang in
-  ru) echo -e "${FC_2}1${FC_3} - xf86-video-intel (X.org Intel i810/i830/i915/945G/G965+ видео драйвер) ${FC_0}" | tee -a $LOG_FILE;;
-  uk) echo -e "${FC_2}1${FC_3} - xf86-video-intel (X.org Intel i810/i830/i915/945G/G965+ відео драйвер) ${FC_0}" | tee -a $LOG_FILE;;
-  *)  echo -e "${FC_2}1${FC_3} - xf86-video-intel (X.org Intel i810/i830/i915/945G/G965+ video drivers) ${FC_0}" | tee -a $LOG_FILE;;
+  ru) echo -e "${FC_2}$2${FC_3} - xf86-video-intel (X.org Intel i810/i830/i915/945G/G965+ видео драйвер) ${FC_0}" | tee -a $LOG_FILE;;
+  uk) echo -e "${FC_2}$2${FC_3} - xf86-video-intel (X.org Intel i810/i830/i915/945G/G965+ відео драйвер) ${FC_0}" | tee -a $LOG_FILE;;
+  *)  echo -e "${FC_2}$2${FC_3} - xf86-video-intel (X.org Intel i810/i830/i915/945G/G965+ video drivers) ${FC_0}" | tee -a $LOG_FILE;;
+esac;;
+
+################
+INSTALL_NOMODESET)
+################
+case $lang in
+  ru) echo -e "${FC_2}$2${FC_3} - modesetting — это драйвер Xorg для устройств KMS.${FC_0}" | tee -a $LOG_FILE;;
+  uk) echo -e "${FC_2}$2${FC_3} - modesetting — це драйвер Xorg для пристроїв KMS.${FC_0}" | tee -a $LOG_FILE;;
+  *)  echo -e "${FC_2}$2${FC_3} - modesetting is an Xorg driver for KMS devices.${FC_0}" | tee -a $LOG_FILE;;
 esac;;
 
 ################
