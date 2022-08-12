@@ -307,6 +307,7 @@ install_pkg() {
         INSTALL=1
         install_sevice "${SYSTEMD}"
         install_sevice "${ADD_SEVICES}"
+        install_sevice "${ADD_SEVICES_NOCONFIRM}" "y"
      else
         show_message FAILED_INSTALL_PACKAGE "${INSTALL_PKG}"
         INSTALL=0

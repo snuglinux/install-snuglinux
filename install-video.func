@@ -158,12 +158,11 @@ install_video_vesa(){
 install_video_intel(){
   local ARRAY AMSURE STR_READ OK
 
-     return 1
-
-  ARRAY="01"
+  ARRAY="02"
   show_message SPECIFY_VIDEO_DRIVER
   show_message DO_NOT_INSTALL 0
   show_message 1_XF86_VIDEO_INTEL
+  show_message 2_NOMODESET
 
   STR_READ=`show_message CHOOSE_INSTALLATION_OPTION`
   OK=0
@@ -183,6 +182,10 @@ install_video_intel(){
      install_pkg "xf86-video-intel" "y"
      sed -i $DIR_CHROOT/etc/mkinitcpio.conf -e 's|MODULES=""|MODULES="i915"|g'
      chroot $DIR_CHROOT mkinitcpio -p linux$LINUX_VER
+     return 1
+     # yes
+  elif [ "$AMSURE" = "2" ]; then
+     install_pkg "nomodeset" "y"
      return 1
      # yes
   fi
