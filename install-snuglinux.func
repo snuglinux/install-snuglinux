@@ -103,6 +103,9 @@ download_updates_func(){
    if [ -f $TMP_DIR/install-snuglinux.func -a -f $TMP_DIR/install-partition.func -a -f $TMP_DIR/install-video.func -a -f $TMP_DIR/install-snuglinux.messages ]; then
       PO_DIR=$TMP_DIR
       source ${PO_DIR}/install-snuglinux.func
+      source ${PO_DIR}/install-partition.func
+      source ${PO_DIR}/install-video.func
+      source ${PO_DIR}/install-snuglinux.messages
    fi
 }
 
@@ -270,7 +273,7 @@ pacman_install() {
 
   LIST_PKG=$*
   LIST_PKG=`echo ${LIST_PKG} | tr ' ' '\n'`
-  pacinstall --cachedir=${DIR_CHROOT}/var/cache/pacman/pkg/ --root=${DIR_CHROOT} ${LIST_PKG} --yolo
+  pacinstall --cachedir=${DIR_CHROOT}/var/cache/pacman/pkg/ --sysroot=${DIR_CHROOT} ${LIST_PKG} --yolo
 }
 
 #=======================================
@@ -743,8 +746,8 @@ fix_system_chroot(){
          fi
       fi
       # что бы в chroot заработал DNS
-      #sudo rm $DIR_CHROOT/etc/resolv.conf
-      #sudo cp -a $DIR_CHROOT/etc/resolvconf.conf $DIR_CHROOT/etc/resolv.conf
+      sudo rm $DIR_CHROOT/etc/resolv.conf
+      sudo cp -a /etc/resolv.conf $DIR_CHROOT/etc/resolv.conf
       LINUX_VER="-$ARM_ARCH";
    fi
    system_language "$DIR_CHROOT";
@@ -779,7 +782,6 @@ install_basic_packages(){
          exit 1;
       fi
    fi
-   chroot ${DIR_CHROOT} pacman -Sy
 }
 
 #=======================================

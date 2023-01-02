@@ -194,12 +194,6 @@ install_video_intel(){
 #=======================================
 install_video_driver(){
   local NVIDIA ATI INTEL VIDEO INSTALL_VIDEO
-  if [ -f "${PO_DIR}/install-video.func" ]; then
-     source "${PO_DIR}/install-video.func"
-  else
-     show_message FILE_NOT_FOUND "${PO_DIR}/install-video.func"
-     exit 1
-  fi
   NOT_INSTALL_PKG=$(not_installed_pkg "xorg-server" "$DIR_CHROOT")
   if [ -n "$NOT_INSTALL_PKG" ] ; then
      installed_pkg "xorg-server" "$DIR_CHROOT"
