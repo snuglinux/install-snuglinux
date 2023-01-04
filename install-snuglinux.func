@@ -69,7 +69,8 @@ system_language() {
      clear
   else
      #chroot ${PATH_FILE} loadkeys ${LANG_SELECT}
-     chroot ${PATH_FILE} setfont cyr-sun16
+     # in chroot setfont throws an error
+     #chroot ${PATH_FILE} setfont cyr-sun16
      chroot ${PATH_FILE} localectl set-keymap us ${LANG_SELECT} --no-convert
      if [ $? != 0 ]; then
         show_message CONTINUE_PRESS_ANY_KEY
