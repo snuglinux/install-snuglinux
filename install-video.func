@@ -89,8 +89,7 @@ install_video_nvidia(){
   show_message 1_NVIDIA
   show_message 2_NVIDIA_390XX
   show_message 3_NVIDIA_340XX
-  show_message 4_NVIDIA_304XX
-  show_message 5_XF86_VIDEO_NOUVEAU
+  show_message 4_XF86_VIDEO_NOUVEAU
   STR_READ=`show_message CHOOSE_INSTALLATION_OPTION`
   OK=0
   while [ "${OK}" = 0 ] ; do
@@ -110,8 +109,6 @@ install_video_nvidia(){
   elif [ "$AMSURE" = "3" ]; then
      PREFIXDRIVER="-340xx";
   elif [ "$AMSURE" = "4" ]; then
-     PREFIXDRIVER="-304xx";
-  elif [ "$AMSURE" = "5" ]; then
     install_pkg "xf86-video-nouveau" "y"
     return 1
     # yes
