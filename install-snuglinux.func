@@ -754,11 +754,11 @@ fix_system_chroot(){
    system_language "$DIR_CHROOT";
    edit_pacman_conf "$DIR_CHROOT/etc";
    edit_pacman_mirrorlist "$DIR_CHROOT/etc";
-   pacman_key_init;
+   pacman_key_init_chroot;
 }
 
 #=======================================
-pacman_key_init(){
+pacman_key_init_chroot(){
    show_message INITIALIZE_PACMAN_KEY
 
    run_command_chroot "pacman-key --init"
@@ -768,6 +768,14 @@ pacman_key_init(){
       run_command_chroot "pacman-key --populate archlinux"
    fi
    run_command_chroot "pacman -Syu --noconfirm"
+}
+
+#=======================================
+pacman_key_init(){
+   show_message INITIALIZE_PACMAN_KEY
+   killall gpg-agent
+   pacman-key --init && pacman-key --populate archlinux
+   pacinstall archlinux-keyring --yolo
 }
 
 #=======================================

@@ -873,7 +873,7 @@ case $lang in
 esac;;
 
 ################
-5_XF86_VIDEO_NOUVEAU)
+4_XF86_VIDEO_NOUVEAU)
 ################
 case $lang in
   ru) echo -e "${FC_2}5${FC_3} - xf86-video-nouveau (Драйвер с открытым исходным кодом 2D-ускорения для видео карт nVidia) ${FC_0}" | tee -a $LOG_FILE;;

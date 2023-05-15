@@ -49,6 +49,8 @@ edit_pacman_conf "/etc";
 
 edit_pacman_mirrorlist "/etc";
 
+pacman_key_init;
+
 checking_installed_packages;
 
 download_updates_func;
