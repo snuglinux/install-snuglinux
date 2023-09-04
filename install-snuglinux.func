@@ -8,6 +8,7 @@ DIR_CHROOT=/mnt
 TMP_DIR=/tmp/snuglinux
 YN="yn"
 
+
 # Loading message file
 if [ -f "${PO_DIR}/$BASE_NAME.messages" ]; then
    . "${PO_DIR}/$BASE_NAME.messages"
@@ -29,6 +30,12 @@ fi
 
 # To determine in pacman yes
 YES_CHAR="$(pacman -Sddw bash --noconfirm | grep '? \[' | cut -d"[" -f2 | cut -d"/" -f1)"
+
+if [ $NO_CHECK_CERTIFICATE == 1 ]; then
+   WGET_NO_CHECK_CERTIFICATE=1
+else
+   WGET_NO_CHECK_CERTIFICATE='--no-check-certificate'
+fi
 
 #=======================================
 ignore_error() {
@@ -96,10 +103,10 @@ download_updates_func(){
    if ! [ -d "$TMP_DIR" ]; then
       mkdir "$TMP_DIR"
    fi
-   wget --quiet --tries=3 -c https://snuglinux.pp.ua/install/install-snuglinux.func     -P $TMP_DIR -nc 2>/dev/null
-   wget --quiet --tries=3 -c https://snuglinux.pp.ua/install/install-partition.func     -P $TMP_DIR -nc 2>/dev/null
-   wget --quiet --tries=3 -c https://snuglinux.pp.ua/install/install-video.func         -P $TMP_DIR -nc 2>/dev/null
-   wget --quiet --tries=3 -c https://snuglinux.pp.ua/install/install-snuglinux.messages -P $TMP_DIR -nc 2>/dev/null
+   wget $WGET_NO_CHECK_CERTIFICATE --quiet --tries=3 -c https://snuglinux.pp.ua/install/install-snuglinux.func     -P $TMP_DIR -nc 2>/dev/null
+   wget $WGET_NO_CHECK_CERTIFICATE --quiet --tries=3 -c https://snuglinux.pp.ua/install/install-partition.func     -P $TMP_DIR -nc 2>/dev/null
+   wget $WGET_NO_CHECK_CERTIFICATE --quiet --tries=3 -c https://snuglinux.pp.ua/install/install-video.func         -P $TMP_DIR -nc 2>/dev/null
+   wget $WGET_NO_CHECK_CERTIFICATE --quiet --tries=3 -c https://snuglinux.pp.ua/install/install-snuglinux.messages -P $TMP_DIR -nc 2>/dev/null
 
    if [ -f $TMP_DIR/install-snuglinux.func -a -f $TMP_DIR/install-partition.func -a -f $TMP_DIR/install-video.func -a -f $TMP_DIR/install-snuglinux.messages ]; then
       PO_DIR=$TMP_DIR
@@ -260,7 +267,7 @@ download_pkg(){
   if [ -f ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME} ]; then
      rm -f ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME}
   fi
-  wget --quiet --tries=3 -c https://${SNUG_SERVER}/install/types/${TYPE}/pack/${PKG_NAME} -P ${TMP_DOWN}/${TYPE}/pack 2>/dev/null
+  wget $WGET_NO_CHECK_CERTIFICATE --quiet --tries=3 -c https://${SNUG_SERVER}/install/types/${TYPE}/pack/${PKG_NAME} -P ${TMP_DOWN}/${TYPE}/pack 2>/dev/null
   if [ $? = 0 ]; then
      if [ -f ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME} ]; then
         source ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME}
@@ -596,7 +603,7 @@ download_type(){
   FILE_LISTS=$TMP_DOWN"/lists"
   rm -fr $TMP_DOWN
   mkdir -p $TMP_DOWN
-  wget --quiet --tries=3 -c https://${SNUG_SERVER}/install/types/lists$ARCH_ARM -O $TMP_DOWN/lists 2>/dev/null
+  wget $WGET_NO_CHECK_CERTIFICATE --quiet --tries=3 -c https://${SNUG_SERVER}/install/types/lists$ARCH_ARM -O $TMP_DOWN/lists 2>/dev/null
   if [ $? != 0 ]; then
      show_message FAILED_LOAD_FILE https://${SNUG_SERVER}/install/types/lists
      exit 1;
@@ -604,15 +611,15 @@ download_type(){
   while read line ; do
        let STR_N=$STR_N+1;
        TYPE=`sed -n ${STR_N}p $FILE_LISTS`;
-       wget --quiet --tries=3 -c https://${SNUG_SERVER}/install/types/$TYPE/lang/$LANG_SELECT -P $TMP_DOWN/$TYPE/lang 2>/dev/null
+       wget $WGET_NO_CHECK_CERTIFICATE --quiet --tries=3 -c https://${SNUG_SERVER}/install/types/$TYPE/lang/$LANG_SELECT -P $TMP_DOWN/$TYPE/lang 2>/dev/null
        if [ $? != 0 ]; then
-          wget --quiet --tries=3 -c https://${SNUG_SERVER}/install/types/$TYPE/lang/en -P $TMP_DOWN/$TYPE/lang 2>/dev/null
+          wget $WGET_NO_CHECK_CERTIFICATE --quiet --tries=3 -c https://${SNUG_SERVER}/install/types/$TYPE/lang/en -P $TMP_DOWN/$TYPE/lang 2>/dev/null
        fi
-       wget --quiet --tries=3 -c https://${SNUG_SERVER}/install/types/$TYPE/packages -P $TMP_DOWN/$TYPE 2>/dev/null
+       wget $WGET_NO_CHECK_CERTIFICATE --quiet --tries=3 -c https://${SNUG_SERVER}/install/types/$TYPE/packages -P $TMP_DOWN/$TYPE 2>/dev/null
        if [ $? != 0 ]; then
           show_message FAILED_LOAD_FILE https://${SNUG_SERVER}/install/types/$TYPE/packages
        fi
-       wget --quiet --tries=3 -c https://${SNUG_SERVER}/install/types/$TYPE/network_manager -P $TMP_DOWN/$TYPE 2>/dev/null
+       wget $WGET_NO_CHECK_CERTIFICATE --quiet --tries=3 -c https://${SNUG_SERVER}/install/types/$TYPE/network_manager -P $TMP_DOWN/$TYPE 2>/dev/null
   done < $FILE_LISTS
 }
 
@@ -670,7 +677,7 @@ install_devices_pkg(){
   if [ "$INSTALL_ARCH" == "arm" ]; then
      TMP_DOWN="$TMP_DIR/install/devices"
      mkdir -p ${TMP_DOWN}
-     wget --quiet --tries=3 -c https://${SNUG_SERVER}/install/devices/${ARM_MODEL} -O ${TMP_DOWN}/${ARM_MODEL} 2>/dev/null
+     wget $WGET_NO_CHECK_CERTIFICATE --quiet --tries=3 -c https://${SNUG_SERVER}/install/devices/${ARM_MODEL} -O ${TMP_DOWN}/${ARM_MODEL} 2>/dev/null
      if [ $? = 0 ]; then
         if [ -f ${TMP_DOWN}/${ARM_MODEL} ]; then
            source ${TMP_DOWN}/${ARM_MODEL}
@@ -825,14 +832,14 @@ download_rootfs(){
    show_message DOWNLOAD_ROOTFS
    cd $TMP_DIR
    if ! [ -f ArchLinuxARM-$ARM_ARCH-latest.tar.gz.md5 ]; then
-      wget http://de4.mirror.archlinuxarm.org/os/ArchLinuxARM-$ARM_ARCH-latest.tar.gz.md5 -O ArchLinuxARM-$ARM_ARCH-latest.tar.gz.md5 2>/dev/null
+      wget $WGET_NO_CHECK_CERTIFICATE http://de4.mirror.archlinuxarm.org/os/ArchLinuxARM-$ARM_ARCH-latest.tar.gz.md5 -O ArchLinuxARM-$ARM_ARCH-latest.tar.gz.md5 2>/dev/null
       if ! [ $? = 0 ]; then
          show_message FAILED_LOAD_FILE "«ArchLinuxARM-$ARM_ARCH-latest.tar.gz.md5»";
          exit 1;
       fi
    fi
    if ! [ -f ArchLinuxARM-$ARM_ARCH-latest.tar.gz ]; then
-      wget http://de4.mirror.archlinuxarm.org/os/ArchLinuxARM-$ARM_ARCH-latest.tar.gz -O ArchLinuxARM-$ARM_ARCH-latest.tar.gz 2>/dev/null
+      wget $WGET_NO_CHECK_CERTIFICATE http://de4.mirror.archlinuxarm.org/os/ArchLinuxARM-$ARM_ARCH-latest.tar.gz -O ArchLinuxARM-$ARM_ARCH-latest.tar.gz 2>/dev/null
       if ! [ $? = 0 ]; then
          show_message FAILED_LOAD_FILE "«ArchLinuxARM-$ARM_ARCH-latest.tar.gz»";
          exit 1;
@@ -854,7 +861,7 @@ download_file_list(){
   TMP_DOWN="$TMP_DIR/install"
   FILE_LISTS="$TMP_DOWN/$DOWN_FILE"
   mkdir -p $TMP_DOWN
-  wget --quiet --tries=3 -c https://${SNUG_SERVER}/install/$DOWN_FILE -O $FILE_LISTS 2>/dev/null
+  wget $WGET_NO_CHECK_CERTIFICATE --quiet --tries=3 -c https://${SNUG_SERVER}/install/$DOWN_FILE -O $FILE_LISTS 2>/dev/null
   if [ $? != 0 ]; then
      show_message FAILED_LOAD_FILE https://${SNUG_SERVER}/install/$DOWN_FILE
      exit 1;
