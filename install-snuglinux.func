@@ -30,7 +30,7 @@ fi
 # To determine in pacman yes
 YES_CHAR="$(pacman -Syddw bash --noconfirm | grep '? \[' | cut -d"[" -f2 | cut -d"/" -f1)"
 
-if [ $PROTOCOL_TYPE == "" ]; then
+if [ -z "$PROTOCOL_TYPE" ]; then
    PROTOCOL_TYPE='https'
 fi
 
