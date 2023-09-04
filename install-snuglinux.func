@@ -32,9 +32,9 @@ fi
 YES_CHAR="$(pacman -Sddw bash --noconfirm | grep '? \[' | cut -d"[" -f2 | cut -d"/" -f1)"
 
 if [ $NO_CHECK_CERTIFICATE == 1 ]; then
-   WGET_NO_CHECK_CERTIFICATE=1
-else
    WGET_NO_CHECK_CERTIFICATE='--no-check-certificate'
+else
+   WGET_NO_CHECK_CERTIFICATE=
 fi
 
 #=======================================
