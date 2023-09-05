@@ -15,6 +15,8 @@ else
    source ${PO_DIR}/install-snuglinux.func
 fi
 
+system_language
+
 # install-partition.func
 if [ -f "${PO_DIR}/install-partition.func" ]; then
    source  "${PO_DIR}/install-partition.func"
@@ -30,8 +32,6 @@ else
    show_message FILE_NOT_FOUND "${PO_DIR}/install-video.func"
    exit 1
 fi
-
-system_language
 
 set_options $*
 

@@ -1,14 +1,12 @@
 #! /bin/bash
 
-lang=`echo $LANG | cut -b 1,2`;
-
 show_message() {
 
 case $1 in
 ##############
 SHOW_USAGE)############################################################
 ##############
-case $lang in
+case $LANG_SELECT in
 
 ru)
 cat <<EOFUSAGE
@@ -67,7 +65,7 @@ esac
 #############
 CURRENT_VERSION)
 #############
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "Версия скрипта ${FC_4}${CURRENT_VERSION}${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "Версія скрипта ${FC_4}${CURRENT_VERSION}${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "Script version ${FC_4}${CURRENT_VERSION}${FC_0}" | tee -a $LOG_FILE;;
@@ -77,7 +75,7 @@ esac
 ################
 FILE_NOT_FOUND*)#######################################################
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка:${FC_0} Файл ${FC_3}$2${FC_0} не найден!" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка:${FC_0} Файл ${FC_3}$2${FC_0} не знайдено!" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR:${FC_0} File ${FC_3}$2${FC_0} not found!" | tee -a $LOG_FILE;;
@@ -87,7 +85,7 @@ esac
 ################
 DELETES_DISK_PARTITION_TABLE*)#######################################################
 ################
-case $lang in
+case $LANG_SELECT in
 ru) echo -e "${FC_2}Внимание: ${FC_3}Операция необратима !!!${FC_0}
 ${FC_2}Вы желаете удалить таблицу разделов диска «${FC_3}$2${FC_2}»? ${FC_3}(y/n)${FC_4}" | tee -a $LOG_FILE;;
 uk) echo -e "${FC_2}Увага: ${FC_3}Операція незворотна !!!${FC_0}
@@ -100,7 +98,7 @@ esac
 ###############
 UNKNOWN_ARG)##########################################################
 ###############
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка:${FC_0} Неизвестный аргумент ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка:${FC_0} Невідомий аргумент ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR:${FC_0} Unknown argement ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
@@ -110,7 +108,7 @@ esac
 ###############
 VAR_NOT_SET*)##########################################################
 ###############
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка:${FC_0} Переменная ${FC_3}$2${FC_0} не установлена" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка:${FC_0} Змінна ${FC_3}$2${FC_0} не встановлена" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR:${FC_0} Variable ${FC_3}$2${FC_0} not set" | tee -a $LOG_FILE;;
@@ -120,7 +118,7 @@ esac
 ###########
 NO_ARCHIVE*)##############################################################
 ###########
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_3}$2${FC_0} не является архивом" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_3}$2${FC_0} не є архівом" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_3}$2${FC_0} is not an archive" | tee -a $LOG_FILE;;
@@ -130,7 +128,7 @@ esac
 ###########
 WORK_DIR)##############################################################
 ###########
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "Изменение рабочей директории на ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "Зміна робочої директорії на ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "Changing working dir to ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
@@ -140,7 +138,7 @@ esac
 ###########
 BT_DIR_NOT_WRITABLE)##############################################################
 ###########
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка:${FC_0} Временная директория ${FC_3}$2${FC_0} не доступна для записи" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка:${FC_0} Тимчасова директорія ${FC_3}$2${FC_0} не доступна для запису" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR:${FC_0} Temp directory ${FC_3}$2${FC_0} is not writable" | tee -a $LOG_FILE;;
@@ -150,7 +148,7 @@ esac
 ############
 YES_OR_NO)##############################################################i
 ###########
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "Введите ${FC_3}yes${FC_0} или ${FC_3}no${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "Введіть ${FC_3}yes${FC_0} или ${FC_3}no${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "Please enter ${FC_3}yes${FC_0} or ${FC_3}no${FC_0}" | tee -a $LOG_FILE;;
@@ -160,7 +158,7 @@ esac
 ##########
 WRITING_TO*)##############################################################i
 ############
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "Файл записан в директорию ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "Файл записаний в директорію ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "File be written in ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
@@ -170,7 +168,7 @@ esac
 ##########
 OVERWRITE_FILE*)###################################################
 ############
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "Перезаписать файл ${FC_3}$2${FC_0}?" | tee -a $LOG_FILE;;
   uk) echo -e "Перезаписати файл ${FC_3}$2${FC_0}?" | tee -a $LOG_FILE;;
   *)  echo -e "Overwrite the file ${FC_3}$2${FC_0}?" | tee -a $LOG_FILE;;
@@ -180,7 +178,7 @@ esac
 ##########
 RUN_COMMAND_AGAIN*)###################################################
 ############
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "Выполнить команду ${FC_3}$2${FC_0} еще раз? ${FC_3}(y/n)${FC_4}: ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "Виконати команду ${FC_3}$2${FC_0} ще раз? ${FC_3}(y/n)${FC_4}: ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "Run the command ${FC_3}$2${FC_0} again ? ${FC_3}(y/n)${FC_4}: ${FC_0}" | tee -a $LOG_FILE;;
@@ -190,7 +188,7 @@ esac
 ##########
 DELETE_CORRUPTED_FILE*)###################################################
 ############
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "Удалить поврежденный файл ${FC_3}$2${FC_0}? ${FC_3}(y/n)${FC_4}: ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "Видалити пошкоджений файл ${FC_3}$2${FC_0}? ${FC_3}(y/n)${FC_4}: ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "Delete corrupted file ${FC_3}$2${FC_0}? ${FC_3}(y/n)${FC_4}: ${FC_0}" | tee -a $LOG_FILE;;
@@ -200,7 +198,7 @@ esac
 ##########
 FAILED_TO_CREATE_DIR*)###################################################
 ############
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка:${FC_0} Не удалось создать каталог ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка:${FC_0} Не вдалося створити каталог ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR:${FC_0} Failed to create directory ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
@@ -210,7 +208,7 @@ esac
 ##########
 ARCHIVE_UNZIPPING_ERROR*)###################################################
 ############
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка:${FC_0} Ошибка разархивирования архива ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка:${FC_0} Помилка розархівування архіву ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR:${FC_0} Archive unzipping error ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
@@ -220,7 +218,7 @@ esac
 ##########
 NOT_FOUND_CONFIG*)###################################################
 ############
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка:${FC_0} Не найден конфигурационный файл ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка:${FC_0} Не знайдено конфігураційний файл ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR:${FC_0} Not found config file ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
@@ -230,7 +228,7 @@ esac
 ##########
 NOT_SPECIFIED_PARAMETER*)###################################################
 ############
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка:${FC_0} Не указан параметр ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка:${FC_0} Не вказано параметр ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR:${FC_0} Not specified parameter ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
@@ -240,7 +238,7 @@ esac
 #############
 DIRECTORY_NOT_FOUND*)
 #############
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка:${FC_0} Каталог ${FC_3}$2${FC_0} не найден" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка:${FC_0} Каталог ${FC_3}$2${FC_0} не знайдено" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR:${FC_0} Directory ${FC_3}$2${FC_0} not found" | tee -a $LOG_FILE;;
@@ -250,7 +248,7 @@ esac
 ################
 FILE_NOT_FOUND*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка:${FC_0} Файл ${FC_2}$2${FC_0} не найден" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка:${FC_0} Файл ${FC_2}$2${FC_0} не знайдено" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR:${FC_0} File ${FC_2}$2${FC_0} not found" | tee -a $LOG_FILE;;
@@ -260,7 +258,7 @@ esac
 ################
 FAILED_COPY_FILE*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка:${FC_0} Не удалось скопировать файл ${FC_2}$2${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка:${FC_0} Не вдалось скопірувати файл ${FC_2}$2${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR:${FC_0} Failed to copy file ${FC_2}$2${FC_0}" | tee -a $LOG_FILE;;
@@ -270,7 +268,7 @@ esac
 ################
 FAILED_UPDATE)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка:${FC_0} Не удалось обновить систему" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка:${FC_0} Не вдалося оновити систему" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR:${FC_0} Failed to update the system" | tee -a $LOG_FILE;;
@@ -280,7 +278,7 @@ esac
 ################
 DOWNLOAD_ROOTFS)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_3}Загрузка файла с rootfs${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_3}Завантаження файлу з rootfs${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_3}Download a file from rootfs${FC_0}" | tee -a $LOG_FILE;;
@@ -290,7 +288,7 @@ esac
 ################
 UNZIP_ROOTFS)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_3}Распаковка архива с rootfs${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_3}Розпакування архіву з rootfs${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_3}Unpacking an archive with rootfs${FC_0}" | tee -a $LOG_FILE;;
@@ -300,7 +298,7 @@ esac
 ################
 PING_SERVER*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "Проверка доступности сервера ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "Перевірка доступності сервера ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "Checking access to the server ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
@@ -310,7 +308,7 @@ esac
 ################
 SUPPORT_TRIM*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "Для устройства ${FC_3}$2${FC_0} есть поддержка TRIM" | tee -a $LOG_FILE;;
   uk) echo -e "Для пристрою ${FC_3}$2${FC_0} є підтримка TRIM" | tee -a $LOG_FILE;;
   *)  echo -e "There is TRIM support for the ${FC_3}$2${FC_0} device" | tee -a $LOG_FILE;;
@@ -320,7 +318,7 @@ esac
 ################
 NOT_ACCESS_SERVER*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка:${FC_0} Не удается получить доступ к серверу ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка:${FC_0} Неможливо отримати доступ до сервера ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR:${FC_0} Can not access the server ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
@@ -330,7 +328,7 @@ esac
 ################
 OK)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}...Хорошо${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}...Добре${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}...OK${FC_0}" | tee -a $LOG_FILE;;
@@ -340,7 +338,7 @@ esac
 ################
 PACKAGE_NOT_INSTALLED*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка:${FC_0} Пакет ${FC_4}$2${FC_0} не установлен!" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка:${FC_0} Пакет ${FC_4}$2${FC_0} не встановлений!" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR:${FC_0} Package of ${FC_4}$2${FC_0} is not installed!" | tee -a $LOG_FILE;;
@@ -350,7 +348,7 @@ esac
 ################
 SUCCESSFULLY_INSTALLED_PACKAGE*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Успешно установлен пакет ${FC_3}$2 ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Успішно встановлено пакет ${FC_3}$2 ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Successfully installed package ${FC_3}$2 ${FC_0}" | tee -a $LOG_FILE;;
@@ -360,7 +358,7 @@ esac
 ################
 SPECIFY_PARTITION_INSTALL*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Укажите раздел для установки ${FC_4}$2${FC_0} (Enter по умолчанию ${FC_3}$3${FC_0}): " | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Вкажіть розділ для установки ${FC_4}$2${FC_0} (Enter за замовчуванням ${FC_3}$3${FC_0}): " | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Specify the partition for installing ${FC_4}$2${FC_0} (Enter by default ${FC_3}$3${FC_0}): " | tee -a $LOG_FILE;;
@@ -370,7 +368,7 @@ esac
 ################
 UEFI_DIRECTORY_DOES_NOT_EXIST*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка:${FC_0} Каталог ${FC_4}$2${FC_0} для установки UEFI не существует!" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка:${FC_0} Каталог ${FC_4}$2${FC_0} для установки UEFI не існує!" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR:${FC_0} The directory ${FC_4}$2${FC_0} for installing UEFI does not exist!" | tee -a $LOG_FILE;;
@@ -380,7 +378,7 @@ esac
 ################
 FAILED_CHECK_MD5SUM_FILE*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка:${FC_0} Неудачная проверка md5sum файла ${FC_4}$2${FC_0}!" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка:${FC_0} Невдала перевірка md5sum файлу ${FC_4}$2${FC_0}!" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR:${FC_0} Failed check of md5sum file ${FC_4}$2${FC_0}!" | tee -a $LOG_FILE;;
@@ -390,7 +388,7 @@ esac
 ################
 FAILED_EXECUTE_COMMAND*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка:${FC_4} Не удалось выполнить команду ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка:${FC_4} Не вдалося виконати команду ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR:${FC_4} Failed to execute the command ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
@@ -400,7 +398,7 @@ esac
 ################
 REQUIRED_LANGUAGE)
 ################
-case $lang in
+case $LANG_SELECT in
 ru) echo -e "Укажите требуемый язык. Возможные варианты:
 ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
 uk) echo -e "Вкажіть потрібну мову. Можливі варіанти:
@@ -413,7 +411,7 @@ esac
 ################
 NOT_RIGHT_VALUE)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Значение указано не верно!${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Значення вказано не вірно!${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}The value is not correct!${FC_0}" | tee -a $LOG_FILE;;
@@ -423,7 +421,7 @@ esac
 ################
 FAILED_LOAD_FILE*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка:${FC_0} Не удалось загрузить файл ${FC_3}$2${FC_0}!" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка:${FC_0} Не вдалося завантажити файл ${FC_3}$2${FC_0}!" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR:${FC_0} Could not load file ${FC_3}$2${FC_0}!" | tee -a $LOG_FILE;;
@@ -433,7 +431,7 @@ esac
 ################
 FAILED_DELETE_FILE*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка:${FC_0} Не удалось удалить файл ${FC_3}$2${FC_0}!" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка:${FC_0} Не вдалося видалити файл ${FC_3}$2${FC_0}!" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR:${FC_0} Failed to delete file ${FC_3}$2${FC_0}!" | tee -a $LOG_FILE;;
@@ -443,7 +441,7 @@ esac
 ################
 I_M_NOT_ROOT)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка:${FC_0} Необходимы права суперпользователя (root)" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка:${FC_0} Необхідні права суперкористувача (root)" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR:${FC_0} You need to be (root)" | tee -a $LOG_FILE;;
@@ -452,7 +450,7 @@ esac;;
 ################
 DESCRIPTION_NOT_EXIST)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Описание не существует!${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Опис не існує!${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}The description does not exist!${FC_0}" | tee -a $LOG_FILE;;
@@ -461,7 +459,7 @@ esac;;
 ################
 LOADING_DATA_SERVER)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Загрузка данных с сервера ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Загрузка данных с сервера ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Loading data from server ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
@@ -470,7 +468,7 @@ esac;;
 ################
 SELECT_TYPE)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Выберите вариант установки: ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Виберіть варіант установки: ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Select the installation type: ${FC_0}" | tee -a $LOG_FILE;;
@@ -479,7 +477,7 @@ esac;;
 ################
 INSTALL_PACKAGE*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Выполняется установка пакета: ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Виконується установка пакета: ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}The package is being installed: ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
@@ -488,7 +486,7 @@ esac;;
 ################
 SYSTEM_REBOOT)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Нажмите ${FC_2}«r»${FC_4} для перезагрузки, ${FC_3}«q»${FC_4} для выхода${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Натисніть ${FC_2}«r»${FC_4} для перезавантаження, ${FC_3}«q»${FC_4} для виходу${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Press ${FC_2}«r»${FC_4} to reboot, ${FC_3}«q»${FC_4} to exit${FC_0}" | tee -a $LOG_FILE;;
@@ -497,7 +495,7 @@ esac;;
 ################
 WANT_INSTALL_PACKAGE*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Вы желаете установить пакет ${FC_3}$2${FC_4}? ${FC_3}(y/n)${FC_4}: ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Ви бажаєте встановити пакет ${FC_3}$2${FC_4}? ${FC_3}(y/n)${FC_4}: ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Do you want to install the package ${FC_3}$2${FC_4}? ${FC_3}(y/n)${FC_4}: ${FC_0}" | tee -a $LOG_FILE;;
@@ -506,7 +504,7 @@ esac;;
 ################
 FAILED_INSTALL_PACKAGE*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка: Не удалось установить пакет ${FC_3}$2${FC_0}!" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка: Не вдалося встановити пакет ${FC_3}$2${FC_0}!" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR: Failed to install package ${FC_3}$2${FC_0}!" | tee -a $LOG_FILE;;
@@ -515,7 +513,7 @@ esac;;
 ################
 SPECIFY_VIDEO_DRIVER)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Выберите вариант установки видеодрайвера:${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Виберіть варіант установки відеоодрайвера:${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Select the video driver installation option:${FC_0}" | tee -a $LOG_FILE;;
@@ -524,7 +522,7 @@ esac;;
 ################
 SPLIT_DISK_PARTITIONS)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Разбить диск на разделы ?${FC_3}(y/n)${FC_0}: " | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Розбити диск на розділи? ${FC_3}(y/n)${FC_0}: " | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Split the disk into partitions? ${FC_3}(y/n)${FC_0}: " | tee -a $LOG_FILE;;
@@ -533,7 +531,7 @@ esac;;
 ################
 FAILED_NOTIFY_PARTITION_TABLE)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка:${FC_0} Не удалось информировать изменения таблицы разделов!" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка:${FC_0} Не вдалося інформувати зміни таблиць розділів!" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR:${FC_0} Failed to notify changes to the partition table!" | tee -a $LOG_FILE;;
@@ -542,7 +540,7 @@ esac;;
 ################
 DEMON_AUTOSTART*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Демон ${FC_3}$2${FC_4} был добавлен в автозапуск${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Демон ${FC_3}$2${FC_4} було додано до автозапуску${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}The demon ${FC_3}$2${FC_4} has been added to auto start${FC_0}" | tee -a $LOG_FILE;;
@@ -551,7 +549,7 @@ esac;;
 ################
 MAKING_CHANGES_TO_FILE*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Внесение изменений в ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Внесення змін до ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Making changes to the ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
@@ -560,7 +558,7 @@ esac;;
 ################
 ADD_DAEMON_AUTOSTART*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Добавить в автозапуск демон ${FC_3}$2${FC_4} systemd? ${FC_3}(y/n)${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Додати до автозапуску демон ${FC_3}$2${FC_4} systemd? ${FC_3}(y/n)${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Add the demon ${FC_3}$2${FC_4} systemd to the autostart? ${FC_3}(y/n)${FC_0}" | tee -a $LOG_FILE;;
@@ -569,7 +567,7 @@ esac;;
 ################
 NEW_USER_LOGIN)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Ведите логин нового пользователя (продолжить ${FC_2}i${FC_4}): ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Введіть логин нового користувача (продовжити ${FC_2}i${FC_4}): ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Enter the login of the new user (сontinue ${FC_2}i${FC_4}): ${FC_0}" | tee -a $LOG_FILE;;
@@ -578,7 +576,7 @@ esac;;
 ################
 ENTER_USER_PASSWORD)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Введите пароль пользователя ${FC_3}$2${FC_4}: ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Введите пароль користувача ${FC_3}$2${FC_4}: ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Enter the user password ${FC_3}$2${FC_4}: ${FC_0}" | tee -a $LOG_FILE;;
@@ -587,7 +585,7 @@ esac;;
 ################
 CREATING_SYSTEM_USERS)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_3}Создание пользователей системы${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_3}Створення користувачів системи${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_3}Creating system users${FC_0}" | tee -a $LOG_FILE;;
@@ -596,7 +594,7 @@ esac;;
 ################
 NO_PARTITION_MOUNTING)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка: ${FC_4}Не указан раздел диска для монтирования!${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка: ${FC_4}Не вказаний розділ диска для монтування!${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR: ${FC_4}The partition of the drive is not specified for mounting!${FC_0}" | tee -a $LOG_FILE;;
@@ -605,7 +603,7 @@ esac;;
 ################
 SPECIFY_PARTITION)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Укажите раздел (Enter по умолчанию ${FC_3}/dev/sda${FC_0}, продолжить ${FC_2}i${FC_0}): " | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Вкажіть розділ (Enter за замовчуванням ${FC_3}/dev/sda${FC_0}, продовжити ${FC_2}i${FC_0}): " | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Specify the partition (Enter by default ${FC_3}/dev/sda${FC_0}, сontinue ${FC_2}i${FC_0}): " | tee -a $LOG_FILE;;
@@ -614,7 +612,7 @@ esac;;
 ################
 SPECIFY_PARTITION_MOUNT*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Укажите раздел для монтирования ${FC_3}$2${FC_0} (${FC_2}i${FC_4} - пропустить) ${FC_3}/dev/sda*${FC_0}: " | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Вкажіть розділ для монтування ${FC_3}$2${FC_0} (${FC_2}i${FC_4} - пропустити) ${FC_3}/dev/sda*${FC_0}: " | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Specify the mount partition ${FC_3}$2${FC_0} (${FC_2}i${FC_4} - skip) ${FC_3}/dev/sda*${FC_0}: " | tee -a $LOG_FILE;;
@@ -623,7 +621,7 @@ esac;;
 ################
 SPECIFY_DISK_PARTITION_LABEL*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Укажите метку раздела ${FC_3}$2${FC_4} (Enter по умолчанию ${FC_3}$2${FC_0}): " | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Вкажіть мітку розділу ${FC_3}$2${FC_4} (Enter за замовчуванням ${FC_3}$2${FC_0}): " | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Specify the label of the partition of the ${FC_3}$2${FC_4} (Enter by default ${FC_3}$2${FC_0}): " | tee -a $LOG_FILE;;
@@ -632,7 +630,7 @@ esac;;
 ################
 FORMAT_PARTITION*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Форматировать раздел ${FC_3}$2${FC_4} в $3 ?${FC_3}(y/n)${FC_4}: ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Форматувати розділ ${FC_3}$2${FC_4} в $3 ? ${FC_3}(y/n)${FC_4}: ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Format partition ${FC_3}$2${FC_4} in $3? ${FC_3}(y/n)${FC_4}: ${FC_0}" | tee -a $LOG_FILE;;
@@ -641,7 +639,7 @@ esac;;
 ################
 INSTALLING_BASIC_PACKAGES)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Установка базовых пакетов${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Установка базових пакетів${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Installing basic packages${FC_0}" | tee -a $LOG_FILE;;
@@ -650,7 +648,7 @@ esac;;
 ################
 INITIALIZE_PACMAN_KEY)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Инициализация ключей pacman${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Ініціалізація ключей pacman${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Initialize pacman keys${FC_0}" | tee -a $LOG_FILE;;
@@ -659,7 +657,7 @@ esac;;
 ################
 UNABLE_UNMOUNT_PARTITION*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка: ${FC_4}Не удалось размонтировать раздел ${FC_3}$2${FC_4}!${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка: ${FC_4}Не вдалося демонтувати розділ ${FC_3}$2${FC_4}!${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR: ${FC_4}Unable to unmount partition ${FC_3}$2${FC_4}!${FC_0}" | tee -a $LOG_FILE;;
@@ -668,7 +666,7 @@ esac;;
 ################
 UNABLE_FORMAT_PARTITION*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка: ${FC_4}Не удалось отфарматировать раздел ${FC_3}$2${FC_4}!${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка: ${FC_4}Невдалося відформатувати розділ ${FC_3}$2${FC_4}!${FC_0}" | tee -a $LOG_FILE;;
  *)  echo -e "${FC_2}ERROR: ${FC_4}Failed to format the partition ${FC_3}$2${FC_4}!${FC_0}" | tee -a $LOG_FILE;;
@@ -677,7 +675,7 @@ esac;;
 ################
 FAILED_SET_SECTION_LABEL*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка: ${FC_4}Не удалось установить метку раздела ${FC_3}$2${FC_4}!${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка: ${FC_4}Не вдалося встановити мітку розділу ${FC_3}$2${FC_4}!${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR: ${FC_4}Failed to set label for partition ${FC_3}$2${FC_4}!${FC_0}" | tee -a $LOG_FILE;;
@@ -686,7 +684,7 @@ esac;;
 ################
 FAILED_MOUNT_PARTITION*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка: ${FC_4}Не удалось смонтировать раздел ${FC_3}$2${FC_4}!${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка: ${FC_4}Не вдалося змонтувати розділ ${FC_3}$2${FC_4}!${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR: ${FC_4}Failed to mount partition ${FC_3}$2${FC_4}!${FC_0}" | tee -a $LOG_FILE;;
@@ -695,7 +693,7 @@ esac;;
 ################
 FAILED_CREATE_USER*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка: ${FC_4}Не удалось создать пользователя ${FC_3}$2${FC_4}!${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка: ${FC_4}Не вдалося створити користувача ${FC_3}$2${FC_4}!${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR: ${FC_4}Failed to create user ${FC_3}$2${FC_4}!${FC_0}" | tee -a $LOG_FILE;;
@@ -704,7 +702,7 @@ esac;;
 ################
 ENTER_HOST_NAME)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Введите имя хоста: ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Введіть ім'я хоста: ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Enter the host name: ${FC_0}" | tee -a $LOG_FILE;;
@@ -713,7 +711,7 @@ esac;;
 ################
 FAILED_SET_HOSTNAME)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка: ${FC_4}Не удалось установить имя хоста!${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка: ${FC_4}Не вдалося встановити ім'я хоста!${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR: ${FC_4}Failed to set hostname!${FC_0}" | tee -a $LOG_FILE;;
@@ -722,7 +720,7 @@ esac;;
 ################
 ENTER_LOCALTIME)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Установка временной зоны${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Установка тимчасової зони${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Setting the time zone${FC_0}" | tee -a $LOG_FILE;;
@@ -731,7 +729,7 @@ esac;;
 ################
 FAILED_SET_TIMEZONE)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка: ${FC_4}Не удалось установить временную зону! ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка: ${FC_4}Не вдалося встановити тимчасову зону! ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR: ${FC_4}Could not set the time zone! ${FC_0}" | tee -a $LOG_FILE;;
@@ -740,7 +738,7 @@ esac;;
 ################
 FAILED_CHANGE_FULL_USERNAME)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка: ${FC_4}Не удалось изменить полное имя пользователя! ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка: ${FC_4}Не вдалося змінити повне ім’я користувача!${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR: ${FC_4}Failed to change full username! ${FC_0}" | tee -a $LOG_FILE;;
@@ -749,7 +747,7 @@ esac;;
 ################
 FAILED_CREATE_PASSWORD)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}Ошибка: ${FC_4}Не удалось создать пароль!${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}Помилка: ${FC_4}Failed to create password!${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}ERROR: ${FC_4}Failed to create password!${FC_0}" | tee -a $LOG_FILE;;
@@ -758,7 +756,7 @@ esac;;
 ################
 GENERATING_FSTAB)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Генерация fstab ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Генерація fstab ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Generating fstab ${FC_0}" | tee -a $LOG_FILE;;
@@ -767,7 +765,7 @@ esac;;
 ################
 PRESS_ANY_KEY_TO_REBOOT)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Нажмите любую клавишу для перезагрузки${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Натисніть будь-яку клавішу для перезавантаження${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Press any key to reboot${FC_0}" | tee -a $LOG_FILE;;
@@ -776,7 +774,7 @@ esac;;
 ################
 CREATING_BOOTABLE_RAM_DISK)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Создание загрузочного RAM диска ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Создание загрузочного RAM диска ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Creating a bootable RAM disk ${FC_0}" | tee -a $LOG_FILE;;
@@ -785,7 +783,7 @@ esac;;
 ################
 DO_NOT_INSTALL*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}$2${FC_3} - не устанавливать ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}$2${FC_3} - не встановлювати ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}$2${FC_3} - do not install ${FC_0}" | tee -a $LOG_FILE;;
@@ -794,7 +792,7 @@ esac;;
 ################
 1_XF86_VIDEO_ATI)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}1${FC_3} - xf86-video-ati (Старая версия ATI/AMD драйвера с открытым исходным кодом) ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}1${FC_3} - xf86-video-ati (Стара версія ATI / AMD драйвера з відкритим вихідним кодом) ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}1${FC_3} - xf86-video-ati (Old version of ATI / AMD driver with open source) ${FC_0}" | tee -a $LOG_FILE;;
@@ -803,7 +801,7 @@ esac;;
 ################
 2_XF86_VIDEO_AMDGPU)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}2${FC_3} - xf86-video-amdgpu (ATI/AMD версия драйвера с открытым исходным кодом) ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}2${FC_3} - xf86-video-amdgpu (ATI/AMD версія драйвера з відкритим вихідним кодом) ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}2${FC_3} - xf86-video-amdgpu (ATI/AMD version of the driver with open source) ${FC_0}" | tee -a $LOG_FILE;;
@@ -812,7 +810,7 @@ esac;;
 ################
 INSTALL_XF86_VIDEO_VESA)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}$2${FC_3} - xf86-video-vesa (X.org vesa видео драйвер) ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}$2${FC_3} - xf86-video-vesa (X.org vesa відео драйвер) ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}$2${FC_3} - xf86-video-vesa (X.org vesa video driver) ${FC_0}" | tee -a $LOG_FILE;;
@@ -821,7 +819,7 @@ esac;;
 ################
 INSTALL_XF86_VIDEO_INTEL)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}$2${FC_3} - xf86-video-intel (X.org Intel i810/i830/i915/945G/G965+ видео драйвер) ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}$2${FC_3} - xf86-video-intel (X.org Intel i810/i830/i915/945G/G965+ відео драйвер) ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}$2${FC_3} - xf86-video-intel (X.org Intel i810/i830/i915/945G/G965+ video drivers) ${FC_0}" | tee -a $LOG_FILE;;
@@ -830,7 +828,7 @@ esac;;
 ################
 INSTALL_NOMODESET)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}$2${FC_3} - modesetting — это драйвер Xorg для устройств KMS.${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}$2${FC_3} - modesetting — це драйвер Xorg для пристроїв KMS.${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}$2${FC_3} - modesetting is an Xorg driver for KMS devices.${FC_0}" | tee -a $LOG_FILE;;
@@ -839,7 +837,7 @@ esac;;
 ################
 1_NVIDIA)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}1${FC_3} - nvidia (Последняя версия драйвера NVIDIA) ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}1${FC_3} - nvidia (Остання версія драйвера NVIDIA) ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}1${FC_3} - nvidia (The latest version of the NVIDIA driver) ${FC_0}" | tee -a $LOG_FILE;;
@@ -848,7 +846,7 @@ esac;;
 ################
 2_NVIDIA_390XX)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}2${FC_3} - nvidia-390xx (для карт GeForce 400 series и более новых [NVCx и новее]) ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}2${FC_3} - nvidia-390xx (для карт GeForce 400 series та новіших [NVCx і новіше]) ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}2${FC_3} - nvidia-390xx (for GeForce 400 series cards and newer [NVCx and newer]) ${FC_0}" | tee -a $LOG_FILE;;
@@ -857,7 +855,7 @@ esac;;
 ################
 3_NVIDIA_340XX)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}3${FC_3} - nvidia-340xx (для карт GeForce 8000/9000 и 100-300 series [NV5x, NV8x, NV9x и NVAx] года производства 2006-2010) ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}3${FC_3} - nvidia-340xx (для карт GeForce 8000/9000 і 100-300 series [NV5x, NV8x, NV9x і NVAx] року виробництва 2006-2010) ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}3${FC_3} - nvidia-340xx (for GeForce 8000/9000 and 100-300 series cards [NV5x, NV8x, NV9x and NVAx] of the year of manufacture 2006-2010) ${FC_0}" | tee -a $LOG_FILE;;
@@ -866,7 +864,7 @@ esac;;
 ################
 4_NVIDIA_304XX)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}4${FC_3} - nvidia-304xx (для карт GeForce 6000/7000 series [NV4x и NV6x] года производства 2004-2006) ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}4${FC_3} - nvidia-304xx (для карт GeForce 6000/7000 series [NV4x і NV6x] року виробництва 2004-2006) ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}4${FC_3} - nvidia-304xx (for GeForce 6000/7000 series [NV4x and NV6x] cards of the year 2004-2006) ${FC_0}" | tee -a $LOG_FILE;;
@@ -875,7 +873,7 @@ esac;;
 ################
 4_XF86_VIDEO_NOUVEAU)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}5${FC_3} - xf86-video-nouveau (Драйвер с открытым исходным кодом 2D-ускорения для видео карт nVidia) ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}5${FC_3} - xf86-video-nouveau (Драйвер з відкритим вихідним кодом 2D-прискорення для відео карт nVidia) ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}5${FC_3} - xf86-video-nouveau (Open Source 2D acceleration driver for nVidia cards) ${FC_0}" | tee -a $LOG_FILE;;
@@ -884,7 +882,7 @@ esac;;
 ################
 CHOOSE_INSTALLATION_OPTION)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Выберите вариант установки: ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Виберіть варіант установки: ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Choose an installation option: ${FC_0}" | tee -a $LOG_FILE;;
@@ -893,7 +891,7 @@ esac;;
 ################
 SPECIFY_NETWORK_MANAGER)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Укажите программу для управления сетевыми соединениями: ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Вкажіть програму для управління мережевими з'єднаннями: ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Specify a program for managing network connections: ${FC_0}" | tee -a $LOG_FILE;;
@@ -902,7 +900,7 @@ esac;;
 ################
 SYSTEMD_NETWORKD*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}$2${FC_3} - systemd-networkd (cистемный демон для управления сетевыми настройками) ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}$2${FC_3} - systemd-networkd (системний демон для управління мережевими настройками) ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}$2${FC_3} - systemd-networkd (system daemon for managing network settings) ${FC_0}" | tee -a $LOG_FILE;;
@@ -911,7 +909,7 @@ esac;;
 ################
 DHCPCD*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}$2${FC_3} - dhcpcd (DHCP клиент) ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}$2${FC_3} - dhcpcd (DHCP клієнт) ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}$2${FC_3} - dhcpcd (DHCP client) ${FC_0}" | tee -a $LOG_FILE;;
@@ -920,7 +918,7 @@ esac;;
 ################
 NETWORK_MANAGER*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}$2${FC_3} - networkmanager (Менеджер сетевых подключений NetworkManager) ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}$2${FC_3} - networkmanager (Менеджер підключення до мережі NetworkManager) ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}$2${FC_3} - networkmanager (Network connection manager NetworkManager) ${FC_0}" | tee -a $LOG_FILE;;
@@ -929,7 +927,7 @@ esac;;
 ################
 WICD*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_2}$2${FC_3} - wicd (Менеджер сетевых подключений wicd) ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}$2${FC_3} - wicd (Менеджер підключення до мережі wicd) ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}$2${FC_3} - wicd (Network connection manager wicd) ${FC_0}" | tee -a $LOG_FILE;;
@@ -938,7 +936,7 @@ esac;;
 ################
 SPECIFY_MOUNTING_PARTITION*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Произвольная точка монтирования раздела (${FC_2}i${FC_4} - продолжить, пример: ${FC_3}/home${FC_4}, ${FC_3}/var${FC_4}, ${FC_3}/boot${FC_4}, ${FC_3}/data${FC_4}, ${FC_3}/archive${FC_4}): ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Довільна точка монтування розділу (${FC_2}i${FC_4} - продовжити, приклад: ${FC_3}/home${FC_4}, ${FC_3}/var${FC_4}, ${FC_3}/boot${FC_4}, ${FC_3}/data${FC_4}, ${FC_3}/archive${FC_4}): ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Any partition mount point (${FC_2}i${FC_4} - continue, example: ${FC_3}/home${FC_4}, ${FC_3}/var${FC_4}, ${FC_3}/boot${FC_4}, ${FC_3}/data${FC_4}, ${FC_3}/archive${FC_4}): ${FC_0}" | tee -a $LOG_FILE;;
@@ -947,7 +945,7 @@ esac;;
 ################
 CONTINUE_PRESS_ANY_KEY)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Для продолжения нажмите любую клавишу${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Для продовження натисніть будь-яку клавішу${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}To continue, press any key${FC_0}" | tee -a $LOG_FILE;;
@@ -956,7 +954,7 @@ esac;;
 ################
 INSTALL_VERSION_ARM)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Установка версии для ${FC_3}ARM${FC_4} устройства${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Установка версії для ${FC_3}ARM${FC_4} пристрою${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Installing the version for ${FC_3}ARM${FC_0}" | tee -a $LOG_FILE;;
@@ -965,7 +963,7 @@ esac;;
 ################
 FOUND_DRIVE_PARTITION*)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Для монтирования ${FC_3}$2${FC_4} найден раздел ${FC_3}$3${FC_4} с меткой ${FC_3}$4${FC_4} использовать его? ${FC_3}(y/n)${FC_4}: ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Для монтування ${FC_3}$2${FC_4} знайдений розділ ${FC_3}$3${FC_4} з міткою ${FC_3}$4${FC_4} використовувати його? ${FC_3}(y/n)${FC_4}: ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}To mount ${FC_3}$2${FC_4}, a disk partition ${FC_3}$3${FC_4} with the label ${FC_3}$4${FC_4} was found to use it? ${FC_3}(y/n) ${FC_4}: ${FC_0}" | tee -a $LOG_FILE;;
@@ -974,7 +972,7 @@ esac;;
 ################
 CHANGE_USERNAME)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}Введите полное имя пользователя (имя, фамилия): ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}Введіть повне ім'я користувача (ім'я, прізвище): ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}Enter your full username (first name, last name): ${FC_0}" | tee -a $LOG_FILE;;
@@ -983,7 +981,7 @@ esac;;
 ################
 OVERWRITE_EXISTING_TRAP)
 ################
-case $lang in
+case $LANG_SELECT in
   ru) echo -e "${FC_4}(ОШИБКА): попытка перезаписать существующую ловушку EXIT ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_4}(ПОМИЛКА): спроба перезаписати існуючу пастку EXIT ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_4}(BUG): attempting to overwrite existing EXIT trap ${FC_0}" | tee -a $LOG_FILE;;
