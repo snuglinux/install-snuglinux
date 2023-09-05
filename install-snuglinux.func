@@ -190,7 +190,7 @@ install_sevice(){
            read
            return 1
         fi
-     elif ls -l "$DIR_CHROOT/usr/lib/systemd/system" | grep "${SERVICE}" > /dev/null ; then
+     else
         chroot $DIR_CHROOT systemctl enable "${SERVICE}"
         if [ $? = 0 ]; then
            show_message DEMON_AUTOSTART ${SERVICE}
@@ -199,10 +199,6 @@ install_sevice(){
            read
            return 1
         fi
-     else
-        show_message FILE_NOT_FOUND "$DIR_CHROOT/usr/lib/systemd/system/${SERVICE}"
-        read
-        return 1
      fi
   fi
   return 0
@@ -259,6 +255,7 @@ download_pkg(){
   FILE_LISTS=${TMP_DOWN}"/lists"
   ADD_PACKAGES=
   ADD_SEVICES=
+  ADD_SEVICES_NOCONFIRM=
 
   TYPE=`sed -n ${SELECT_TYPE}p $FILE_LISTS`;
   if [ -f ${TMP_DOWN}/${TYPE}/pack/${PKG_NAME} ]; then
@@ -291,7 +288,7 @@ install_pkg() {
 
   INSTALL_PKG=$(not_installed_pkg "$1" "$DIR_CHROOT")
   NOCONFIRM="$2"
-  SYSTEMD="$3"
+  SYSTEMD=$3
   INSTALL=0
   INSTALL_PKG="${INSTALL_PKG#"${INSTALL_PKG%%[![:space:]]*}"}"
   #"
@@ -313,9 +310,18 @@ install_pkg() {
      if [ $? = 0 ]; then
         show_message SUCCESSFULLY_INSTALLED_PACKAGE "${INSTALL_PKG}"
         INSTALL=1
-        install_sevice "${SYSTEMD}"
-        install_sevice "${ADD_SEVICES}"
-        install_sevice "${ADD_SEVICES_NOCONFIRM}" "y"
+        SYSTEMD=`echo ${SYSTEMD} | tr ' ' '\n'`
+        for s in ${SYSTEMD[@]} ; do
+            install_sevice "${s}"
+        done
+        ADD_SEVICES=`echo ${ADD_SEVICES} | tr ' ' '\n'`
+        for s in ${ADD_SEVICES[@]} ; do
+            install_sevice "${s}"
+        done
+        ADD_SEVICES_NOCONFIRM=`echo ${ADD_SEVICES_NOCONFIRM} | tr ' ' '\n'`
+        for s in ${ADD_SEVICES_NOCONFIRM[@]} ; do
+            install_sevice "${s}" "y"
+        done
      else
         show_message FAILED_INSTALL_PACKAGE "${INSTALL_PKG}"
         INSTALL=0
