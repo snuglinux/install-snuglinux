@@ -1,22 +1,21 @@
 #! /bin/bash
 
 #=======================================
-check_amdgpu(){
-  local INDEX CHIPSET_NAME
+check_video_drivers(){
+  local INDEX CHIPSET_NAME DRIVERS DIR
 
-  VIDEO_CHIPSET=`lspci | grep -i --color vga`
-  VIDEO_CHIPSET=`echo $VIDEO_CHIPSET | tr a-z A-Z`
-
-  download_file_list "amdgpu";
-  if ! [ -f "${PO_DIR}/amdgpu" ]; then
-     show_message FILE_NOT_FOUND "${PO_DIR}/amdgpu"
+  DRIVERS=$1
+  VIDEO_CHIPSET=`echo $(lspci | grep -i --color vga) | tr a-z A-Z`
+  download_file_list "$DRIVERS";
+  if ! [ -f "${TMP_DIR}/install/$DRIVERS" ]; then
+     show_message FILE_NOT_FOUND "${TMP_DIR}/install/$DRIVERS"
      exit 1
   fi
   INDEX=0
   while read line ; do
      CHIPSET_NAME[$INDEX]="$line"
      INDEX=$(($INDEX+1))
-  done < ${PO_DIR}/amdgpu
+  done < ${TMP_DIR}/install/$DRIVERS
 
   for i in "${CHIPSET_NAME[@]}"; do
       echo "$VIDEO_CHIPSET" | grep "$i" > /dev/null
@@ -30,22 +29,28 @@ check_amdgpu(){
 }
 
 #=======================================
-install_video_ati(){
+install_video_amd(){
   local ARRAY AMSURE STR_READ OK
+  local VAL_ATI VAL_AMDGPU
 
-  check_amdgpu;
-  CHECK_AMDGPU=$?
-  if [ $CHECK_AMDGPU = 1 ]; then
-     ARRAY="012"
-  else
-     ARRAY="01"
-  fi
   show_message SPECIFY_VIDEO_DRIVER
   show_message DO_NOT_INSTALL 0
-  show_message 1_XF86_VIDEO_ATI
-  if [ ${CHECK_AMDGPU} = 1 ]; then
-     show_message 2_XF86_VIDEO_AMDGPU
+  ARRAY="0"
+
+  check_video_drivers "ati";
+  if [ $? = 1 ]; then
+     VAL_ATI="${#ARRAY}"
+     ARRAY="$ARRAY${VAL_ATI}"
+     show_message XF86_VIDEO_ATI ${VAL_ATI}
   fi
+
+  check_video_drivers "amdgpu";
+  if [ $? = 1 ]; then
+     VAL_AMDGPU="${#ARRAY}"
+     ARRAY="$ARRAY${VAL_AMDGPU}"
+     show_message XF86_VIDEO_AMDGPU ${VAL_AMDGPU}
+  fi
+
   STR_READ=`show_message CHOOSE_INSTALLATION_OPTION`
   OK=0
   while [ "${OK}" = 0 ] ; do
@@ -60,11 +65,11 @@ install_video_ati(){
   if [ "${AMSURE}" = "0" ]; then
      return 0
      # no
-  elif [ "${AMSURE}" = "1" ]; then
+  elif [ "${AMSURE}" = "${VAL_ATI}" ]; then
      install_pkg "xf86-video-ati" "y"
      return 1
      # yes
-  elif [ "${AMSURE}" = "2" ]; then
+  elif [ "${AMSURE}" = "${VAL_AMDGPU}" ]; then
      install_pkg "xf86-video-amdgpu" "y"
      sed -i $DIR_CHROOT/etc/mkinitcpio.conf -e 's|MODULES=()|MODULES=(amdgpu)|g'
      chroot $DIR_CHROOT mkinitcpio -p linux$LINUX_VER
@@ -86,10 +91,10 @@ install_video_nvidia(){
 
   show_message SPECIFY_VIDEO_DRIVER
   show_message DO_NOT_INSTALL 0
-  show_message 1_NVIDIA
-  show_message 2_NVIDIA_390XX
-  show_message 3_NVIDIA_340XX
-  show_message 4_XF86_VIDEO_NOUVEAU
+  show_message NVIDIA 1
+  show_message NVIDIA_390XX 2
+  show_message NVIDIA_340XX 3
+  show_message XF86_VIDEO_NOUVEAU 4
   STR_READ=`show_message CHOOSE_INSTALLATION_OPTION`
   OK=0
   while [ "${OK}" = 0 ] ; do
@@ -210,7 +215,7 @@ install_video_driver(){
   fi
   ATI=`echo ${VIDEO} | grep "RADEON\|ATI\|AMD"`
   if [ "$ATI" ]; then
-     install_video_ati
+     install_video_amd
      if [ $? = 1 ]; then
         INSTALL_VIDEO="yes"
      fi

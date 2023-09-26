@@ -336,6 +336,16 @@ esac
 ;;
 
 ################
+PACKAGE_WAS_PREVIOUSLY_INSTALLED*)
+################
+case $LANG_SELECT in
+  ru) echo -e "${FC_2}Ошибка:${FC_0} Пакет ${FC_4}$2${FC_0} был установлен ранее!" | tee -a $LOG_FILE;;
+  uk) echo -e "${FC_2}Помилка:${FC_0} Пакет ${FC_4}$2${FC_0} був встановлений раніше! " | tee -a $LOG_FILE;;
+  *)  echo -e "${FC_2}ERROR:${FC_0} Package ${FC_4}$2${FC_0} was previously installed!" | tee -a $LOG_FILE;;
+esac
+;;
+
+################
 PACKAGE_NOT_INSTALLED*)
 ################
 case $LANG_SELECT in
@@ -790,25 +800,25 @@ case $LANG_SELECT in
 esac;;
 
 ################
-1_XF86_VIDEO_ATI)
+XF86_VIDEO_ATI*)
 ################
 case $LANG_SELECT in
-  ru) echo -e "${FC_2}1${FC_3} - xf86-video-ati (Старая версия ATI/AMD драйвера с открытым исходным кодом) ${FC_0}" | tee -a $LOG_FILE;;
-  uk) echo -e "${FC_2}1${FC_3} - xf86-video-ati (Стара версія ATI / AMD драйвера з відкритим вихідним кодом) ${FC_0}" | tee -a $LOG_FILE;;
-  *)  echo -e "${FC_2}1${FC_3} - xf86-video-ati (Old version of ATI / AMD driver with open source) ${FC_0}" | tee -a $LOG_FILE;;
+  ru) echo -e "${FC_2}$2${FC_3} - xf86-video-ati (Старая версия ATI/AMD драйвера с открытым исходным кодом) ${FC_0}" | tee -a $LOG_FILE;;
+  uk) echo -e "${FC_2}$2${FC_3} - xf86-video-ati (Стара версія ATI / AMD драйвера з відкритим вихідним кодом) ${FC_0}" | tee -a $LOG_FILE;;
+  *)  echo -e "${FC_2}$2${FC_3} - xf86-video-ati (Old version of ATI / AMD driver with open source) ${FC_0}" | tee -a $LOG_FILE;;
 esac;;
 
 ################
-2_XF86_VIDEO_AMDGPU)
+XF86_VIDEO_AMDGPU*)
 ################
 case $LANG_SELECT in
-  ru) echo -e "${FC_2}2${FC_3} - xf86-video-amdgpu (ATI/AMD версия драйвера с открытым исходным кодом) ${FC_0}" | tee -a $LOG_FILE;;
-  uk) echo -e "${FC_2}2${FC_3} - xf86-video-amdgpu (ATI/AMD версія драйвера з відкритим вихідним кодом) ${FC_0}" | tee -a $LOG_FILE;;
-  *)  echo -e "${FC_2}2${FC_3} - xf86-video-amdgpu (ATI/AMD version of the driver with open source) ${FC_0}" | tee -a $LOG_FILE;;
+  ru) echo -e "${FC_2}$2${FC_3} - xf86-video-amdgpu (ATI/AMD версия драйвера с открытым исходным кодом) ${FC_0}" | tee -a $LOG_FILE;;
+  uk) echo -e "${FC_2}$2${FC_3} - xf86-video-amdgpu (ATI/AMD версія драйвера з відкритим вихідним кодом) ${FC_0}" | tee -a $LOG_FILE;;
+  *)  echo -e "${FC_2}$2${FC_3} - xf86-video-amdgpu (ATI/AMD version of the driver with open source) ${FC_0}" | tee -a $LOG_FILE;;
 esac;;
 
 ################
-INSTALL_XF86_VIDEO_VESA)
+INSTALL_XF86_VIDEO_VESA*)
 ################
 case $LANG_SELECT in
   ru) echo -e "${FC_2}$2${FC_3} - xf86-video-vesa (X.org vesa видео драйвер) ${FC_0}" | tee -a $LOG_FILE;;
@@ -817,7 +827,7 @@ case $LANG_SELECT in
 esac;;
 
 ################
-INSTALL_XF86_VIDEO_INTEL)
+INSTALL_XF86_VIDEO_INTEL*)
 ################
 case $LANG_SELECT in
   ru) echo -e "${FC_2}$2${FC_3} - xf86-video-intel (X.org Intel i810/i830/i915/945G/G965+ видео драйвер) ${FC_0}" | tee -a $LOG_FILE;;
@@ -826,7 +836,7 @@ case $LANG_SELECT in
 esac;;
 
 ################
-INSTALL_NOMODESET)
+INSTALL_NOMODESET*)
 ################
 case $LANG_SELECT in
   ru) echo -e "${FC_2}$2${FC_3} - modesetting — это драйвер Xorg для устройств KMS.${FC_0}" | tee -a $LOG_FILE;;
@@ -835,48 +845,48 @@ case $LANG_SELECT in
 esac;;
 
 ################
-1_NVIDIA)
+NVIDIA*)
 ################
 case $LANG_SELECT in
-  ru) echo -e "${FC_2}1${FC_3} - nvidia (Последняя версия драйвера NVIDIA) ${FC_0}" | tee -a $LOG_FILE;;
-  uk) echo -e "${FC_2}1${FC_3} - nvidia (Остання версія драйвера NVIDIA) ${FC_0}" | tee -a $LOG_FILE;;
-  *)  echo -e "${FC_2}1${FC_3} - nvidia (The latest version of the NVIDIA driver) ${FC_0}" | tee -a $LOG_FILE;;
+  ru) echo -e "${FC_2}$2${FC_3} - nvidia (Последняя версия драйвера NVIDIA) ${FC_0}" | tee -a $LOG_FILE;;
+  uk) echo -e "${FC_2}$2${FC_3} - nvidia (Остання версія драйвера NVIDIA) ${FC_0}" | tee -a $LOG_FILE;;
+  *)  echo -e "${FC_2}$2${FC_3} - nvidia (The latest version of the NVIDIA driver) ${FC_0}" | tee -a $LOG_FILE;;
 esac;;
 
 ################
-2_NVIDIA_390XX)
+NVIDIA_390XX*)
 ################
 case $LANG_SELECT in
-  ru) echo -e "${FC_2}2${FC_3} - nvidia-390xx (для карт GeForce 400 series и более новых [NVCx и новее]) ${FC_0}" | tee -a $LOG_FILE;;
-  uk) echo -e "${FC_2}2${FC_3} - nvidia-390xx (для карт GeForce 400 series та новіших [NVCx і новіше]) ${FC_0}" | tee -a $LOG_FILE;;
-  *)  echo -e "${FC_2}2${FC_3} - nvidia-390xx (for GeForce 400 series cards and newer [NVCx and newer]) ${FC_0}" | tee -a $LOG_FILE;;
+  ru) echo -e "${FC_2}$2${FC_3} - nvidia-390xx (для карт GeForce 400 series и более новых [NVCx и новее]) ${FC_0}" | tee -a $LOG_FILE;;
+  uk) echo -e "${FC_2}$2${FC_3} - nvidia-390xx (для карт GeForce 400 series та новіших [NVCx і новіше]) ${FC_0}" | tee -a $LOG_FILE;;
+  *)  echo -e "${FC_2}$2${FC_3} - nvidia-390xx (for GeForce 400 series cards and newer [NVCx and newer]) ${FC_0}" | tee -a $LOG_FILE;;
 esac;;
 
 ################
-3_NVIDIA_340XX)
+NVIDIA_340XX*)
 ################
 case $LANG_SELECT in
-  ru) echo -e "${FC_2}3${FC_3} - nvidia-340xx (для карт GeForce 8000/9000 и 100-300 series [NV5x, NV8x, NV9x и NVAx] года производства 2006-2010) ${FC_0}" | tee -a $LOG_FILE;;
-  uk) echo -e "${FC_2}3${FC_3} - nvidia-340xx (для карт GeForce 8000/9000 і 100-300 series [NV5x, NV8x, NV9x і NVAx] року виробництва 2006-2010) ${FC_0}" | tee -a $LOG_FILE;;
-  *)  echo -e "${FC_2}3${FC_3} - nvidia-340xx (for GeForce 8000/9000 and 100-300 series cards [NV5x, NV8x, NV9x and NVAx] of the year of manufacture 2006-2010) ${FC_0}" | tee -a $LOG_FILE;;
+  ru) echo -e "${FC_2}$2${FC_3} - nvidia-340xx (для карт GeForce 8000/9000 и 100-300 series [NV5x, NV8x, NV9x и NVAx] года производства 2006-2010) ${FC_0}" | tee -a $LOG_FILE;;
+  uk) echo -e "${FC_2}$2${FC_3} - nvidia-340xx (для карт GeForce 8000/9000 і 100-300 series [NV5x, NV8x, NV9x і NVAx] року виробництва 2006-2010) ${FC_0}" | tee -a $LOG_FILE;;
+  *)  echo -e "${FC_2}$2${FC_3} - nvidia-340xx (for GeForce 8000/9000 and 100-300 series cards [NV5x, NV8x, NV9x and NVAx] of the year of manufacture 2006-2010) ${FC_0}" | tee -a $LOG_FILE;;
 esac;;
 
 ################
-4_NVIDIA_304XX)
+NVIDIA_304XX*)
 ################
 case $LANG_SELECT in
-  ru) echo -e "${FC_2}4${FC_3} - nvidia-304xx (для карт GeForce 6000/7000 series [NV4x и NV6x] года производства 2004-2006) ${FC_0}" | tee -a $LOG_FILE;;
-  uk) echo -e "${FC_2}4${FC_3} - nvidia-304xx (для карт GeForce 6000/7000 series [NV4x і NV6x] року виробництва 2004-2006) ${FC_0}" | tee -a $LOG_FILE;;
-  *)  echo -e "${FC_2}4${FC_3} - nvidia-304xx (for GeForce 6000/7000 series [NV4x and NV6x] cards of the year 2004-2006) ${FC_0}" | tee -a $LOG_FILE;;
+  ru) echo -e "${FC_2}$2${FC_3} - nvidia-304xx (для карт GeForce 6000/7000 series [NV4x и NV6x] года производства 2004-2006) ${FC_0}" | tee -a $LOG_FILE;;
+  uk) echo -e "${FC_2}$2${FC_3} - nvidia-304xx (для карт GeForce 6000/7000 series [NV4x і NV6x] року виробництва 2004-2006) ${FC_0}" | tee -a $LOG_FILE;;
+  *)  echo -e "${FC_2}$2${FC_3} - nvidia-304xx (for GeForce 6000/7000 series [NV4x and NV6x] cards of the year 2004-2006) ${FC_0}" | tee -a $LOG_FILE;;
 esac;;
 
 ################
-4_XF86_VIDEO_NOUVEAU)
+XF86_VIDEO_NOUVEAU*)
 ################
 case $LANG_SELECT in
-  ru) echo -e "${FC_2}5${FC_3} - xf86-video-nouveau (Драйвер с открытым исходным кодом 2D-ускорения для видео карт nVidia) ${FC_0}" | tee -a $LOG_FILE;;
-  uk) echo -e "${FC_2}5${FC_3} - xf86-video-nouveau (Драйвер з відкритим вихідним кодом 2D-прискорення для відео карт nVidia) ${FC_0}" | tee -a $LOG_FILE;;
-  *)  echo -e "${FC_2}5${FC_3} - xf86-video-nouveau (Open Source 2D acceleration driver for nVidia cards) ${FC_0}" | tee -a $LOG_FILE;;
+  ru) echo -e "${FC_2}$2${FC_3} - xf86-video-nouveau (Драйвер с открытым исходным кодом 2D-ускорения для видео карт nVidia) ${FC_0}" | tee -a $LOG_FILE;;
+  uk) echo -e "${FC_2}$2${FC_3} - xf86-video-nouveau (Драйвер з відкритим вихідним кодом 2D-прискорення для відео карт nVidia) ${FC_0}" | tee -a $LOG_FILE;;
+  *)  echo -e "${FC_2}$2${FC_3} - xf86-video-nouveau (Open Source 2D acceleration driver for nVidia cards) ${FC_0}" | tee -a $LOG_FILE;;
 esac;;
 
 ################

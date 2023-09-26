@@ -293,6 +293,7 @@ install_pkg() {
   INSTALL_PKG="${INSTALL_PKG#"${INSTALL_PKG%%[![:space:]]*}"}"
   #"
   if [ -z "${INSTALL_PKG}" ] ; then
+     show_message PACKAGE_WAS_PREVIOUSLY_INSTALLED "$1"
      return 0
   fi
   if [ "${NOCONFIRM}" != "y" ]; then
