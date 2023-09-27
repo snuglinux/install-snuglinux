@@ -18,6 +18,9 @@ check_video_drivers(){
   done < ${TMP_DIR}/install/$DRIVERS
 
   for i in "${CHIPSET_NAME[@]}"; do
+      if [ -z "$i" ]; then
+         continue
+      fi
       echo "$VIDEO_CHIPSET" | grep "$i" > /dev/null
       if [ "$?" = 0 ]; then
          # yes

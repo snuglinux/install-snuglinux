@@ -1,6 +1,6 @@
 #! /bin/bash
 
-CURRENT_VERSION=0.0.0
+CURRENT_VERSION=0.0.34
 INSTALL_PREFIX=/usr
 PO_DIR=${INSTALL_PREFIX}/share/snuglinux
 
@@ -16,22 +16,6 @@ else
 fi
 
 system_language
-
-# install-partition.func
-if [ -f "${PO_DIR}/install-partition.func" ]; then
-   source  "${PO_DIR}/install-partition.func"
-else
-   show_message FILE_NOT_FOUND "${PO_DIR}/install-partition.func"
-   exit 1
-fi
-
-# install-video.func
-if [ -f "${PO_DIR}/install-video.func" ]; then
-   source "${PO_DIR}/install-video.func"
-else
-   show_message FILE_NOT_FOUND "${PO_DIR}/install-video.func"
-   exit 1
-fi
 
 set_options $*
 
