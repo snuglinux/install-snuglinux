@@ -1,0 +1,17 @@
+pkgbase = install-snuglinux
+	pkgdesc = Console script to install and configure distribution snuglinux
+	pkgver = 0.0.34
+	pkgrel = 1
+	url = https://github.com/snuglinux/install-snuglinux
+	arch = any
+	license = GPL2
+	depends = openssl
+	depends = grep
+	depends = sed
+	depends = wget
+	depends = pacutils
+	backup = etc/install-snuglinux.conf
+	source = https://github.com/snuglinux/install-snuglinux/archive/0.0.34.tar.gz
+	md5sums = a1c096d56c87b730b694ae9e95548c51
+
+pkgname = install-snuglinux

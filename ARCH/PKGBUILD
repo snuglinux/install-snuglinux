@@ -1,5 +1,5 @@
 pkgname=install-snuglinux
-pkgver=0.0.30
+pkgver=0.0.34
 pkgrel=1
 pkgdesc="Console script to install and configure distribution snuglinux"
 arch=('any')
@@ -8,7 +8,7 @@ license=('GPL2')
 depends=("openssl" "grep" "sed" "wget" "pacutils" )
 source=("https://github.com/snuglinux/${pkgname}/archive/${pkgver}.tar.gz")
 backup=('etc/install-snuglinux.conf')
-md5sums=('56ff0729f758a3ae48830c8734bdfab2')
+md5sums=('a16eb454d704e286fe173ac239dce237')
 
 package(){
   cd "$srcdir/${pkgname}-$pkgver"
@@ -28,6 +28,7 @@ package(){
   install -m644 install-video.func          "$pkgdir/usr/share/snuglinux"
   install -m644 list-arm-devices            "$pkgdir/usr/share/snuglinux"
   install -m644 amdgpu                      "$pkgdir/usr/share/snuglinux"
+  install -m644 ati                         "$pkgdir/usr/share/snuglinux"
   install -m644 README.md                   "$pkgdir/usr/share/doc/${pkgname}/README"
   install -Dm 644 COPYING                   "$pkgdir/usr/share/licenses/${pkgname}/LICENSE"
   install -Dm 644 install-snuglinux.conf    "$pkgdir/etc"
