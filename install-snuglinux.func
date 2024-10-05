@@ -59,8 +59,15 @@ system_language() {
      done
   fi
   source ~/.config/lang.conf
-  UP_LANG_SELECT=`echo "${LANG_SELECT^^}"`
-  LANG_UTF8=${LANG_SELECT}"_"${UP_LANG_SELECT}.UTF-8
+  #UP_LANG_SELECT=`echo "${LANG_SELECT^^}"`
+  #LANG_UTF8=${LANG_SELECT}"_"${UP_LANG_SELECT}.UTF-8
+  if [ "${LANG_SELECT}" == "en" ]; then
+     LANG_UTF8="en_US.UTF-8"
+  elif [ "${LANG_SELECT}" == "uk" ]; then
+     LANG_UTF8="uk_UA.UTF-8"
+  elif [ "${LANG_SELECT}" == "ru" ]; then
+     LANG_UTF8="ru_RU.UTF-8"
+  fi
   if [ -z "${PATH_FILE}" ]; then
      #loadkeys ${LANG_SELECT}
      export LANG=${LANG_UTF8}
@@ -377,6 +384,7 @@ install_network_manager(){
    elif [ "$AMSURE" = "1" ]; then
       install_sevice "systemd-networkd.service" "y"
    elif [ "$AMSURE" = "2" ]; then
+      install_pkg "dhcpcd" "y"
       install_sevice "dhcpcd.service" "y"
       return 1
    elif [ "$AMSURE" = "3" ]; then
@@ -457,10 +465,27 @@ generating_fstab(){
 }
 
 #=======================================
+fix_mkinitcpio_conf(){
+   if ! [ -d "$TMP_DIR/mkinitcpio" ]; then
+      mkdir "$TMP_DIR/mkinitcpio"
+   fi
+   wget --quiet --tries=3 -c $PROTOCOL_TYPE://${SNUG_SERVER}/install//mkinitcpio/hooks-systemd.conf  -P $TMP_DIR/mkinitcpio -nc 2>/dev/null
+   sudo cp $TMP_DIR/mkinitcpio/hooks-systemd.conf $DIR_CHROOT/etc/mkinitcpio.conf.d/hooks-systemd.conf
+   if ! [ $? = 0 ]; then
+        show_message FAILED_COPY_FILE "«hooks-systemd.conf»";
+        exit 1;
+   fi
+  #show_message MAKING_CHANGES_TO_FILE $DIR_CHROOT/etc/mkinitcpio.conf
+  #sed -i $DIR_CHROOT/etc/mkinitcpio.conf -e "s|consolefont block filesystems|consolefont block encrypt lvm2 filesystems|"
+}
+
+#=======================================
 creating_bootable_ram_disk(){
+  fix_mkinitcpio_conf
   show_message CREATING_BOOTABLE_RAM_DISK
   run_command_chroot "mkinitcpio -p linux$LINUX_VER"
 }
+
 
 #=======================================
 enter_localtime(){
@@ -784,7 +809,7 @@ pacman_key_init_chroot(){
 #=======================================
 pacman_key_init(){
    show_message INITIALIZE_PACMAN_KEY
-   killall gpg-agent
+   killall gpg-agent > /dev/null 2>&1
    pacman-key --init && pacman-key --populate archlinux
    pacinstall archlinux-keyring --yolo
 }

@@ -997,6 +997,24 @@ case $LANG_SELECT in
   *)  echo -e "${FC_4}(BUG): attempting to overwrite existing EXIT trap ${FC_0}" | tee -a $LOG_FILE;;
 esac;;
 
+################
+ENCRYPT_PARTITION_LUKS*)
+################
+case $LANG_SELECT in
+  ru) echo -e "${FC_4}Зашифровать раздел посредством LUKS? ${FC_3}(y/n)${FC_4}:${FC_0}" | tee -a $LOG_FILE;;
+  uk) echo -e "${FC_4}Зашифрувати розділ за допомогою LUKS? ${FC_3}(y/n)${FC_4}:${FC_0}" | tee -a $LOG_FILE;;
+  *)  echo -e "${FC_4}Encrypt partition using LUKS? ${FC_3}(y/n)${FC_4}:${FC_0}" | tee -a $LOG_FILE;;
+esac;;
+
+################
+MAKING_CHANGES_TO_FILE*)
+################
+case $LANG_SELECT in
+  ru) echo -e "${FC_4}Внесение изменений в файл ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
+  uk) echo -e "${FC_4}Внесення змін до файлу ${FC_3}$2${FC_0}" | tee -a $LOG_FILE;;
+  *)  echo -e "${FC_4}Making changes to the ${FC_3}$2${FC_0} file" | tee -a $LOG_FILE;;
+esac;;
+
 *)
 echo -e "Unknown string $1";
 exit 1

@@ -43,7 +43,7 @@ find_part_label(){
   local find_label=$1
   lsblk -f --output NAME,LABEL,TYPE -p -n -P 2>&1 | while read line; do
     eval $line
-    if [ "$TYPE" == "part" ]; then
+    if [ "$TYPE" == "part" ] || [ "$TYPE" == "crypt" ] || [ "$TYPE" == "lvm" ]; then
       if ! [ -z $LABEL ]; then
         if [ "$LABEL" ==  "$find_label" ]; then
            echo $NAME
@@ -56,11 +56,37 @@ find_part_label(){
 }
 
 #=======================================
+fix_grub_conf(){
+   local CRYPTODISKS_NAME DISK_NAME DISK_PART TEMP_CRYPTODEVICE GRUB_CMDLINE
+
+   sed -i ${DIR_CHROOT}/etc/default/grub -e "s|GRUB_TIMEOUT=5|GRUB_TIMEOUT=1|"
+   sed -i ${DIR_CHROOT}/etc/default/grub -e "s|GRUB_DISTRIBUTOR=\"Arch\"|GRUB_DISTRIBUTOR=\"Snug\"|"
+   sed -i ${DIR_CHROOT}/etc/default/grub -e "s|#GRUB_ENABLE_CRYPTODISK=y|GRUB_ENABLE_CRYPTODISK=y|"
+   CRYPTODISKS_NAME=`lsblk -o PATH | grep /dev/mapper`
+   for i in ${CRYPTODISKS_NAME[@]}; do
+       DISK_NAME=`echo $(basename $i)`;
+       TEMP_CRYPTODEVICE=`cryptsetup status $DISK_NAME | grep device | awk -F: '{print $2}'`
+       if [ -n "$TEMP_CRYPTODEVICE" ]; then
+          DISK_PART=${TEMP_CRYPTODEVICE//' '}":$DISK_NAME"
+       fi
+
+       CRYPT_ROOT=`echo $i | grep "root"`
+       if [ -n "$CRYPT_ROOT" ]; then
+          GRUB_CMDLINE="$GRUB_CMDLINE `echo "cryptdevice=$DISK_PART" root=$i`"
+       fi
+   done
+   GRUB_CMDLINE=${GRUB_CMDLINE/' '}
+   sed -i ${DIR_CHROOT}/etc/default/grub -e "s|GRUB_CMDLINE_LINUX=\"\"|GRUB_CMDLINE_LINUX=\"$GRUB_CMDLINE\"|"
+}
+
+#=======================================
 install_grub_bios(){
   local STR_READ AMSURE OK
 
   OK=0
   install_pkg "grub" "y"
+  fix_grub_conf;
+
   while [ "${OK}" = 0 ] ; do
         STR_READ=`show_message SPECIFY_PARTITION_INSTALL "grub" "/dev/sda"`
         read -p "${STR_READ}" AMSURE
@@ -97,6 +123,7 @@ install_grub_uefi(){
   fi
   install_pkg "grub" "y"
   install_pkg "efibootmgr" "y"
+  fix_grub_conf;
 
   OK=0
   while [ "${OK}" = 0 ] ; do
@@ -119,8 +146,10 @@ install_grub_uefi(){
 install_grub(){
   if [ $UEFI = 0 ]; then
      install_grub_bios
+     return $?;
   else
      install_grub_uefi
+     return $?;
   fi
 }
 
@@ -151,8 +180,14 @@ install_bootloader(){
   lsblk -e7 -d -p -o NAME,MODEL,SIZE,SERIAL | grep -v "rom\|loop\|airoot\|sr"
   if [ "$INSTALL_ARCH" == "arm" ] ; then
      install_uboot;
+     if [ $? != 0 ]; then
+        exit 1;
+     fi
   else
      install_grub;
+     if [ $? != 0 ]; then
+        exit 1;
+     fi
   fi
 }
 
@@ -289,7 +324,7 @@ mount_part() {
   fi
   FIND_DEV_LABEL=$(find_part_label "${LABEL_PART}")
   OK=0
-  lsblk -f --output MODEL,NAME,LABEL,SIZE,UUID,SERIAL | grep -v "rom\|loop\|airoot\|sr"
+  lsblk -p --output MODEL,NAME,LABEL,FSTYPE,TYPE,SIZE,UUID,SERIAL | grep -v "rom\|loop\|airoot\|sr"
   while [ "${OK}" = 0 ]; do
         if [ -n "${FIND_DEV_LABEL}" ]; then
            while [ "$YN" = "${YN#*$AMSURE_FIND_LABEL}" ] ; do
@@ -304,7 +339,7 @@ mount_part() {
            read -p "${STR_READ}" AMSURE_DEV
         fi
         LAST_SYMBOL=`echo ${AMSURE_DEV:$((${#AMSURE_DEV}-1)):1}`
-        if [[ "${LAST_SYMBOL}" != *[[:digit:]]* ]]; then
+        if  [ -z "$(echo ${AMSURE_DEV} | grep "/dev/mapper")" ] && [[ "${LAST_SYMBOL}" != *[[:digit:]]* ]]; then
            show_message NOT_RIGHT_VALUE
            OK=0
            continue
@@ -425,6 +460,7 @@ preparation_disk(){
   fi
   partition_drive
   mount_part "/"
+  #mount_part "/boot"
   if [ $UEFI = 1 ]; then
       mount_part "efi"
   fi

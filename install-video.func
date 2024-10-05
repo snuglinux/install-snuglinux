@@ -162,12 +162,25 @@ install_video_vesa(){
 #=======================================
 install_video_intel(){
   local ARRAY AMSURE STR_READ OK
+  local VAL_INTEL VAL_NOMODESET
 
-  ARRAY="012"
   show_message SPECIFY_VIDEO_DRIVER
   show_message DO_NOT_INSTALL 0
-  show_message INSTALL_XF86_VIDEO_INTEL 1
-  show_message INSTALL_NOMODESET 2
+  ARRAY="0"
+
+  check_video_drivers "intel";
+  if [ $? = 1 ]; then
+     VAL_INTEL="${#ARRAY}"
+     ARRAY="$ARRAY${VAL_INTEL}"
+     show_message INSTALL_XF86_VIDEO_INTEL ${VAL_INTEL}
+  fi
+
+  check_video_drivers "nomodeset";
+  if [ $? = 1 ]; then
+     VAL_NOMODESET="${#ARRAY}"
+     ARRAY="$ARRAY${VAL_NOMODESET}"
+     show_message INSTALL_NOMODESET ${VAL_NOMODESET}
+  fi
 
   STR_READ=`show_message CHOOSE_INSTALLATION_OPTION`
   OK=0
@@ -180,17 +193,18 @@ install_video_intel(){
            OK=1
         fi
   done
-  if [ "$AMSURE" = "0" ]; then
+
+  if [ "${AMSURE}" = "0" ]; then
      return 0
      # no
-  elif [ "$AMSURE" = "1" ]; then
+  elif [ "${AMSURE}" = "${VAL_INTEL}" ]; then
      install_pkg "xf86-video-intel" "y"
-     sed -i $DIR_CHROOT/etc/mkinitcpio.conf -e 's|MODULES=""|MODULES="i915"|g'
+     sed -i $DIR_CHROOT/etc/mkinitcpio.conf -e 's|MODULES=()|MODULES=(i915)|g'
      chroot $DIR_CHROOT mkinitcpio -p linux$LINUX_VER
      return 1
      # yes
-  elif [ "$AMSURE" = "2" ]; then
-     echo "not implemented yet"
+  elif [ "${AMSURE}" = "${VAL_NOMODESET}" ]; then
+     install_pkg "libva-vdpau-driver lib32-libva-vdpau-driver libvdpau-va-gl vulkan-intel lib32-vulkan-intel lib32-mesa" "y"
      return 1
      # yes
   fi
