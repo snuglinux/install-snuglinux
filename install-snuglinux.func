@@ -466,13 +466,18 @@ generating_fstab(){
 
 #=======================================
 fix_mkinitcpio_conf(){
+   local hooks_file
+
+   hooks_file="hooks-udev.conf";
+   #hooks_file="hooks-systemd.conf";
+
    if ! [ -d "$TMP_DIR/mkinitcpio" ]; then
       mkdir "$TMP_DIR/mkinitcpio"
    fi
-   wget --quiet --tries=3 -c $PROTOCOL_TYPE://${SNUG_SERVER}/install//mkinitcpio/hooks-systemd.conf  -P $TMP_DIR/mkinitcpio -nc 2>/dev/null
-   sudo cp $TMP_DIR/mkinitcpio/hooks-systemd.conf $DIR_CHROOT/etc/mkinitcpio.conf.d/hooks-systemd.conf
+   wget --quiet --tries=3 -c $PROTOCOL_TYPE://${SNUG_SERVER}/install/mkinitcpio/$hooks_file  -P $TMP_DIR/mkinitcpio -nc 2>/dev/null
+   cp $TMP_DIR/mkinitcpio/$hooks_file $DIR_CHROOT/etc/mkinitcpio.conf.d/$hooks_file
    if ! [ $? = 0 ]; then
-        show_message FAILED_COPY_FILE "«hooks-systemd.conf»";
+        show_message FAILED_COPY_FILE "«$hooks_file»";
         exit 1;
    fi
   #show_message MAKING_CHANGES_TO_FILE $DIR_CHROOT/etc/mkinitcpio.conf

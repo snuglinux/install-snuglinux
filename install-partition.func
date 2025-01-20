@@ -177,7 +177,7 @@ install_uboot(){
 #=======================================
 # Install operating system loader
 install_bootloader(){
-  lsblk -e7 -d -p -o NAME,MODEL,SIZE,SERIAL | grep -v "rom\|loop\|airoot\|sr"
+  lsblk -e7 -d -p -o NAME,MODEL,SIZE,SERIAL,TYPE | grep -v "rom\|loop\|airoot\|sr"
   if [ "$INSTALL_ARCH" == "arm" ] ; then
      install_uboot;
      if [ $? != 0 ]; then
@@ -324,7 +324,7 @@ mount_part() {
   fi
   FIND_DEV_LABEL=$(find_part_label "${LABEL_PART}")
   OK=0
-  lsblk -p --output MODEL,NAME,LABEL,FSTYPE,TYPE,SIZE,UUID,SERIAL | grep -v "rom\|loop\|airoot\|sr"
+  lsblk -p -M --output MODEL,NAME,LABEL,FSTYPE,TYPE,SIZE,UUID,SERIAL | grep -v "rom\|loop\|airoot\|sr"
   while [ "${OK}" = 0 ]; do
         if [ -n "${FIND_DEV_LABEL}" ]; then
            while [ "$YN" = "${YN#*$AMSURE_FIND_LABEL}" ] ; do
@@ -387,7 +387,7 @@ check_if_disk_exists(){
 
    DEV=$1
 
-   STR=`lsblk -e7 -d -o NAME -p -P| grep $DEV > /dev/null`
+   STR=`lsblk -e7 -M -p -o NAME | grep -v "rom\|loop\|airoot\|sr\|part" | grep $DEV > /dev/null`
    if [ $? = 0 ]; then
       return 1
    else
@@ -409,7 +409,7 @@ partition_drive() {
      exit
   fi
   if [ "${AMSURE}" = "y" ] ; then
-     lsblk -e7 -d -p -o NAME,MODEL,SIZE,SERIAL | grep -v "rom\|loop\|airoot\|sr"
+     lsblk -e7 -M -p -o NAME,MODEL,SIZE,SERIAL,TYPE | grep -v "rom\|loop\|airoot\|sr"
      OK=0
      while [ "${OK}" = 0 ] ; do
            STR_READ=`show_message SPECIFY_PARTITION`
