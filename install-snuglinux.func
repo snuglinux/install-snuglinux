@@ -420,26 +420,12 @@ edit_pacman_conf(){
   PATH_FILE="$1";
   FILE="${PATH_FILE}/pacman.conf";
   show_message MAKING_CHANGES_TO_FILE "${FILE}"
-  if [ "$INSTALL_ARCH" = "x86_64" ] ; then
-     grep "#\[multilib]" $FILE > /dev/null
-     if [ "$?" = 0 ]; then
-        F=`sed -n '/\#\[multilib]/{=}' $FILE`
-        let "F = $F + 1"
-        sed -i $FILE -e 's|\#\[multilib\]|\[multilib\]|g'
-        sed -i $FILE -e "$F s|\#Include = \/etc\/pacman.d\/mirrorlist|Include = \/etc\/pacman.d\/mirrorlist|g"
-     fi
-  fi
 
-  grep "\[snuglinux-core]" $FILE > /dev/null
-  if [ $? = 1 ]; then
-     F=`sed -n '/after the header, and they will be used before the default mirrors./{=}' $FILE`
-     let "F = $F + 1"
-     sed -i $FILE -e $F"a\[snuglinux-core]"
-     let "F = $F + 1"
-     sed -i $FILE -e $F"a\SigLevel = Optional TrustAll"
-     let "F = $F + 1"
-     sed -i $FILE -e $F"a\Server = $PROTOCOL_TYPE://${SNUG_SERVER}/repo/core/"'$arch'"\n"
-  fi
+  wget $PROTOCOL_TYPE://${SNUG_SERVER}/repo/pacman.conf --timestamping
+  cp pacman.conf $FILE
+
+  wget $PROTOCOL_TYPE://${SNUG_SERVER}/repo/mirrorlist --timestamping
+  cp mirrorlist ${PATH_FILE}/etc/pacman.d/mirrorlist
 }
 
 #=======================================
