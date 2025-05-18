@@ -782,6 +782,7 @@ fix_system_chroot(){
    edit_pacman_conf "$DIR_CHROOT/etc";
    edit_pacman_mirrorlist "$DIR_CHROOT/etc";
    pacman_key_init_chroot;
+   mdadm_conf;
 }
 
 #=======================================

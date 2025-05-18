@@ -43,7 +43,7 @@ find_part_label(){
   local find_label=$1
   lsblk -f --output NAME,LABEL,TYPE -p -n -P 2>&1 | while read line; do
     eval $line
-    if [ "$TYPE" == "part" ] || [ "$TYPE" == "crypt" ] || [ "$TYPE" == "lvm" ]; then
+    if [ "$TYPE" == "part" ] || [ "$TYPE" == "crypt" ] || [ "$TYPE" == "lvm" ] || [ "$TYPE" == "raid1" ]; then
       if ! [ -z $LABEL ]; then
         if [ "$LABEL" ==  "$find_label" ]; then
            echo $NAME
@@ -189,6 +189,18 @@ install_bootloader(){
         exit 1;
      fi
   fi
+}
+
+#=======================================
+mdadm_conf(){
+  local STR_READ OK
+
+  if [ $UEFI == 1 ]; then
+     install_pkg "mdadm" "y"
+     mdadm --detail --scan >> "${DIR_CHROOT}"/etc/mdadm.conf
+  fi
+
+  return 0
 }
 
 #=======================================
@@ -457,6 +469,11 @@ preparation_disk(){
      else
         UEFI=0;
      fi
+  fi
+  if [ -n "`mdadm -Esv`" ]; then
+     REID=1;
+  else
+     REID=0;
   fi
   partition_drive
   mount_part "/"
