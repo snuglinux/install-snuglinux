@@ -94,7 +94,7 @@ install_video_nvidia(){
 
   show_message SPECIFY_VIDEO_DRIVER
   show_message DO_NOT_INSTALL 0
-  show_message NVIDIA 1
+  show_message NVIDIA_LATEST 1
   show_message NVIDIA_390XX 2
   show_message NVIDIA_340XX 3
   show_message XF86_VIDEO_NOUVEAU 4

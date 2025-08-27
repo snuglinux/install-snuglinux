@@ -414,29 +414,6 @@ install_network_manager(){
 }
 
 #=======================================
-edit_pacman_conf(){
-  local PATH_FILE FILE F
-
-  PATH_FILE="$1";
-  FILE="${PATH_FILE}/pacman.conf";
-  show_message MAKING_CHANGES_TO_FILE "${FILE}"
-
-  wget $PROTOCOL_TYPE://${SNUG_SERVER}/repo/pacman.conf --timestamping
-  cp pacman.conf $FILE
-
-  wget $PROTOCOL_TYPE://${SNUG_SERVER}/repo/mirrorlist --timestamping
-  cp mirrorlist ${PATH_FILE}/etc/pacman.d/mirrorlist
-}
-
-#=======================================
-edit_pacman_mirrorlist(){
-  local PATH_FILE
-
-  PATH_FILE="$1";
-  sed -i 's/^# Server/Server/' "${PATH_FILE}/pacman.d/mirrorlist"
-}
-
-#=======================================
 generating_fstab(){
   show_message GENERATING_FSTAB
   if [ -f $DIR_CHROOT/etc/fstab ]; then
@@ -779,8 +756,6 @@ fix_system_chroot(){
       LINUX_VER="-$ARM_ARCH";
    fi
    system_language "$DIR_CHROOT";
-   edit_pacman_conf "$DIR_CHROOT/etc";
-   edit_pacman_mirrorlist "$DIR_CHROOT/etc";
    pacman_key_init_chroot;
    mdadm_conf;
 }
@@ -793,7 +768,7 @@ pacman_key_init_chroot(){
    if [ "$INSTALL_ARCH" == "arm" ]; then
       run_command_chroot "pacman-key --populate archlinuxarm"
    else
-      run_command_chroot "pacman-key --populate archlinux"
+      run_command_chroot "pacman-key --populate snuglinux"
    fi
    run_command_chroot "pacman -Syu --noconfirm"
 }
@@ -802,8 +777,7 @@ pacman_key_init_chroot(){
 pacman_key_init(){
    show_message INITIALIZE_PACMAN_KEY
    killall gpg-agent > /dev/null 2>&1
-   pacman-key --init && pacman-key --populate archlinux
-   pacinstall archlinux-keyring --yolo
+   pacman-key --init && pacman-key --populate snuglinux
 }
 
 #=======================================

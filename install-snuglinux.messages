@@ -845,7 +845,7 @@ case $LANG_SELECT in
 esac;;
 
 ################
-NVIDIA*)
+NVIDIA_LATEST*)
 ################
 case $LANG_SELECT in
   ru) echo -e "${FC_2}$2${FC_3} - nvidia (Последняя версия драйвера NVIDIA) ${FC_0}" | tee -a $LOG_FILE;;

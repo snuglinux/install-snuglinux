@@ -29,10 +29,6 @@ if [ "$?" = 1 ]; then
    exit 1;
 fi
 
-edit_pacman_conf "/etc";
-
-edit_pacman_mirrorlist "/etc";
-
 pacman_key_init;
 
 checking_installed_packages;
