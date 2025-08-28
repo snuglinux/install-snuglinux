@@ -1,5 +1,5 @@
 pkgname=install-snuglinux
-pkgver=0.0.40
+pkgver=0.0.41
 pkgrel=1
 pkgdesc="Console script to install and configure distribution snuglinux"
 arch=('any')
@@ -8,7 +8,7 @@ license=('GPL2')
 depends=("openssl" "grep" "sed" "wget" "pacutils" )
 source=("https://github.com/snuglinux/${pkgname}/archive/${pkgver}.tar.gz")
 backup=('etc/install-snuglinux.conf')
-md5sums=('63e0609866dbc88d9b5f2de71b19be2a')
+md5sums=('ecaa735dfb4a410fb2d4965737f96b3c')
 
 package(){
   cd "$srcdir/${pkgname}-$pkgver"
@@ -29,6 +29,10 @@ package(){
   install -m644 list-arm-devices            "$pkgdir/usr/share/snuglinux"
   install -m644 amdgpu                      "$pkgdir/usr/share/snuglinux"
   install -m644 ati                         "$pkgdir/usr/share/snuglinux"
+  install -m644 nvidia-340xx                "$pkgdir/usr/share/snuglinux"
+  install -m644 nvidia-390xx                "$pkgdir/usr/share/snuglinux"
+  install -m644 nvidia-470xx                "$pkgdir/usr/share/snuglinux"
+  install -m644 nvidia-580xx                "$pkgdir/usr/share/snuglinux"
   install -m644 README.md                   "$pkgdir/usr/share/doc/${pkgname}/README"
   install -Dm 644 COPYING                   "$pkgdir/usr/share/licenses/${pkgname}/LICENSE"
   install -Dm 644 install-snuglinux.conf    "$pkgdir/etc"
