@@ -339,9 +339,9 @@ esac
 PACKAGE_WAS_PREVIOUSLY_INSTALLED*)
 ################
 case $LANG_SELECT in
-  ru) echo -e "${FC_2}Ошибка:${FC_0} Пакет ${FC_4}$2${FC_0} был установлен ранее!" | tee -a $LOG_FILE;;
-  uk) echo -e "${FC_2}Помилка:${FC_0} Пакет ${FC_4}$2${FC_0} був встановлений раніше! " | tee -a $LOG_FILE;;
-  *)  echo -e "${FC_2}ERROR:${FC_0} Package ${FC_4}$2${FC_0} was previously installed!" | tee -a $LOG_FILE;;
+  ru) echo -e "${FC_5}Внимание:${FC_0} Пакет ${FC_4}$2${FC_0} был установлен ранее!" | tee -a $LOG_FILE;;
+  uk) echo -e "${FC_5}Увага:${FC_0} Пакет ${FC_4}$2${FC_0} був встановлений раніше! " | tee -a $LOG_FILE;;
+  *)  echo -e "${FC_5}Warning:${FC_0} Package ${FC_4}$2${FC_0} was previously installed!" | tee -a $LOG_FILE;;
 esac
 ;;
 
@@ -851,6 +851,15 @@ case $LANG_SELECT in
   ru) echo -e "${FC_2}$2${FC_3} - nvidia (Последняя версия драйвера NVIDIA) ${FC_0}" | tee -a $LOG_FILE;;
   uk) echo -e "${FC_2}$2${FC_3} - nvidia (Остання версія драйвера NVIDIA) ${FC_0}" | tee -a $LOG_FILE;;
   *)  echo -e "${FC_2}$2${FC_3} - nvidia (The latest version of the NVIDIA driver) ${FC_0}" | tee -a $LOG_FILE;;
+esac;;
+
+################
+NVIDIA_470XX*)
+################
+case $LANG_SELECT in
+  ru) echo -e "${FC_2}$2${FC_3} - nvidia-470xx (для карт Fermi (GeForce GTX 400/500), Kepler (GeForce GTX 600/700/900), Quadro, Tesla) ${FC_0}" | tee -a $LOG_FILE;;
+  uk) echo -e "${FC_2}$2${FC_3} - nvidia-470xx (для карт Fermi (GeForce GTX 400/500), Kepler (GeForce GTX 600/700/900), Quadro, Tesla) ${FC_0}" | tee -a $LOG_FILE;;
+  *)  echo -e "${FC_2}$2${FC_3} - nvidia-470xx (for Fermi (GeForce GTX 400/500), Kepler (GeForce GTX 600/700/900), Quadro, Tesla cards) ${FC_0}" | tee -a $LOG_FILE;;
 esac;;
 
 ################

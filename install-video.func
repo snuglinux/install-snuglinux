@@ -5,7 +5,7 @@ check_video_drivers(){
   local INDEX CHIPSET_NAME DRIVERS DIR
 
   DRIVERS=$1
-  VIDEO_CHIPSET=`echo $(lspci | grep -i --color vga) | tr a-z A-Z`
+  VIDEO_CHIPSET=`echo $(lspci -nn | grep -i --color vga) | tr a-z A-Z`
   download_file_list "$DRIVERS";
   if ! [ -f "${TMP_DIR}/install/$DRIVERS" ]; then
      show_message FILE_NOT_FOUND "${TMP_DIR}/install/$DRIVERS"
@@ -22,6 +22,37 @@ check_video_drivers(){
          continue
       fi
       echo "$VIDEO_CHIPSET" | grep "$i" > /dev/null
+      if [ "$?" = 0 ]; then
+         # yes
+         return 1
+      fi
+  done
+  # no
+  return 0
+}
+
+#=======================================
+check_video_drivers_device_id(){
+  local INDEX CHIPSET_NAME DRIVERS DIR
+
+  DRIVERS=$1
+  VIDEO_CHIPSET_ID=`lspci -nn | grep -i 'VGA' | grep -oP '\[[0-9a-fA-F]{4}:[0-9a-fA-F]{4}\]' | head -1 | cut -d: -f2 | tr -d ']' | tr '[:lower:]' '[:upper:]'`
+  download_file_list "$DRIVERS";
+  if ! [ -f "${TMP_DIR}/install/$DRIVERS" ]; then
+     show_message FILE_NOT_FOUND "${TMP_DIR}/install/$DRIVERS"
+     exit 1
+  fi
+  INDEX=0
+  while read line ; do
+     CHIPSET_NAME[$INDEX]="$line"
+     INDEX=$(($INDEX+1))
+  done < ${TMP_DIR}/install/$DRIVERS
+
+  for i in "${CHIPSET_NAME[@]}"; do
+      if [ -z "$i" ]; then
+         continue
+      fi
+      echo "$i"  | grep "$VIDEO_CHIPSET_ID" > /dev/null
       if [ "$?" = 0 ]; then
          # yes
          return 1
@@ -88,6 +119,76 @@ install_video_amd(){
 #=======================================
 install_video_nvidia(){
   local ARRAY AMSURE PREFIXDRIVER STR_READ OK
+  local VAL_340 VAL_390 VAL_470 VAL_580
+
+  show_message SPECIFY_VIDEO_DRIVER
+  show_message DO_NOT_INSTALL 0
+  ARRAY="0"
+
+  check_video_drivers_device_id "nvidia-340xx";
+  if [ $? = 1 ]; then
+     VAL_340="${#ARRAY}"
+     ARRAY="$ARRAY${VAL_340}"
+     show_message NVIDIA_340XX ${VAL_340}
+  fi
+  check_video_drivers_device_id "nvidia-390xx";
+  if [ $? = 1 ]; then
+     VAL_390="${#ARRAY}"
+     ARRAY="$ARRAY${VAL_390}"
+     show_message NVIDIA_390XX ${VAL_390}
+  fi
+  check_video_drivers_device_id "nvidia-470xx";
+  if [ $? = 1 ]; then
+     VAL_470="${#ARRAY}"
+     ARRAY="$ARRAY${VAL_470}"
+     show_message NVIDIA_470XX ${VAL_470}
+  fi
+  check_video_drivers_device_id "nvidia-580xx";
+  if [ $? = 1 ]; then
+     VAL_580="${#ARRAY}"
+     ARRAY="$ARRAY${VAL_580}"
+     show_message NVIDIA_LATEST ${VAL_580}
+  fi
+  STR_READ=`show_message CHOOSE_INSTALLATION_OPTION`
+  OK=0
+  while [ "${OK}" = 0 ] ; do
+        read -p "${STR_READ}" AMSURE
+        if [ "$ARRAY" = "${ARRAY#*$AMSURE}" ]; then
+           show_message NOT_RIGHT_VALUE
+           continue
+        else
+           OK=1
+        fi
+  done
+  PREFIXDRIVER="0"
+  if [ "${AMSURE}" = "0" ]; then
+     return 0
+     # no
+  elif [ "${AMSURE}" = "${VAL_340}" ]; then
+     PREFIXDRIVER="-340xx";
+     # yes
+  elif [ "${AMSURE}" = "${VAL_390}" ]; then
+     PREFIXDRIVER="-390xx";
+     # yes
+  elif [ "${AMSURE}" = "${VAL_470}" ]; then
+     PREFIXDRIVER="-470xx";
+     # yes
+  elif [ "${AMSURE}" = "${VAL_510}" ]; then
+     PREFIXDRIVER="-510xx";
+     # yes
+  elif [ "${AMSURE}" = "${VAL_580}" ]; then
+     PREFIXDRIVER="";
+     # yes
+  fi
+  if [ "${PREFIXDRIVER}" != "0" ]; then
+     install_pkg "nvidia$PREFIXDRIVER$LINUX_VER" "y"
+     install_pkg "nvidia$PREFIXDRIVER-utils" "y"
+     install_pkg "opencl-nvidia$PREFIXDRIVER" "y"
+     install_pkg "libvdpau" "y"
+     install_pkg "nvidia$PREFIXDRIVER$LINUX_VER-dkms"
+     chroot $DIR_CHROOT nvidia-xconfig
+     return 1
+  fi
 
   PREFIXDRIVER=""
   ARRAY="012345"
